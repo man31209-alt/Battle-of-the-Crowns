@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#24180f">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="B.O.C.">
+<title>Battle of the Crowns</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Alegreya+Sans:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+/*
+VOICE: a lord's war table at dusk: warm, sturdy, readable at a glance.
+IDEA: carved oak and iron fittings framing a living map.
+PICTURE: the map itself, full screen; the HUD is the frame around it.
+COLOUR and TYPE: dark oak #24180f, iron edge #6b4a2b, parchment ink #f6ecd5, crown gold #e0b04a; Cinzel titles, Alegreya Sans UI.
+LAYOUT: resources across the top, quick buttons left, minimap right, command panel along the bottom.
+*/
+:root{--oak:#24180f;--oak2:#3a2818;--edge:#6b4a2b;--ink:#f6ecd5;--dim:#c9b894;--gold:#e0b04a;--red:#d0442f;--grn:#5fae4a;
+--sat:env(safe-area-inset-top);--sab:env(safe-area-inset-bottom);--sal:env(safe-area-inset-left);--sar:env(safe-area-inset-right)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+html,body{margin:0;height:100%;overflow:hidden;background:#0c0905;color:var(--ink);font:500 15px/1.3 'Alegreya Sans',system-ui,sans-serif;overscroll-behavior:none}
+button{font:inherit;color:inherit;cursor:pointer}
+#game{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+[hidden]{display:none!important}
+
+#top{position:fixed;top:0;left:0;right:0;z-index:5;display:flex;align-items:center;gap:5px;
+ padding:calc(var(--sat) + 5px) calc(var(--sar) + 6px) 5px calc(var(--sal) + 6px);
+ background:linear-gradient(#2b1d12f5,#22170ee6);border-bottom:2px solid var(--edge);box-shadow:0 2px 10px #0008}
+.res{display:flex;align-items:center;gap:3px;background:#0005;border:1px solid #6b4a2b99;border-radius:7px;padding:2px 6px 2px 3px;
+ font-weight:800;font-size:15px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.res img{width:20px;height:20px}
+.res.warn b{color:#ff8a6b}
+#age{margin-left:auto;text-align:right;line-height:1.05;white-space:nowrap}
+#age b{display:block;font:900 13px Cinzel,serif;color:var(--gold);letter-spacing:.02em}
+#age small{font-size:12px;color:var(--dim);font-variant-numeric:tabular-nums}
+.iconbtn{width:38px;height:38px;flex:none;border-radius:8px;border:1.5px solid var(--edge);background:linear-gradient(#4a321f,#2e1f13);display:grid;place-items:center;padding:0}
+.iconbtn span,.iconbtn span::before,.iconbtn span::after{display:block;width:18px;height:2.5px;background:var(--ink);border-radius:2px;position:relative}
+.iconbtn span::before,.iconbtn span::after{content:'';position:absolute;left:0}
+.iconbtn span::before{top:-6px}.iconbtn span::after{top:6px}
+
+#side{position:fixed;z-index:4;left:calc(var(--sal) + 8px);top:calc(var(--sat) + 58px);display:flex;flex-direction:column;gap:8px}
+.rb{width:48px;height:48px;border-radius:50%;padding:0;position:relative;display:grid;place-items:center;
+ background:radial-gradient(circle at 40% 35%,#563a23,#24180f);border:2px solid var(--edge);box-shadow:0 2px 6px #0009}
+.rb img{width:32px;height:32px}
+.rb.on{border-color:var(--gold);box-shadow:0 0 0 3px #e0b04a55,0 2px 6px #0009}
+.badge{position:absolute;right:-5px;top:-5px;min-width:20px;height:20px;border-radius:10px;background:var(--red);color:#fff;font-weight:800;font-size:12px;line-height:20px;text-align:center;padding:0 5px;border:1.5px solid #2a1a10}
+.badge:empty,.badge[data-z="1"]{display:none}
+
+#mini{position:fixed;z-index:4;right:calc(var(--sar) + 8px);top:calc(var(--sat) + 58px);width:128px;height:128px;
+ border:2px solid var(--edge);border-radius:6px;background:#000;touch-action:none;box-shadow:0 2px 8px #000a}
+
+#toasts{position:fixed;z-index:6;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 196px);display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none;width:min(92vw,420px)}
+.toast{pointer-events:auto;background:#1b120bf0;border:1.5px solid var(--edge);border-radius:9px;padding:7px 12px;font-weight:700;font-size:15px;text-align:center;box-shadow:0 3px 10px #000a;animation:tin .25s ease}
+.toast.bad{border-color:var(--red);color:#ffd9cf}
+.toast.good{border-color:var(--gold);color:#ffe9b8}
+@keyframes tin{from{opacity:0;transform:translateY(-6px)}}
+
+#panel{position:fixed;z-index:5;left:0;right:0;bottom:0;display:flex;gap:10px;align-items:flex-start;
+ padding:8px calc(var(--sar) + 8px) calc(var(--sab) + 8px) calc(var(--sal) + 8px);
+ background:linear-gradient(#2b1d12f2,#1b120bfa);border-top:2px solid var(--edge);box-shadow:0 -3px 12px #0009}
+#info{flex:0 0 230px;min-height:58px;display:flex;gap:9px;align-items:flex-start}
+#info .por{width:54px;height:54px;flex:none;border-radius:8px;border:1.5px solid var(--edge);background:radial-gradient(#5a4029,#2a1b10)}
+#info .por img{width:100%;height:100%}
+#info .tx{flex:1;min-width:0}
+#info h4{margin:0 0 3px;font:900 15px Cinzel,serif;color:var(--gold);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hp{height:7px;background:#0008;border-radius:4px;overflow:hidden;border:1px solid #0006}
+.hp i{display:block;height:100%;background:linear-gradient(#7fd060,#3f9a35)}
+.hp.lo i{background:linear-gradient(#ff8b6b,#c8432f)}
+.st{font-size:13px;color:var(--dim);margin-top:3px;line-height:1.25}
+.st b{color:var(--ink)}
+.q{display:flex;gap:4px;margin-top:5px;flex-wrap:wrap}
+.q button{width:34px;height:34px;padding:0;border-radius:6px;border:1px solid var(--edge);background:#0005;position:relative;overflow:hidden}
+.q button img{width:100%;height:100%}
+.q button i{position:absolute;left:0;bottom:0;height:4px;background:var(--gold)}
+.grp{display:flex;flex-wrap:wrap;gap:4px}
+.grp button{width:40px;height:40px;padding:0;border-radius:6px;border:1px solid var(--edge);background:#0005;position:relative}
+.grp button img{width:100%;height:100%}
+.grp button b{position:absolute;right:1px;bottom:0;font-size:12px;text-shadow:0 1px 2px #000}
+#acts{flex:1;display:flex;flex-wrap:wrap;gap:5px;align-content:flex-start;max-height:146px;overflow-y:auto}
+.tabs{display:flex;gap:4px;width:100%}
+.tabs button{flex:1;height:30px;border-radius:6px;border:1px solid var(--edge);background:#0004;font-weight:800;font-size:14px;color:var(--dim)}
+.tabs button.on{background:#e0b04a26;color:var(--gold);border-color:var(--gold)}
+.ab{width:64px;height:68px;border-radius:8px;padding:2px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;
+ background:linear-gradient(#4b3321,#2e1f13);border:1.5px solid #7a5634;box-shadow:inset 0 1px #ffffff14}
+.ab:active{transform:translateY(1px);border-color:var(--gold)}
+.ab img{width:34px;height:34px}
+.ab .nm{font-size:12px;font-weight:700;line-height:1.05;max-width:60px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ab .cs{font-size:11px;line-height:1.1;color:var(--dim);white-space:nowrap;font-variant-numeric:tabular-nums}
+.cs i{display:inline-block;width:7px;height:7px;border-radius:2px;margin:0 1px 0 3px;vertical-align:0}
+.cf{background:#e0533e}.cw{background:#a0703f}.cg{background:#f0c43c}.cs2{background:#a9a9a9}
+.ab.no{opacity:.42}
+.ab.wide{width:auto;min-width:84px;padding:0 10px;flex-direction:row;gap:6px}
+.ab.ok{border-color:#6fbf54;background:linear-gradient(#3e5a26,#24361a)}
+.ab.x{border-color:#b8513e;background:linear-gradient(#5a2a20,#371812)}
+.hint{font-size:13px;color:var(--dim);width:100%;line-height:1.3}
+
+.screen{position:fixed;inset:0;z-index:10;display:grid;place-items:center;padding:calc(var(--sat) + 16px) 16px calc(var(--sab) + 16px);
+ background:radial-gradient(ellipse at 50% 40%,#0c090566,#0c0905d9);overflow-y:auto}
+.card{width:min(100%,560px);background:linear-gradient(#2e1f13f4,#1c130cf7);border:2px solid var(--edge);border-radius:14px;padding:22px 20px;box-shadow:0 10px 40px #000c}
+.card h1{font:900 clamp(30px,8vw,46px)/1.02 Cinzel,serif;margin:0;color:var(--gold);text-align:center;text-wrap:balance;text-shadow:0 2px 0 #000}
+.card h2{font:900 30px Cinzel,serif;margin:0 0 8px;color:var(--gold);text-align:center}
+.card .sub{text-align:center;color:var(--dim);margin:6px 0 16px;font-size:16px}
+.card h3{font:700 13px Cinzel,serif;color:var(--dim);margin:16px 0 8px;letter-spacing:.04em}
+.styles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.styles button{border-radius:10px;border:2px solid #6b4a2b;background:#0004;padding:6px 4px 8px;display:flex;flex-direction:column;align-items:center;gap:4px;font-weight:700;font-size:13px;line-height:1.1}
+.styles button.on{border-color:var(--gold);background:#e0b04a1f}
+.styles img{width:100%;max-width:96px;aspect-ratio:1}
+.seg{display:flex;gap:6px}
+.seg button{flex:1;height:44px;border-radius:9px;border:2px solid #6b4a2b;background:#0004;font-weight:800;font-size:16px}
+.seg button.on{border-color:var(--gold);color:var(--gold);background:#e0b04a1f}
+.row{display:flex;gap:8px;margin-top:20px}
+.big{flex:1;height:52px;border-radius:10px;border:2px solid var(--gold);background:linear-gradient(#e7bd5b,#b98a2c);color:#24180f;font:900 18px Cinzel,serif}
+.big.alt{background:linear-gradient(#4b3321,#2e1f13);color:var(--gold)}
+.link{display:block;margin:14px auto 0;background:none;border:0;color:var(--dim);text-decoration:underline;font-size:15px;min-height:44px}
+.help{font-size:15px;line-height:1.45;color:var(--ink)}
+.help dt{font-weight:800;color:var(--gold);margin-top:10px}
+.help dd{margin:2px 0 0}
+.stats{width:100%;border-collapse:collapse;margin:10px 0 4px;font-size:15px}
+.stats td{padding:5px 4px;border-bottom:1px solid #6b4a2b66}
+.stats td:not(:first-child){text-align:right;font-variant-numeric:tabular-nums}
+.stats tr:first-child td{font-weight:800;color:var(--gold)}
+.note{font-size:13px;color:var(--dim);text-align:center;margin-top:12px}
+
+@media (max-width:640px){
+ #panel{flex-direction:column;gap:6px}
+ #info{flex:none;width:100%;min-height:0}
+ #info .por{width:44px;height:44px}
+ #acts{width:100%;max-height:178px;gap:4px}
+ .ab{width:calc((100% - 20px)/6);min-width:52px;height:62px}
+ .ab img{width:30px;height:30px}
+ .ab .nm{font-size:11.5px;max-width:100%}
+ #toasts{top:calc(var(--sat) + 172px)}
+ .res{font-size:14px;padding:2px 5px 2px 2px}
+ .res img{width:18px;height:18px}
+ #mini{width:104px;height:104px}
+}
+@media (max-width:400px){.res.pop{display:none}#age small{display:none}}
+@media (max-height:460px){#side{gap:5px}.rb{width:42px;height:42px}.rb img{width:28px;height:28px}#mini{width:96px;height:96px}#acts{max-height:118px}#info{flex-basis:200px}
+ .ab{width:58px;min-width:0;height:54px}.ab img{width:24px;height:24px}.tabs button{height:26px}#toasts{top:calc(var(--sat) + 60px)}#panel{padding-top:6px}}
+@media (prefers-reduced-motion:reduce){.toast{animation:none}}
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+
+<div id="hud" hidden>
+ <div id="top">
+  <div class="res" id="r-food"><img alt="Food"><b>0</b></div>
+  <div class="res" id="r-wood"><img alt="Wood"><b>0</b></div>
+  <div class="res" id="r-gold"><img alt="Gold"><b>0</b></div>
+  <div class="res" id="r-stone"><img alt="Stone"><b>0</b></div>
+  <div class="res pop" id="r-pop"><img alt="Population"><b>0/0</b></div>
+  <div id="age"><b>Dark Age</b><small>0:00</small></div>
+  <button class="iconbtn" id="menuBtn" aria-label="Menu"><span></span></button>
+ </div>
+ <div id="side">
+  <button class="rb" id="bIdle" aria-label="Next idle villager"><img alt=""><span class="badge"></span></button>
+  <button class="rb" id="bArmy" aria-label="Select army"><img alt=""><span class="badge"></span></button>
+  <button class="rb" id="bBox" aria-label="Box select mode"><img alt=""></button>
+  <button class="rb" id="bHome" aria-label="Go to town center"><img alt=""></button>
+ </div>
+ <canvas id="mini" width="144" height="144"></canvas>
+ <div id="toasts"></div>
+ <div id="panel" hidden><div id="info"></div><div id="acts"></div></div>
+</div>
+
+<div id="title" class="screen">
+ <div class="card">
+  <h1>Battle of the Crowns</h1>
+  <p class="sub">Gather. Build. Wall up. Hold the line.</p>
+  <h3>Your architecture</h3>
+  <div class="styles" id="styles"></div>
+  <h3>Rival</h3>
+  <div class="seg" id="diff"><button data-d="0">Easy</button><button data-d="1" class="on">Normal</button><button data-d="2">Hard</button></div>
+  <div class="row"><button class="big alt" id="contBtn" hidden>Continue</button><button class="big" id="newBtn">New game</button></div>
+  <button class="link" id="helpBtn">How to play</button>
+ </div>
+</div>
+
+<div id="pause" class="screen" hidden>
+ <div class="card">
+  <h2>Paused</h2>
+  <h3>Game speed</h3>
+  <div class="seg" id="speed"><button data-s="1">Slow</button><button data-s="1.5">Normal</button><button data-s="2">Fast</button></div>
+  <div class="row"><button class="big" id="resumeBtn">Resume</button></div>
+  <div class="row"><button class="big alt" id="quitBtn">Save &amp; quit</button></div>
+  <button class="link" id="help2Btn">How to play</button>
+  <p class="note">The game saves on its own every 30 seconds.</p>
+ </div>
+</div>
+
+<div id="helpScr" class="screen" hidden>
+ <div class="card">
+  <h2>How to play</h2>
+  <dl class="help">
+   <dt>Select</dt><dd>Tap a unit. Double-tap to grab every unit of that kind on screen. Hold your finger still for a moment, then drag, to draw a selection box (or turn on the box button at left).</dd>
+   <dt>Command</dt><dd>With units selected, tap a tree, mine or bush to gather, an enemy to attack, a foundation to build, or open ground to move.</dd>
+   <dt>Camera</dt><dd>Drag with one finger to pan. Pinch to zoom. Tap the minimap to jump.</dd>
+   <dt>Build</dt><dd>Select villagers, pick a building, tap the map where it should go, then press the check mark. For walls, tap the start, tap the end, then confirm.</dd>
+   <dt>Turtle tools</dt><dd>Palisades in the Dark Age, stone walls, gates and towers in Feudal, castles in Castle Age. Ring the town bell to pull villagers inside the town center, where each one adds an arrow.</dd>
+   <dt>Win</dt><dd>Destroy the rival's town centers and castles and all their villagers.</dd>
+   <dt>Desktop</dt><dd>Left-click or drag to select, right-click to command, wheel to zoom, WASD or arrows to pan.</dd>
+  </dl>
+  <div class="row"><button class="big" id="helpClose">Got it</button></div>
+ </div>
+</div>
+
+<div id="end" class="screen" hidden>
+ <div class="card">
+  <h2 id="endTitle">Victory</h2>
+  <p class="sub" id="endSub"></p>
+  <table class="stats" id="endStats"></table>
+  <div class="row"><button class="big alt" id="endTitleBtn">Main menu</button><button class="big" id="againBtn">Play again</button></div>
+ </div>
+</div>
+
+<script src="game.js"></script>
+<script>
+if('serviceWorker' in navigator&&location.protocol==='https:'){addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{})})}
+</script>
+</body>
+</html>
