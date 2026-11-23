@@ -54,10 +54,10 @@ button{font:inherit;color:inherit;cursor:pointer}
 .badge{position:absolute;right:-5px;top:-5px;min-width:20px;height:20px;border-radius:10px;background:var(--red);color:#fff;font-weight:800;font-size:12px;line-height:20px;text-align:center;padding:0 5px;border:1.5px solid #2a1a10}
 .badge:empty,.badge[data-z="1"]{display:none}
 
-#mini{position:fixed;z-index:4;right:calc(var(--sar) + 8px);top:calc(var(--sat) + 58px);width:128px;height:128px;
- border:2px solid var(--edge);border-radius:6px;background:#000;touch-action:none;box-shadow:0 2px 8px #000a}
+#mini{position:fixed;z-index:4;right:calc(var(--sar) + 8px);top:calc(var(--sat) + 58px);width:156px;height:78px;
+ border:2px solid var(--edge);border-radius:6px;background:#0c0905;touch-action:none;box-shadow:0 2px 8px #000a}
 
-#toasts{position:fixed;z-index:6;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 196px);display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none;width:min(92vw,420px)}
+#toasts{position:fixed;z-index:6;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 146px);display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none;width:min(92vw,420px)}
 .toast{pointer-events:auto;background:#1b120bf0;border:1.5px solid var(--edge);border-radius:9px;padding:7px 12px;font-weight:700;font-size:15px;text-align:center;box-shadow:0 3px 10px #000a;animation:tin .25s ease}
 .toast.bad{border-color:var(--red);color:#ffd9cf}
 .toast.good{border-color:var(--gold);color:#ffe9b8}
@@ -137,13 +137,13 @@ button{font:inherit;color:inherit;cursor:pointer}
  .ab{width:calc((100% - 20px)/6);min-width:52px;height:62px}
  .ab img{width:30px;height:30px}
  .ab .nm{font-size:11.5px;max-width:100%}
- #toasts{top:calc(var(--sat) + 172px)}
+ #toasts{top:calc(var(--sat) + 132px)}
  .res{font-size:14px;padding:2px 5px 2px 2px}
  .res img{width:18px;height:18px}
- #mini{width:104px;height:104px}
+ #mini{width:128px;height:64px}
 }
 @media (max-width:400px){.res.pop{display:none}#age small{display:none}}
-@media (max-height:460px){#side{gap:5px}.rb{width:42px;height:42px}.rb img{width:28px;height:28px}#mini{width:96px;height:96px}#acts{max-height:118px}#info{flex-basis:200px}
+@media (max-height:460px){#side{gap:5px}.rb{width:42px;height:42px}.rb img{width:28px;height:28px}#mini{width:120px;height:60px}#acts{max-height:118px}#info{flex-basis:200px}
  .ab{width:58px;min-width:0;height:54px}.ab img{width:24px;height:24px}.tabs button{height:26px}#toasts{top:calc(var(--sat) + 60px)}#panel{padding-top:6px}}
 @media (prefers-reduced-motion:reduce){.toast{animation:none}}
 </style>
