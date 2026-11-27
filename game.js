@@ -9,7 +9,7 @@ const cv=$('#game'),ctx=cv.getContext('2d');
 let DPR=1,VW=1,VH=1;
 const clamp=(v,a,b)=>v<a?a:v>b?b:v;
 const R4=['food','wood','stone','gold'];
-const PHASE=['Village','Town','City'];
+const PHASE=['Village','Town','City','Kingdom'];
 const PCOL=['#2f6fe0','#d6392b','#3a9a46','#d9a521'];
 const PNAME=['You','Red','Green','Gold'];
 function mulberry(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
@@ -86,10 +86,10 @@ const isHero=t=>t.startsWith('h_');
 /* ---------- buildings ---------- */
 // terr: territory radius when this building is a territory root. any: may be built outside your territory. gar: garrison slots.
 const B={
- tc:{n:'Town Center',w:4,h:4,hp:3000,cost:{wood:300,stone:300,gold:200},tm:120,ph:1,pop:20,drop:['food','wood','stone','gold'],los:10,arr:{n:3,r:7,a:6},train:['villager','spear','archer'],tech:['loom','treadmill','wheel','masonry','conscript','architecture','town','city'],gar:20,terr:16,d:'Center of your town. Trains villagers. Claims territory.'},
+ tc:{n:'Town Center',w:4,h:4,hp:3000,cost:{wood:300,stone:300,gold:200},tm:120,ph:1,pop:20,drop:['food','wood','stone','gold'],los:10,arr:{n:3,r:7,a:6},train:['villager','spear','archer'],tech:['loom','treadmill','wheel','masonry','conscript','architecture','town','city','kingdom','royal','hoardings'],gar:20,terr:16,d:'Center of your town. Trains villagers. Claims territory.'},
  house:{n:'House',w:2,h:2,hp:600,cost:{wood:60},tm:16,ph:0,pop:10,los:4,d:'+10 population.'},
- farmstead:{n:'Farmstead',w:2,h:2,hp:700,cost:{wood:100},tm:20,ph:0,drop:['food'],los:6,tech:['gather','collar','plow'],d:'Drop off food. Farming upgrades.'},
- storehouse:{n:'Storehouse',w:2,h:2,hp:700,cost:{wood:100},tm:20,ph:0,drop:['wood','stone','gold'],los:6,tech:['axe','saw','stonem','goldm','goldm2'],d:'Drop off wood, stone and gold. Gathering upgrades.'},
+ farmstead:{n:'Farmstead',w:2,h:2,hp:700,cost:{wood:100},tm:20,ph:0,drop:['food'],los:6,tech:['gather','collar','plow','crop'],d:'Drop off food. Farming upgrades.'},
+ storehouse:{n:'Storehouse',w:2,h:2,hp:700,cost:{wood:100},tm:20,ph:0,drop:['wood','stone','gold'],los:6,tech:['axe','saw','stonem','goldm','goldm2','twoman','deepmine'],d:'Drop off wood, stone and gold. Gathering upgrades.'},
  field:{n:'Field',w:3,h:3,hp:300,cost:{wood:100},tm:14,ph:0,los:2,flat:1,slots:5,d:'Never runs out. Up to 5 farmers.'},
  corral:{n:'Corral',w:2,h:2,hp:500,cost:{wood:100},tm:16,ph:0,los:4,train:['sheep'],d:'Raises sheep to hunt for food.'},
  dock:{n:'Dock',w:2,h:2,hp:1000,cost:{wood:150},tm:24,ph:0,drop:['food','wood'],los:7,train:['fishboat','galley'],tech:['nets','shipwright'],water:1,any:1,d:'Build on the shore. Fishing boats and warships.'},
@@ -99,8 +99,8 @@ const B={
  sentry:{n:'Sentry Tower',w:1,h:1,hp:500,cost:{wood:100},tm:20,ph:0,los:10,arr:{n:1,r:6,a:4},gar:3,d:'Cheap lookout tower.'},
  outpost:{n:'Outpost',w:1,h:1,hp:300,cost:{wood:40},tm:10,ph:0,los:14,any:1,d:'Sees far. Can be built outside your territory.'},
  palisade:{n:'Palisade',w:1,h:1,hp:350,cost:{wood:3},tm:4,ph:0,los:2,wall:1,any:1,nocap:1,d:'Wooden wall.'},
- smith:{n:'Blacksmith',w:3,h:3,hp:1500,cost:{wood:200},tm:30,ph:1,los:6,tech:['forge','iron','fletch','bodkin','scale','chain','barding'],d:'Attack and armor upgrades.'},
- market:{n:'Market',w:3,h:3,hp:1500,cost:{wood:300},tm:40,ph:1,los:6,train:['trader'],tech:['caravan','guilds'],market:1,d:'Barter goods. Trade carts run between markets.'},
+ smith:{n:'Blacksmith',w:3,h:3,hp:1500,cost:{wood:200},tm:30,ph:1,los:6,tech:['forge','iron','fletch','bodkin','scale','chain','barding','plate','blast','bracer'],d:'Attack and armor upgrades.'},
+ market:{n:'Market',w:3,h:3,hp:1500,cost:{wood:300},tm:40,ph:1,los:6,train:['trader'],tech:['caravan','guilds','banking'],market:1,d:'Barter goods. Trade carts run between markets.'},
  temple:{n:'Monastery',w:3,h:3,hp:2000,cost:{stone:300},tm:40,ph:1,los:7,train:['monk'],tech:['herbal'],gar:10,heal:3,d:'Trains monks. Heals units inside.'},
  workshop:{n:'Siege Workshop',w:3,h:3,hp:1500,cost:{wood:300},tm:40,ph:1,los:6,train:['ram','mangonel','treb'],d:'Builds siege weapons.'},
  tower:{n:'Stone Tower',w:1,h:1,hp:1600,cost:{wood:100,stone:150},tm:40,ph:1,los:11,arr:{n:2,r:8,a:7},gar:5,d:'Strong tower. Garrison adds arrows.'},
@@ -114,7 +114,8 @@ const BUILD_TABS={eco:['house','farmstead','storehouse','field','corral','dock',
 /* ---------- technologies ---------- */
 const TECH={
  town:{n:'Town Phase',ph:0,cost:{food:500,wood:400},tm:60,up:1,need:5,d:'Needs 5 buildings. Unlocks smiths, markets, monasteries, castles, siege and stone walls.'},
- city:{n:'City Phase',ph:1,cost:{stone:600,gold:600},tm:80,up:2,need:4,d:'Needs 4 Town-phase buildings. Unlocks knights, champions, heroes and wonders.'},
+ city:{n:'City Phase',ph:1,cost:{stone:600,gold:600},tm:80,up:2,need:4,d:'Needs 4 Town-phase buildings. Unlocks knights, champions, heroes and wonders. Stone buildings, +10% building health.'},
+ kingdom:{n:'Kingdom Phase',ph:2,cost:{food:1200,stone:800,gold:1000},tm:100,up:3,need:8,d:'Needs 8 Town-phase buildings. Grand architecture, +15% more building health and the best upgrades.'},
  loom:{n:'Loom',ph:0,cost:{gold:50},tm:20,ic:'shield',d:'Villagers +20 health and +1/+2 armor.',fx:m=>{m.vhp+=20;m.varm[0]+=1;m.varm[1]+=2}},
  treadmill:{n:'Treadmill Crane',ph:0,cost:{wood:200},tm:30,ic:'brick',d:'Everyone builds 20% faster.',fx:m=>{m.build+=.2}},
  wheel:{n:'Wheelbarrow',ph:1,cost:{food:200,wood:100},tm:40,ic:'wheel',d:'Villagers 10% faster, carry +5.',fx:m=>{m.vspd+=.1;m.carry+=5}},
@@ -140,6 +141,15 @@ const TECH={
  barding:{n:'Horse Barding',ph:2,cost:{food:300,gold:250},tm:45,ic:'shield',d:'Cavalry +25% health.',fx:m=>{m.hp.cav+=.25}},
  caravan:{n:'Caravan',ph:1,cost:{food:200,gold:150},tm:30,ic:'wheel',d:'Trade carts +25% gold and faster.',fx:m=>{m.trade+=.25;m.spd.trd+=.25}},
  guilds:{n:'Guilds',ph:2,cost:{food:300,gold:200},tm:40,ic:'brick',d:'Better barter prices.',fx:m=>{m.barter*=.5}},
+ royal:{n:'Royal Treasury',ph:3,cost:{food:600,gold:600},tm:60,ic:'pickg',d:'Units cost 10% less and train 15% faster.',fx:m=>{m.train+=.15;m.cost.all=(m.cost.all||1)*.9}},
+ hoardings:{n:'Hoardings',ph:3,cost:{wood:500,stone:400},tm:60,ic:'brick',req:'architecture',d:'Buildings +25% health. Towers and castles shoot 1 more arrow.',fx:m=>{m.bhp+=.25;m.towerArr+=1}},
+ plate:{n:'Plate Armor',ph:3,cost:{food:400,gold:350},tm:60,ic:'shield',req:'chain',d:'Soldiers +2/+3 armor.',fx:m=>{m.arm[0]+=2;m.arm[1]+=3}},
+ blast:{n:'Blast Furnace',ph:3,cost:{food:400,gold:300},tm:60,ic:'sword',req:'iron',d:'Melee units +2 attack.',fx:m=>{m.atk.m+=2}},
+ bracer:{n:'Bracer',ph:3,cost:{food:400,gold:300},tm:60,ic:'arrow',req:'bodkin',d:'Ranged +1 attack and +1 range.',fx:m=>{m.atk.p+=1;m.rng+=1}},
+ crop:{n:'Crop Rotation',ph:3,cost:{food:400,wood:300},tm:50,ic:'wheat',req:'plow',d:'Fields +25%.',fx:m=>{m.rate.farm+=.25}},
+ twoman:{n:'Two-Man Saw',ph:3,cost:{food:400,wood:300},tm:50,ic:'axe',req:'saw',d:'Wood +25%.',fx:m=>{m.rate.wood+=.25}},
+ deepmine:{n:'Deep Mining',ph:3,cost:{food:400,wood:300},tm:50,ic:'picks',req:'goldm2',d:'Gold and stone +25%.',fx:m=>{m.rate.gold+=.25;m.rate.stone+=.25}},
+ banking:{n:'Banking',ph:3,cost:{food:400,gold:300},tm:50,ic:'wheel',req:'caravan',d:'Trade carts +30% gold.',fx:m=>{m.trade+=.3}},
  herbal:{n:'Herbal Medicine',ph:1,cost:{gold:200},tm:30,ic:'wheat',d:'Monks and buildings heal 50% faster.',fx:m=>{m.heal+=.5}}
 };
 const RATE={berry:.55,farm:.45,wood:.6,gold:.45,stone:.45,hunt:1.2,fish:.6};
@@ -158,7 +168,7 @@ const cam={x:0,y:0,z:1};
 const groundCv=document.createElement('canvas'),fogCv=document.createElement('canvas');const fogCtx=fogCv.getContext('2d');let fogImg=null;
 
 /* ---------- helpers ---------- */
-const costOf=(p,c,kind,key)=>{const o={};let f=1;if(kind==='u'){const d=U[key];f=p.m.cost[key]||1;if(d.tag==='shp')f*=p.m.shipCost}else if(kind==='t')f=p.m.techCost;for(const r in c)o[r]=Math.round(c[r]*f);return o};
+const costOf=(p,c,kind,key)=>{const o={};let f=1;if(kind==='u'){const d=U[key];f=(p.m.cost[key]||1)*(p.m.cost.all||1);if(d.tag==='shp')f*=p.m.shipCost}else if(kind==='t')f=p.m.techCost;for(const r in c)o[r]=Math.round(c[r]*f);return o};
 const afford=(p,c)=>R4.every(r=>(p.res[r]||0)>=(c[r]||0));
 const pay=(p,c)=>{for(const r in c)p.res[r]-=c[r]};
 const refund=(p,c,f=1)=>{for(const r in c)p.res[r]+=Math.floor(c[r]*f)};
@@ -426,12 +436,12 @@ function spawn(b,type){const nav=!!U[type].nav;const p=freeAround(b,null,null,na
 function phaseCount(p,ph){let n=0;for(const b of blds){if(b.o!==p.i||b.built<1)continue;const d=B[b.type];if(d.wall||d.flat||b.type==='outpost'||b.type==='palisade')continue;if(ph===0||d.ph>=1)n++}return n}
 function phaseReady(p,id){const t=TECH[id];if(!t.up)return true;return phaseCount(p,t.ph)>=t.need}
 function applyTech(p,id){const t=TECH[id];
- if(t.up){p.phase=t.up;if(p.i===0)toast('You have entered the '+PHASE[p.phase]+' Phase!','good');else if(vis0(p))toast(p.civN+' entered the '+PHASE[p.phase]+' Phase','bad');panelDirty=true;return}
+ if(t.up){const bb=blds.filter(b=>b.o===p.i).map(b=>[b,b.hp/bMaxHp(b)]);evictSprites(p.i);p.phase=t.up;recomputeMods(p);for(const [b,f] of bb)b.hp=f*bMaxHp(b);if(p.i===0)toast('You have entered the '+PHASE[p.phase]+' Phase!','good');else if(vis0(p))toast(p.civN+' entered the '+PHASE[p.phase]+' Phase','bad');panelDirty=true;return}
  const before=blds.filter(b=>b.o===p.i).map(b=>[b,b.hp/bMaxHp(b)]);const ub=units.filter(u=>u.o===p.i).map(u=>[u,u.hp/uMaxHp(u)]);
  p.techs.push(id);recomputeMods(p);for(const [b,f] of before)b.hp=f*bMaxHp(b);for(const [u,f] of ub)u.hp=f*uMaxHp(u);
  if(p.i===0)toast(t.n+' researched','good');panelDirty=true}
 const vis0=p=>true;
-function recomputeMods(p){p.m=newMods();CIVS[p.civ].mods(p.m);for(const k of p.techs)TECH[k].fx(p.m)}
+function recomputeMods(p){p.m=newMods();p.m.bhp+=[0,0,.1,.25][p.phase||0];CIVS[p.civ].mods(p.m);for(const k of p.techs)TECH[k].fx(p.m)}
 function inQueue(o,id){return blds.some(b=>b.o===o&&b.queue.some(q=>q.t===id))}
 function techOk(p,id){const t=TECH[id];if(t.up)return p.phase===t.ph&&!inQueue(p.i,id);return p.phase>=t.ph&&p.techs.indexOf(id)<0&&!inQueue(p.i,id)&&(!t.req||p.techs.indexOf(t.req)>=0)}
 function unitOk(p,type,b){const d=U[type];if(p.phase<d.ph)return false;if(d.hero){if(p.hero&&ents.has(p.hero))return false;if(blds.some(x=>x.o===p.i&&x.queue.some(q=>q.u===type)))return false}return true}
@@ -605,7 +615,7 @@ function aiTick(p){const ai=p.ai,o=p.i;ai.t+=1;
  const mb=blds.filter(b=>b.o===o);const has=(t,done)=>mb.filter(b=>b.type===t&&(!done||b.built>=1));const pending=t=>mb.some(b=>b.type===t&&b.built<1);
  const tcs=has('tc',1);const anchor=tcs[0]||has('castle',1)[0]||mb.find(b=>!B[b.type].wall);
  const home=anchor?{x:anchor.x+anchor.w/2,y:anchor.y+anchor.h/2}:vils[0]?{x:vils[0].x,y:vils[0].y}:null;if(!home)return;
- const R=p.res;const nextPh=['town','city'][p.phase];const gatherers=vils.length+cits.length;const phT=[16,26][p.phase]||999;
+ const R=p.res;const nextPh=['town','city','kingdom'][p.phase];const gatherers=vils.length+cits.length;const phT=[16,26,40][p.phase]||999;
  const phQ=nextPh&&inQueue(o,nextPh);ai.saving=!!nextPh&&!phQ&&gatherers>=phT-3;
  if(!tcs.length&&vils.length&&afford(p,B.tc.cost)&&!pending('tc'))aiBuild(p,'tc',home.x,home.y,0,10);
  if(nextPh&&!phQ&&gatherers>=phT&&phaseReady(p,nextPh)&&tcs.length){const c=costOf(p,TECH[nextPh].cost,'t');if(afford(p,c)){pay(p,c);tcs[0].queue.push({t:nextPh,p:0})}}
@@ -632,7 +642,7 @@ function aiTick(p){const ai=p.ai,o=p.i;ai.t+=1;
    if(ai.diff===2&&has('tower').length<3&&R.stone>=300)aiBuild(p,'tower',home.x+(Math.random()-.5)*16,home.y+(Math.random()-.5)*16,5,11);
    if(has('barracks').length<2&&R.wood>700)aiBuild(p,'barracks',home.x,home.y,7,17)}
   if(p.phase>=2&&ai.diff===2&&S.wonderWin&&!has('wonder').length&&R.wood>1300&&R.stone>1200&&R.gold>1200)aiBuild(p,'wonder',home.x,home.y,6,16)}
- if(!ai.saving){for(const tid of ['loom','gather','axe','collar','stonem','goldm','treadmill','wheel','forge','fletch','scale','saw','plow','goldm2','nets','masonry','iron','bodkin','chain','barding','herbal','conscript','architecture','shipwright','caravan']){
+ if(!ai.saving){for(const tid of ['loom','gather','axe','collar','stonem','goldm','treadmill','wheel','forge','fletch','scale','saw','plow','goldm2','nets','masonry','iron','bodkin','chain','barding','herbal','conscript','architecture','shipwright','caravan','blast','plate','bracer','crop','twoman','deepmine','hoardings','royal','banking']){
   const t=TECH[tid];if(!techOk(p,tid))continue;if((tid==='loom'||tid==='treadmill')&&gatherers<12)continue;const bt=Object.keys(B).find(k=>B[k].tech&&B[k].tech.indexOf(tid)>=0);
   const b=has(bt,1).find(x=>!x.queue.length);if(!b)continue;const c=costOf(p,t.cost,'t');if(R4.every(r=>(R[r]||0)>=(c[r]||0)*1.3)){pay(p,c);b.queue.push({t:tid,p:0});break}}}
  if(!ai.saving||army.length<6||R.food>1000){const prod=mb.filter(b=>b.built>=1&&B[b.type].train&&b.type!=='corral'&&b.type!=='dock'&&b.type!=='market'&&b.type!=='temple'&&b.queue.length<1);let rm=room;
@@ -767,7 +777,7 @@ function sroof(g,st,x,y,z,w,d,rh,ov,axis,wcol){const k=st.kind;
  merlons(g,x,y,z,w,d,shade(wcol,-.06))}
 function hut(g,st,x,y,w,d,h,rh,axis,o={}){const flat=st.kind==='flat';const wc=o.wall||st.wall;box3(g,x,y,0,w,d,h,wc,o.tex||st.wallTex,flat?st.roof:null,null,o.feat);sroof(g,st,x,y,h,w,d,rh,o.ov??.12,axis,wc)}
 const ZMX={tc:150,castle:150,tower:140,palisade:46,wall:56,gate:62,field:10,farmstead:100,storehouse:70,dock:70,market:100,temple:170,sentry:100,outpost:80,corral:44,wonder:240,barracks:110,range:110,stable:100,smith:110,workshop:110,house:90};
-function model(g,type,sk,col){const st=SP[sk];const bigO=(feat)=>({wall:st.big,tex:st.bigTex,feat});
+function model(g,type,sk,col,tier=2){const st=tierStyle(sk,tier);const bigO=(feat)=>({wall:st.big,tex:st.bigTex,feat});
  switch(type){
  case 'house':{shadow3(g,.3,.35,1.4,1.3,40);hut(g,st,.3,.35,1.4,1.3,20,16,'x',{feat:{y:f=>{door(g,f,.2,.62,.3,col);win(g,f,.72)},x:f=>win(g,f,.5)}});
   if(st.kind==='flat'){box3(g,.45,.5,20,.6,.55,10,st.wall,st.wallTex,st.roof,null,{x:f=>win(g,f,.5,3.5,.3,.7)});merlons(g,.45,.5,30,.6,.55,st.wall)}else box3(g,1.2,.55,26,.18,.18,16,st.stone,'stone',shade(st.stone,-.2));break}
@@ -861,10 +871,10 @@ case 'storehouse':{shadow3(g,.25,.25,1.5,1.1,40);for(const [a,b] of [[.3,.3],[1.
    hut(g,st,1.7,.3,1.6,4.4,34,36,'y',{wall:st.big,tex:'plank'});box3(g,2.2,2.2,60,.6,.6,40,st.big,'plank',null);hip(g,2.2,2.2,100,.6,.6,40,.1,st.roof,'thatch');banner(g,2.5,2.5,150,col,22)}
   break}
  }}
-function makeBSprite(type,sk,o){const d=B[type],w=d.w,h=d.h,zm=ZMX[type]||100,pad=22,sc=2.5;const c=document.createElement('canvas');
+function makeBSprite(type,sk,o,tier){const d=B[type],w=d.w,h=d.h,zm=ZMX[type]||100,pad=22,sc=2.5;const c=document.createElement('canvas');
  c.width=Math.ceil(((w+h)*HW+pad*2+40)*sc);c.height=Math.ceil(((w+h)*HH+zm+pad*2)*sc);const g=c.getContext('2d');g.scale(sc,sc);c.ox=h*HW+pad;c.oy=zm+pad;c.sc=sc;g.translate(c.ox,c.oy);
- model(g,type,sk,PCOL[o]);return defineEdges(c,2,'#1c120a')}
-function bSprite(type,sk,o){const k=type+sk+o;let c=sprC.get(k);if(!c){c=makeBSprite(type,sk,o);sprC.set(k,c)}return c}
+ model(g,type,sk,PCOL[o],tier);if(tier>=3&&!B[type].wall&&!B[type].flat&&B[type].w>=2)royalTrim(g,type,PCOL[o]);if(tier===0&&!B[type].wall&&!B[type].flat&&B[type].w>=2&&type!=='dock')rusticBits(g,type);return defineEdges(c,2,'#1c120a')}
+function bSprite(type,sk,o,tier=2){const k=type+'|'+sk+'|'+o+'|'+tier;let c=sprC.get(k);if(!c){c=makeBSprite(type,sk,o,tier);sprC.set(k,c)}return c}
 const treeV=[],resV={2:[],3:[],4:[]};
 function makeResSprites(){const mk=(w,h,f,ec)=>{const c=document.createElement('canvas');c.width=w*3;c.height=h*3;const g=c.getContext('2d');g.scale(3,3);f(g);c.w=w;c.h=h;return defineEdges(c,2,ec||'#16210f')};const r=mulberry(99);
  for(let v=0;v<6;v++)treeV.push(mk(44,56,g=>{g.fillStyle='rgba(10,20,0,.32)';g.beginPath();g.ellipse(24,51,14,5,0,0,7);g.fill();
@@ -901,6 +911,31 @@ function rockSprite(v){const key=S.biome+v;if(rockCache[key])return rockCache[ke
   if(S.biome!=='desert'){g.fillStyle=pal[3];g.beginPath();g.moveTo(T[0],T[1]);const sd=(base-top)*(S.biome==='snow'?.42:.22);g.lineTo(T[0]-sd*.8,T[1]+sd);g.lineTo(T[0]-sd*.3,T[1]+sd*.8);g.lineTo(T[0],T[1]+sd*1.1);g.lineTo(T[0]+sd*.4,T[1]+sd*.75);g.lineTo(T[0]+sd*.7,T[1]+sd*.9);g.closePath();g.fill()}
   else{g.fillStyle='rgba(255,220,170,.25)';for(let j=1;j<4;j++){const yy=top+(base-top)*j/4;g.fillRect(cx-bw*j/4,yy,bw*j/2,1.4)}}}
  c.w=w;c.h=h;const out=defineEdges(c,2,S.biome==='desert'?'#3a1c10':'#22201c');rockCache[key]=out;return out}
+
+/* ---------- architecture that improves with each phase ---------- */
+const TIERS={
+ west:[{wall:'#9a7650',wallTex:'log',big:'#8e6c4a',bigTex:'plank',stone:'#8c8577',roof:'#b39a5e',roofTex:'thatch',kind:'steep',wood:'#5a3e24'},
+       {wall:'#e2d3b0',wallTex:'timber',big:'#d8c8a4',bigTex:'timber',stone:'#9e978a',roof:'#6e5038',roofTex:'slate',kind:'gable',wood:'#5e3f26'},null,
+       {wall:'#f2ead8',wallTex:'timber',big:'#d2cbbd',bigTex:'stone',stone:'#c4bdae',roof:'#585e6c',roofTex:'slate',kind:'gable',wood:'#4a2e1a'}],
+ east:[{wall:'#a8865c',wallTex:'plank',big:'#9c7c56',bigTex:'plank',stone:'#8e8a7e',roof:'#b29c62',roofTex:'thatch',kind:'gable',wood:'#5a3a26'},
+       {wall:'#e6dcc4',wallTex:'east',big:'#d9cfb6',bigTex:'plank',stone:'#a8a496',roof:'#6a5a48',roofTex:'slate',kind:'pagoda',wood:'#5a3a26'},null,
+       {wall:'#f6f1e4',wallTex:'east',big:'#f2ecdc',bigTex:'east',stone:'#c8c4b6',roof:'#2e6a58',roofTex:'slate',kind:'pagoda',wood:'#7a1e1a'}],
+ mid:[{wall:'#b48e62',wallTex:'sand',big:'#ad885e',bigTex:'sand',stone:'#a8936c',roof:'#a88a5e',roofTex:null,kind:'flat',dome:'#8a7050',wood:'#6a4a2e'},
+      {wall:'#cdb080',wallTex:'sand',big:'#c8aa7c',bigTex:'sand',stone:'#bca97e',roof:'#d8c08e',roofTex:null,kind:'flat',dome:'#a06a3a',wood:'#7a5636'},null,
+      {wall:'#efe2c2',wallTex:'sand',big:'#eadcb8',bigTex:'sand',stone:'#ddd0aa',roof:'#f4e6c0',roofTex:null,kind:'flat',dome:'#2a8aa8',wood:'#7a5636'}],
+ norse:[{wall:'#6e5038',wallTex:'log',big:'#6a4e36',bigTex:'log',stone:'#857f74',roof:'#7c8a4a',roofTex:'thatch',kind:'steep',wood:'#4a3220'},
+        {wall:'#8b6443',wallTex:'log',big:'#806048',bigTex:'plank',stone:'#948f84',roof:'#9a8650',roofTex:'thatch',kind:'steep',wood:'#5e4129'},
+        {wall:'#94704c',wallTex:'plank',big:'#a29c90',bigTex:'stone',stone:'#a29c90',roof:'#6a4c32',roofTex:'slate',kind:'steep',wood:'#4e3420'},
+        {wall:'#9a7250',wallTex:'plank',big:'#bcb6a8',bigTex:'stone',stone:'#b4ae9f',roof:'#4a4a52',roofTex:'slate',kind:'steep',wood:'#3e2a1a'}]};
+function tierStyle(sk,tier){const t=TIERS[sk]&&TIERS[sk][tier];return t||SP[sk]}
+function bTier(o){const p=P&&P[o];return p?Math.min(3,p.phase||0):2}
+function evictSprites(o){for(const k of [...sprC.keys()]){const a=k.split('|');if(a[2]==String(o))sprC.delete(k)}}
+function royalTrim(g,type,col){const d=B[type],w=d.w,h=d.h;const zm=ZMX[type]||100;
+ for(const [x,y] of [[.15,h-.1],[w-.1,h-.1]]){banner(g,x,y,0,col,Math.min(46,zm*.42))}
+ const p=PJ(w/2,h-.05,0);g.fillStyle='#e8c15a';g.strokeStyle='#6a4a10';g.lineWidth=.8;g.beginPath();g.arc(p[0],p[1]-zm*.22,3.4,0,7);g.fill();g.stroke();g.fillStyle=col;g.beginPath();g.arc(p[0],p[1]-zm*.22,1.8,0,7);g.fill()}
+function rusticBits(g,type){const d=B[type],w=d.w,h=d.h;
+ const p=PJ(w-.15,h*.55,0);g.fillStyle='#6b4a2c';for(let k=0;k<3;k++){g.beginPath();g.ellipse(p[0]+k*2.4,p[1]-k*2.6,4.6,2,0,0,7);g.fill();g.fillStyle=k%2?'#6b4a2c':'#7a5636'}g.fillStyle='#c8a868';for(let k=0;k<3;k++){g.beginPath();g.arc(p[0]-3+k*3.4,p[1]-2.6*k-1,1,0,7);g.fill()}
+ const q=PJ(.2,h-.2,0);g.fillStyle='#c9ad62';g.strokeStyle='#7a6030';g.lineWidth=.8;g.beginPath();g.ellipse(q[0],q[1]-4,6,4.5,0,0,7);g.fill();g.stroke();g.beginPath();g.moveTo(q[0]-5,q[1]-4);g.lineTo(q[0]+5,q[1]-4);g.stroke()}
 /* ---------- unit drawing (people & horses) ---------- */
 const SKIN=['#e8bd96','#c18c62','#8a573a'],HAIR=['#5a3a22','#2a1c12','#8a5a2a','#1a1410'];
 function seg2(g,x0,y0,x1,y1,w,col){g.lineCap='round';g.strokeStyle=shade(col,-.42);g.lineWidth=w+.6;g.beginPath();g.moveTo(x0,y0);g.lineTo(x1,y1);g.stroke();g.strokeStyle=col;g.lineWidth=w;g.beginPath();g.moveTo(x0,y0);g.lineTo(x1,y1);g.stroke();
@@ -1107,7 +1142,7 @@ function farmSprite(w,h,q,built){const k=w+'x'+h+q+built;let c=farmC.get(k);if(c
  const R=9;for(let r=0;r<R;r++){const t=.2+(h-.4)*(r+.5)/R;const a=PJ(.18,t,0),b=PJ(w-.18,t,0);g.strokeStyle='#4a2f17';g.lineWidth=1.3;g.beginPath();g.moveTo(a[0],a[1]+1);g.lineTo(b[0],b[1]+1);g.stroke();g.strokeStyle='#86603a';g.lineWidth=.7;g.beginPath();g.moveTo(a[0],a[1]-.4);g.lineTo(b[0],b[1]-.4);g.stroke();
   if(built&&q>0){const cols=['#c8a050','#b9b046','#9fb544','#86ad3c','#7aa83a'];for(let s=.24;s<w-.22;s+=.13){const p=PJ(s,t,0);const hgt=2+q*1.1;g.strokeStyle=cols[Math.min(4,q-1)];g.lineWidth=1.3;g.beginPath();g.moveTo(p[0],p[1]);g.lineTo(p[0]-.6,p[1]-hgt);g.moveTo(p[0],p[1]);g.lineTo(p[0]+1.2,p[1]-hgt*.8);g.stroke();if(q<=2){g.fillStyle='#e0c060';g.fillRect(p[0]-.8,p[1]-hgt-1.2,1.6,1.6)}}}}
  farmC.set(k,c);return c}
-function drawBld(g,b){const c=bSprite(b.type,P[b.o].style,b.o);const p=PJ(b.x,b.y,0);const X=p[0]-c.ox,Y=p[1]-c.oy,w=c.width/c.sc,h=c.height/c.sc;
+function drawBld(g,b){const c=bSprite(b.type,P[b.o].style,b.o,bTier(b.o));const p=PJ(b.x,b.y,0);const X=p[0]-c.ox,Y=p[1]-c.oy,w=c.width/c.sc,h=c.height/c.sc;
  if(b.built<1){footprint(g,b.x,b.y,b.w,b.h);g.fillStyle='rgba(95,68,38,.55)';g.fill();g.setLineDash([4,3]);g.strokeStyle='#d6b47a';g.lineWidth=1.2;g.stroke();g.setLineDash([]);
   const bot=PJ(b.x+b.w,b.y+b.h,0)[1]+6,cy=bot-(bot-Y)*(.1+.9*b.built);
   if(b.built>0){g.save();g.beginPath();g.rect(X,cy,w,h);g.clip();g.globalAlpha=.55+.45*b.built;g.drawImage(c,X,Y,w,h);g.restore()}
@@ -1162,7 +1197,7 @@ function render(){const z=cam.z;ctx.setTransform(DPR,0,0,DPR,0,0);ctx.fillStyle=
  if(placing&&placing.tx!=null){const d=B[placing.type];const tiles=d.wall?wallLine(placing.ax??placing.tx,placing.ay??placing.ty,placing.tx,placing.ty):[[placing.tx,placing.ty]];
   tiles.sort((a,b)=>a[0]+a[1]-b[0]-b[1]);
   for(const [x,y] of tiles){const ok=canPlace(placing.type,x,y,0,false);footprint(ctx,x,y,d.w,d.h);ctx.fillStyle=ok?'rgba(110,230,90,.3)':'rgba(240,70,50,.4)';ctx.fill();ctx.strokeStyle=ok?'#9cff7c':'#ff6a50';ctx.lineWidth=1.5;ctx.stroke();
-   ctx.globalAlpha=.6;if(d.flat){const sp=farmSprite(d.w,d.h,0,false),p=PJ(x,y,0);ctx.drawImage(sp,p[0]-sp.ox,p[1]-sp.oy,sp.w,sp.h)}else{const c=bSprite(placing.type,P[0].style,0),p=PJ(x,y,0);ctx.drawImage(c,p[0]-c.ox,p[1]-c.oy,c.width/c.sc,c.height/c.sc)}ctx.globalAlpha=1}}
+   ctx.globalAlpha=.6;if(d.flat){const sp=farmSprite(d.w,d.h,0,false),p=PJ(x,y,0);ctx.drawImage(sp,p[0]-sp.ox,p[1]-sp.oy,sp.w,sp.h)}else{const c=bSprite(placing.type,P[0].style,0,bTier(0)),p=PJ(x,y,0);ctx.drawImage(c,p[0]-c.ox,p[1]-c.oy,c.width/c.sc,c.height/c.sc)}ctx.globalAlpha=1}}
  ctx.setTransform(DPR,0,0,DPR,0,0);
  if(gest&&gest.type==='box'){const x=Math.min(gest.sx,gest.cx),y=Math.min(gest.sy,gest.cy),w=Math.abs(gest.cx-gest.sx),h=Math.abs(gest.cy-gest.sy);ctx.fillStyle='rgba(244,240,216,.12)';ctx.fillRect(x,y,w,h);ctx.strokeStyle='#f4f0d8';ctx.lineWidth=1.5;ctx.strokeRect(x+.5,y+.5,w,h)}}
 function hpBar(e){let mx,x,y,w;if(e.k==='u'){if(e.gar)return;mx=uMaxHp(e);const p=PJ(e.x,e.y,0),tg=U[e.type].tag;w=tg==='cav'||tg==='sie'?30:22;x=p[0]-w/2;y=p[1]-(tg==='cav'?44:tg==='sie'?50:36)}
@@ -1455,7 +1490,7 @@ function act(a){const p=P[0];const [k,v]=a.split(':');const s=selection();
  if(k==='batch'){batch5=!batch5;lastSig='';return}
  const b=s.es[0];if(!b||b.k!=='b')return;
  if(k==='train'){const ud2=U[v];if(b.queue.length>=5){toast('Queue is full');return}if(!unitOk(p,v,b)){toast(isHero(v)?'You can only have one hero at a time':'Not available yet');return}const n=batch5&&!isHero(v)?5:1;const c0=costOf(p,ud2.cost,'u',v),c={};for(const r in c0)c[r]=c0[r]*n;if(!afford(p,c)){toast('Need '+need(p,c),'bad');return}pay(p,c);b.queue.push({u:v,p:0,n,cost:c});lastSig='';return}
- if(k==='tech'){const tc=TECH[v];if(!techOk(p,v))return;if(tc.up&&!phaseReady(p,v)){toast(`You need ${tc.need} ${tc.ph?'Town-phase ':''}buildings first (houses and farmsteads count${tc.ph?' only in the Village phase':''})`,'bad');return}const c=costOf(p,tc.cost,'t');if(!afford(p,c)){toast('Need '+need(p,c),'bad');return}pay(p,c);b.queue.push({t:v,p:0,cost:c});lastSig='';return}
+ if(k==='tech'){const tc=TECH[v];if(!techOk(p,v))return;if(tc.up&&!phaseReady(p,v)){toast(`You need ${tc.need} ${tc.ph?'Town-phase or later ':''}buildings first${tc.ph?'':' (houses and farmsteads count)'}`,'bad');return}const c=costOf(p,tc.cost,'t');if(!afford(p,c)){toast('Need '+need(p,c),'bad');return}pay(p,c);b.queue.push({t:v,p:0,cost:c});lastSig='';return}
  if(k==='cancel'){const it=b.queue[+v];if(!it)return;const c=it.cost||(it.u?costOf(p,U[it.u].cost,'u',it.u):costOf(p,TECH[it.t].cost,'t'));refund(p,c,it.done?1-it.done/(it.n||1):1);b.queue.splice(+v,1);lastSig='';return}
  if(k==='bell'){ringBell(0,true);lastSig='';return}if(k==='clear'){ringBell(0,false);lastSig='';return}
  if(k==='unload'){unload(b);lastSig='';return}
