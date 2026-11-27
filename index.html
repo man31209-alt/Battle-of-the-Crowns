@@ -184,6 +184,13 @@ button{font:inherit;color:inherit;cursor:pointer}
 @media (max-height:460px){#groups{top:calc(var(--sat) + 122px)}.gb{height:30px;width:40px}#alertBtn{top:calc(var(--sat) + 158px)}#side{gap:5px}.rb{width:42px;height:42px}.rb img{width:28px;height:28px}#mini{width:120px;height:60px}#acts{max-height:118px}#info{flex-basis:200px}
  .ab{width:58px;min-width:0;height:54px}.ab img{width:24px;height:24px}.tabs button{height:26px}#toasts{top:calc(var(--sat) + 60px)}#panel{padding-top:6px}}
 @media (prefers-reduced-motion:reduce){.toast{animation:none}}
+body.lefty #side{left:auto;right:calc(var(--sar) + 8px)}body.lefty #mini,body.lefty #groups,body.lefty #alertBtn,body.lefty #allyBtn{right:auto;left:calc(var(--sal) + 8px)}body.lefty #panel{flex-direction:row-reverse}
+body.bigui .ab{width:76px;height:80px}body.bigui .rb{width:58px;height:58px}body.bigui .gb{width:52px;height:40px}body.bigui .tb{transform:scale(1.15)}
+#slotScr,#setScr{z-index:40}#slotScr .card,#setScr .card,#edScr .card{max-height:88vh;overflow:auto}.ach .row{margin-top:6px;justify-content:flex-start;gap:6px}
+#edBar{position:fixed;z-index:6;left:0;right:0;bottom:0;padding:6px calc(var(--sar) + 6px) calc(var(--sab) + 6px) calc(var(--sal) + 6px);background:linear-gradient(#2b1d12f2,#1b120bfa);border-top:2px solid var(--edge)}
+#edTools{display:flex;flex-wrap:wrap;gap:4px}#edTools button,#edBar .row button{padding:6px 9px;border-radius:7px;border:1.5px solid var(--edge);background:linear-gradient(#4a321f,#2e1f13);color:var(--ink);font-weight:700;font-size:13px}#edTools button.on{border-color:var(--gold);color:var(--gold);background:linear-gradient(#6a4a28,#3e2a17)}#edTools .sep{width:8px}
+#edBar .row{display:flex;gap:6px;align-items:center;margin-top:6px}#edInfo{flex:1;color:var(--dim);font-size:13px}#edCode{width:100%;box-sizing:border-box;padding:8px;border-radius:8px;border:1px solid var(--edge);background:#0006;color:var(--ink)}#edName{padding:8px;border-radius:8px;border:1px solid var(--edge);background:#0006;color:var(--ink);font-size:15px;width:100%;box-sizing:border-box}
+@media (max-height:460px){body.bigui .ab{width:66px;height:66px}}
 </style>
 </head>
 <body>
@@ -234,15 +241,23 @@ button{font:inherit;color:inherit;cursor:pointer}
   <h3>Your color</h3><div class="seg wrap" id="pcolor"></div>
   <div class="grid2"><div><h3>Roofs</h3><div class="seg wrap" id="proof"></div></div><div><h3>Seasons, day &amp; night</h3><div class="seg" id="seasons"></div></div></div>
   <div class="row"><button class="big alt" id="contBtn" hidden>Continue</button><button class="big" id="newBtn">New game</button></div>
+  <div class="row"><button class="big alt" id="loadBtn">Load game</button><button class="big alt" id="edBtn">Map editor</button></div>
   <div class="row"><button class="big alt" id="missBtn">Missions</button><button class="big alt" id="tutBtn">Tutorial (optional)</button></div>
   <div class="row"><button class="seg1" data-snd="sfx">Sound: On</button><button class="seg1" data-snd="music">Music: On</button></div>
-  <div class="row"><button class="link" id="helpBtn">How to play</button><button class="link" id="achBtn">Achievements</button><button class="link" id="treeBtn2">Tech tree</button></div>
+  <div class="row"><button class="link" id="helpBtn">How to play</button><button class="link" id="achBtn">Achievements</button><button class="link" id="setBtn">Settings</button><button class="link" id="treeBtn2">Tech tree</button></div>
  </div>
 </div>
 <div id="missScr" class="screen" hidden><div class="card"><h2>Missions</h2><p class="sub">Uses the civilization, color and roofs you picked.</p><div id="missList"></div><div class="row"><button class="big alt" id="missClose">Close</button></div></div></div>
 <div id="allyScr" class="screen" hidden><div class="card"><h2>Allies</h2><div id="allyList"></div><div class="row"><button class="big" id="allyClose">Back to the game</button></div></div></div>
 <div id="treeScr" class="screen" hidden><div class="card"><h2>Tech tree</h2><div id="treeList"></div><div class="row"><button class="big" id="treeClose">Close</button></div></div></div>
 <div id="achScr" class="screen" hidden><div class="card"><h2>Achievements</h2><div id="achList"></div><div class="row"><button class="big" id="achClose">Close</button></div></div></div>
+<div id="slotScr" class="screen" hidden><div class="card"><h2 id="slotTitle">Save game</h2><div id="slotList"></div><div class="row"><button class="big" id="slotClose">Close</button></div></div></div>
+<div id="setScr" class="screen" hidden><div class="card"><h2>Settings</h2><div id="setList"></div><div class="row"><button class="big" id="setClose">Done</button></div></div></div>
+<div id="edScr" class="screen" hidden><div class="card"><h2>Map editor</h2><h3>New map</h3><input id="edName" maxlength="24" placeholder="Map name" value="My map">
+<div class="grid2"><div><h3>Size</h3><div class="seg" id="edSize" data-v="m"><button data-v="s">Small</button><button data-v="m" class="on">Medium</button><button data-v="l">Large</button></div></div><div><h3>Land</h3><div class="seg wrap" id="edBiome" data-v="temp"><button data-v="temp" class="on">Green</button><button data-v="desert">Desert</button><button data-v="snow">Snow</button></div></div></div>
+<div class="row"><button class="big" id="edNew">Start painting</button></div><h3>Your maps</h3><div id="edMaps"></div>
+<h3>Import a friend's map</h3><input id="edCode" placeholder="Paste a map code (BOC1:…)"><div class="row"><button class="big alt" id="edImport">Import</button><button class="big alt" id="edClose">Close</button></div></div></div>
+<div id="edBar" hidden><div id="edTools"></div><div class="row"><span id="edInfo"></span><button id="edSave">Save</button><button id="edPlay">Play</button><button id="edShare">Share</button><button id="edExit">Exit</button></div></div>
 <div id="loading" class="screen" hidden><div class="card"><h2>Drawing the map…</h2><p class="sub">Planting forests, filling rivers, raising towns.</p></div></div>
 
 <div id="pause" class="screen" hidden>
@@ -251,11 +266,11 @@ button{font:inherit;color:inherit;cursor:pointer}
   <h3>Game speed</h3>
   <div class="seg" id="speed"><button data-s="1">Slow</button><button data-s="1.5">Normal</button><button data-s="2">Fast</button></div>
   <div class="row"><button class="seg1" data-snd="sfx">Sound: On</button><button class="seg1" data-snd="music">Music: On</button></div>
-  <div class="row"><button class="big alt" id="treeBtn">Tech tree</button></div>
+  <div class="row"><button class="big alt" id="treeBtn">Tech tree</button><button class="big alt" id="saveSlotBtn">Save game</button><button class="big alt" id="setBtn2">Settings</button></div>
   <div class="row"><button class="big" id="resumeBtn">Resume</button></div>
   <div class="row"><button class="big alt" id="quitBtn">Save &amp; quit</button></div>
   <button class="link" id="help2Btn">How to play</button>
-  <p class="note">The game saves on its own every 30 seconds.</p>
+  <p class="note">The game autosaves every 30 seconds. Use Save game to keep up to 3 more.</p>
  </div>
 </div>
 
@@ -275,6 +290,9 @@ button{font:inherit;color:inherit;cursor:pointer}
    <dt>Ranks and heroes</dt><dd>Soldiers become Advanced and then Elite as they fight. Each civilization has a hero trained at the castle in the City phase whose aura helps nearby troops.</dd>
    <dt>Trade</dt><dd>Build two markets far apart and send trade carts between them for gold. Markets also let you buy and sell food, wood and stone.</dd>
    <dt>Win</dt><dd>Destroy every rival's town centers, castles and workers. With the Wonder option on, a finished wonder that stands for 10 minutes also wins.</dd>
+   <dt>Saving</dt><dd>The game autosaves every 30 seconds. Open the menu and tap Save game to keep up to 3 more saves; load any of them from Load game on the title screen.</dd>
+   <dt>Settings</dt><dd>Larger buttons, a left-handed layout (minimap and buttons swap sides), graphics quality (Battery saver runs cooler and longer) and vibration.</dd>
+   <dt>Map editor</dt><dd>Paint land, water, shallows, sand, rock, forests, gold, stone, berries, fish and hills, then place 2 to 4 start spots. Save it and it shows up in the Map list; Play starts a game on it right away. Share copies a map code a friend can paste into Import.</dd>
    <dt>Desktop</dt><dd>Left-click or drag to select, right-click to command, wheel to zoom, WASD or arrows to pan.</dd>
   </dl>
   <div class="row"><button class="big" id="helpClose">Got it</button></div>
