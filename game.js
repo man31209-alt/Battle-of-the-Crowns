@@ -261,7 +261,7 @@ function pathRect(u,x0,y0,x1,y1,adj){const r=findPath(u.o,u.nav,u.x,u.y,x0,y0,x1
  if(!u.path.length&&!r.partial){const cx=Math.floor(u.x)+.5,cy=Math.floor(u.y)+.5;if(Math.hypot(cx-u.x,cy-u.y)>.05)u.path=[{x:cx,y:cy}]}}
 function goPoint(u,x,y){const tx=clamp(x|0,0,W-1),ty=clamp(y|0,0,H-1);if(passXY(tx,ty,u.o,u.nav)){pathRect(u,tx,ty,tx,ty,false);if(!u.partial){if(u.path.length)u.path[u.path.length-1]={x,y};else u.path=[{x,y}]}}else pathRect(u,tx,ty,tx,ty,true)}
 function pathToEnt(u,e){if(e.k!=='b'){const tx=e.x|0,ty=e.y|0;pathRect(u,tx,ty,tx,ty,true);if(!u.partial)u.path.push({x:e.x,y:e.y})}else pathRect(u,e.x,e.y,e.x+e.w-1,e.y+e.h-1,true)}
-function step(u,dt){if(!u.path||!u.path.length)return true;const p=u.path[0];const dx=p.x-u.x,dy=p.y-u.y,d=Math.hypot(dx,dy),s=uSpd(u)*dt;
+function step(u,dt){if(!u.path||!u.path.length)return true;const p=u.path[0];const _gs=u.task&&u.task.gs;const dx=p.x-u.x,dy=p.y-u.y,d=Math.hypot(dx,dy),s=(_gs?Math.min(uSpd(u),_gs):uSpd(u))*dt;
  if(Math.abs(dx)>.04)u.face=dx<0?-1:1;u.an+=dt*uSpd(u)*5;u.mv=1;
  if(d<=s){u.x=p.x;u.y=p.y;u.path.shift();return !u.path.length}
  const nx=u.x+dx/d*s,ny=u.y+dy/d*s;
@@ -589,7 +589,10 @@ function computeFog(){vis.fill(0);const mark=(cx,cy,r)=>{const r2=r*r+r;const x0
  const d=fogImg.data;for(let i=0;i<N;i++){d[i*4+3]=vis[i]?0:explored[i]?118:255}fogCtx.putImageData(fogImg,0,0)}
 
 /* ---------- AI ---------- */
-function aiInit(p,diff){p.ai={diff,t:0,nextWave:S.peace+[900,620,430][diff],gap:[360,250,180][diff],wave:[5,8,11][diff],vilT:[22,34,46][diff],bonus:[.85,1.05,1.3][diff],waves:new Set(),saving:false,target:-1}}
+const AIPERS={balanced:{n:'Balanced',w:1,g:1,s:1,v:1},rusher:{n:'Aggressive',w:.6,g:.8,s:.7,v:.85},boomer:{n:'Builder',w:1.35,g:1,s:1.3,v:1.25},turtle:{n:'Defender',w:1.45,g:1.15,s:1.2,v:1.05}};
+function aiInit(p,diff){const pk=Object.keys(AIPERS);const pers=pk[Math.floor(Math.random()*pk.length)],q=AIPERS[pers];
+ p.ai={diff,pers,t:0,nextWave:S.peace+Math.round([900,620,430][diff]*q.w),gap:Math.round([360,250,180][diff]*q.g),wave:Math.round([5,8,11][diff]*q.s),vilT:Math.round([22,34,46][diff]*q.v),bonus:[.85,1.05,1.3][diff],waves:new Set(),saving:false,target:-1,
+  nextRaid:diff?S.peace+[0,520,380][diff]*(pers==='rusher'?.7:pers==='turtle'?1.6:1)+Math.random()*90:1e9,raid:[],raidT:0,waveN:0,regroup:0}}
 function aiSpot(o,type,cx,cy,r0,r1){const d=B[type];for(let r=r0;r<=r1;r++){const cand=[];const X=Math.round(cx),Y=Math.round(cy);for(let y=Y-r;y<=Y+r;y++)for(let x=X-r;x<=X+r;x++){if(Math.max(Math.abs(x-X),Math.abs(y-Y))!==r)continue;cand.push([x-(d.w>>1),y-(d.h>>1)])}
  for(let k=cand.length-1;k>0;k--){const j=Math.floor(Math.random()*(k+1));const t=cand[k];cand[k]=cand[j];cand[j]=t}
  for(const [x,y] of cand)if(canPlace(type,x,y,o,!d.flat&&!d.water))return[x,y]}return null}
@@ -612,7 +615,7 @@ function aiAssign(p,v,home,vils){const d=ud(v);
   if(i<0)i=nearestRes(RT[r],home.x,home.y,r==='wood'?24:30,false,false);
   if(i>=0){v.task={k:'gather',rt:r,tx:i%W,ty:(i/W)|0};return}}}
 function aiNearestEnemyBld(p,home){let best=null,bd=1e9;for(const b of blds){if(!isEnemy(p.i,b.o)||B[b.type].flat)continue;const d=Math.hypot(b.x-home.x,b.y-home.y)+(B[b.type].wall?25:0)+(b.type==='tc'||b.type==='castle'?-6:0);if(d<bd){bd=d;best=b}}return best}
-function aiTick(p){const ai=p.ai,o=p.i;ai.t+=1;
+function aiTick(p){const ai=p.ai,o=p.i;ai.t+=1;if(!ai.raid)ai.raid=[];if(ai.nextRaid==null)ai.nextRaid=ai.t+400;if(ai.regroup==null)ai.regroup=0;if(ai.waveN==null)ai.waveN=0;if(!ai.pers)ai.pers="balanced";
  const my=units.filter(u=>u.o===o),vils=my.filter(u=>ud(u).tag==='vil'),army=my.filter(u=>isMil(u)&&ud(u).tag!=='shp'),cits=army.filter(u=>ud(u).cit&&!ai.waves.has(u.id));
  const mb=blds.filter(b=>b.o===o);const has=(t,done)=>mb.filter(b=>b.type===t&&(!done||b.built>=1));const pending=t=>mb.some(b=>b.type===t&&b.built<1);
  const tcs=has('tc',1);const anchor=tcs[0]||has('castle',1)[0]||mb.find(b=>!B[b.type].wall);
@@ -638,9 +641,12 @@ function aiTick(p){const ai=p.ai,o=p.i;ai.t+=1;
   if(gatherers>=10&&!has('barracks').length)aiBuild(p,'barracks',home.x,home.y,6,14);
   if(gatherers>=14&&!has('range').length)aiBuild(p,'range',home.x,home.y,6,15);
   if(gatherers>=17&&!has('stable').length)aiBuild(p,'stable',home.x,home.y,6,15);
+  if(ai.pers==='rusher'&&gatherers>=7&&!has('barracks').length)aiBuild(p,'barracks',home.x,home.y,6,14);
+  if(ai.pers==='turtle'&&gatherers>=9&&has('sentry').length<2+ai.diff&&R.wood>150)aiBuild(p,'sentry',home.x+(Math.random()-.5)*16,home.y+(Math.random()-.5)*16,6,10);
   if(gatherers>=12&&has('sentry').length<ai.diff&&R.wood>250)aiBuild(p,'sentry',home.x+(Math.random()-.5)*14,home.y+(Math.random()-.5)*14,5,10);
   if(p.phase>=1){for(const [t,g] of [['smith',20],['temple',24],['market',26],['workshop',28]]){if(gatherers>=g&&!has(t).length&&!pending(t)){aiBuild(p,t,home.x,home.y,6,16);break}}
    if(ai.diff>0&&!has('castle').length&&!pending('castle')&&R.stone>=700)aiBuild(p,'castle',home.x,home.y,7,15);
+   if(ai.pers==='turtle'&&has('tower').length<2+ai.diff*2&&R.stone>=250)aiBuild(p,'tower',home.x+(Math.random()-.5)*18,home.y+(Math.random()-.5)*18,6,12);
    if(ai.diff===2&&has('tower').length<3&&R.stone>=300)aiBuild(p,'tower',home.x+(Math.random()-.5)*16,home.y+(Math.random()-.5)*16,5,11);
    if(has('barracks').length<2&&R.wood>700)aiBuild(p,'barracks',home.x,home.y,7,17)}
   if(p.phase>=2&&ai.diff===2&&S.wonderWin&&!has('wonder').length&&R.wood>1300&&R.stone>1200&&R.gold>1200)aiBuild(p,'wonder',home.x,home.y,6,16)}
@@ -663,7 +669,8 @@ function aiTick(p){const ai=p.ai,o=p.i;ai.t+=1;
  for(const bt of my.filter(u=>u.type==='fishboat'&&!u.task)){const i=nearestRes(5,bt.x,bt.y,30,false,true);if(i>=0)bt.task={k:'gather',rt:'fish',tx:i%W,ty:(i/W)|0}}
  for(const g of my.filter(u=>u.type==='galley'&&!u.task)){const e=nearestEnemy(g,25,true);if(e)g.task={k:'atk',id:e.id,auto:1}}
  for(const id of [...ai.waves])if(!ents.has(id))ai.waves.delete(id);
- if(!peace()&&ai.t>=ai.nextWave&&army.length>=ai.wave){ai.nextWave=ai.t+ai.gap;ai.wave+=3;let k=0;for(const u of army){if(ud(u).cit&&k>=army.length*.7)continue;ai.waves.add(u.id);k++;if(u.task&&u.task.k==='gather')u.carry=0;u.task=null}}
+ aiRaid(p,army,home);aiRetreat(p,home);aiBreach(p);
+ if(!peace()&&ai.t>=ai.nextWave&&army.length>=ai.wave&&ai.t>=ai.regroup){ai.nextWave=ai.t+ai.gap;ai.wave+=3;ai.waveN=0;let k=0;for(const u of army){if(ud(u).cit&&k>=army.length*.7)continue;if(ai.raid.includes(u.id))continue;ai.waves.add(u.id);ai.waveN++;k++;if(u.task&&u.task.k==='gather')u.carry=0;u.task=null}}
  for(const id of ai.waves){const u=ents.get(id);if(!u||u.gar)continue;if(u.task&&u.task.k==='atk')continue;const t=aiNearestEnemyBld(p,{x:u.x,y:u.y});if(t)u.task={k:'atk',id:t.id,wave:1,dmg:ud(u).tag==='sie'?1:0};else{const e=nearestEnemy(u,999,false);if(e)u.task={k:'atk',id:e.id,wave:1}}}}
 
 /* ---------- placement ---------- */
@@ -690,6 +697,23 @@ function confirmPlace(){if(!placing||placing.tx==null)return;const p=P[0],d=B[pl
  if(!afford(p,d.cost)){toast('Need '+need(p,d.cost),'bad');return}
  pay(p,d.cost);const b=mkBld(placing.type,0,placing.tx,placing.ty,false);assignBuild(ws,[b.id]);
  fx.push({k:'ring',x:b.x+b.w/2,y:b.y+b.h/2,t:0,life:.6,c:'#7fe06a'});placing=null;panelDirty=true}
+
+/* raids on villagers, retreats when a wave is beaten, and breaching walls */
+function aiRaid(p,army,home){const ai=p.ai;ai.raid=ai.raid.filter(id=>ents.has(id));
+ if(!ai.raid.length&&!peace()&&ai.t>=ai.nextRaid){ai.nextRaid=ai.t+[0,300,200][ai.diff]*(ai.pers==='rusher'?.7:1)+Math.random()*80;
+  const fast=army.filter(u=>!ai.waves.has(u.id)&&!ud(u).cit&&ud(u).tag!=='sie'&&!u.gar&&(ud(u).tag==='cav'||uRng(u)>0)).sort((a,b)=>uSpd(b)-uSpd(a)).slice(0,3+ai.diff);
+  if(fast.length>=3){let best=null,bs=-1;for(const v of units){if(!isEnemy(p.i,v.o)||ud(v).tag!=='vil'||v.gar)continue;let dt=1e9;for(const b of blds)if(b.o===v.o&&(b.type==='tc'||b.type==='castle'||b.type==='tower'))dt=Math.min(dt,Math.hypot(b.x-v.x,b.y-v.y));
+    const sc=Math.min(dt,25)-Math.hypot(v.x-home.x,v.y-home.y)*.15;if(sc>bs){bs=sc;best=v}}
+   if(best){ai.raid=fast.map(u=>u.id);ai.raidT=ai.t;for(const u of fast){u.task={k:'atk',id:best.id,raid:1};u.path=null}}}}
+ if(!ai.raid.length)return;const rs=ai.raid.map(id=>ents.get(id));let avgHp=0;for(const u of rs)avgHp+=u.hp/uMaxHp(u);avgHp/=rs.length;
+ const over=ai.t-ai.raidT>75||avgHp<.45;for(const u of rs){if(over){if(!u.task||u.task.k!=='move'){u.task={k:'move',x:home.x+(Math.random()-.5)*4,y:home.y+(Math.random()-.5)*4};u.path=null}continue}
+  if(!u.task||u.task.k!=='atk'){let tv=null,td=14;for(const v of units){if(!isEnemy(p.i,v.o)||v.gar||ud(v).tag!=='vil')continue;const d=Math.hypot(v.x-u.x,v.y-u.y);if(d<td){td=d;tv=v}}if(tv){u.task={k:'atk',id:tv.id,raid:1};u.path=null}}}
+ if(over&&rs.every(u=>Math.hypot(u.x-home.x,u.y-home.y)<6||!u.task))ai.raid=[]}
+function aiRetreat(p,home){const ai=p.ai;if(!ai.waves.size||ai.waveN<6)return;const ws=[...ai.waves].map(id=>ents.get(id)).filter(Boolean);
+ if(ws.length>=ai.waveN*.35)return;let cx=0,cy=0;for(const u of ws){cx+=u.x;cy+=u.y}cx/=ws.length;cy/=ws.length;let foe=0;for(const e of units)if(isEnemy(p.i,e.o)&&isMil(e)&&!e.gar&&Math.hypot(e.x-cx,e.y-cy)<10)foe++;
+ if(foe<ws.length*1.5)return;for(const u of ws){u.task={k:'move',x:home.x+(Math.random()-.5)*5,y:home.y+(Math.random()-.5)*5};u.path=null}ai.waves.clear();ai.waveN=0;ai.regroup=ai.t+90}
+function aiBreach(p){const ai=p.ai;if(!ai.waves.size||ai.t%3)return;for(const id of ai.waves){const u=ents.get(id);if(!u||!u.task||u.task.k!=='atk'||!u.partial)continue;const cur=ents.get(u.task.id);if(cur&&cur.k==='b'&&B[cur.type].wall)continue;
+ let wb=null,wd=14;for(const b of blds){if(!isEnemy(p.i,b.o)||!B[b.type].wall)continue;const d=rectDist(u.x,u.y,b.x,b.y,b.w,b.h)+(b.type==='gate'?-3:0);if(d<wd){wd=d;wb=b}}if(wb){u.task={k:'atk',id:wb.id,wave:1,breach:1};u.path=null}}}
 /* ---------- sprites: isometric 3D kit ---------- */
 const sprC=new Map();
 const HW=32,HH=16,ZS=32;
@@ -1384,6 +1408,8 @@ function makeIcons(sk){
  ICON.bell=iconCanvas(g=>sym(g,'bell',32,32,1.6,'#f2cf6a'),['#7a5a2a','#3a2a12']);ICON.clear=iconCanvas(g=>sym(g,'check',32,32,1.6,'#bff0a8'),['#3e5a26','#1e2e12']);
  ICON.stop=iconCanvas(g=>sym(g,'stop',32,32,1.4,'#f6ecd5'),['#5a4a3a','#2a2016']);ICON.del=iconCanvas(g=>sym(g,'trash',32,32,1.5,'#ffd0c4'),['#7a2a20','#3a120c']);
  ICON.ok=iconCanvas(g=>sym(g,'check',32,32,1.7,'#e8ffd8'));ICON.no=iconCanvas(g=>sym(g,'x',32,32,1.5,'#ffe0d8'));
+ for(const f of ['loose','line','box','wedge'])ICON['form_'+f]=iconCanvas(g=>{const pts=f==='loose'?[[18,20],[34,16],[46,26],[24,34],[40,40],[20,48],[44,50]]:f==='line'?[[12,24],[22,24],[32,24],[42,24],[52,24],[12,38],[22,38],[32,38],[42,38],[52,38]]:f==='box'?[[20,18],[32,18],[44,18],[20,32],[32,32],[44,32],[20,46],[32,46],[44,46]]:[[32,14],[25,26],[39,26],[18,38],[32,38],[46,38],[11,50],[25,50],[39,50],[53,50]];
+  pts.forEach(([x,y],i)=>{g.fillStyle=(f==='loose'?i%2:y>30)?'#9fd0ff':'#f6ecd5';g.beginPath();g.arc(x,y,4,0,7);g.fill()});g.fillStyle='#ffd34a';g.beginPath();g.moveTo(32,4);g.lineTo(27,10);g.lineTo(37,10);g.fill()},['#3a4a5a','#1a2430']);
  ICON.patrol=iconCanvas(g=>{g.strokeStyle='#f6ecd5';g.fillStyle='#f6ecd5';g.lineWidth=4;g.lineCap='round';g.beginPath();g.moveTo(16,24);g.lineTo(44,24);g.stroke();g.beginPath();g.moveTo(48,24);g.lineTo(39,17);g.lineTo(39,31);g.fill();g.strokeStyle='#ffd34a';g.fillStyle='#ffd34a';g.beginPath();g.moveTo(48,42);g.lineTo(20,42);g.stroke();g.beginPath();g.moveTo(16,42);g.lineTo(25,35);g.lineTo(25,49);g.fill();g.fillStyle='#e8dcc0';g.beginPath();g.arc(32,33,3,0,7);g.fill()},['#5a4a2a','#2a1e0c']);
  ICON.amove=iconCanvas(g=>{sym(g,'sword',26,34,1.2,'#f6ecd5');sym(g,'arrow',40,26,1,'#ffb0a0')},['#6a3a2a','#2a120c']);ICON.gar=iconCanvas(g=>{g.fillStyle='#e8dcc0';g.fillRect(18,22,28,26);g.fillRect(16,16,6,8);g.fillRect(29,16,6,8);g.fillRect(42,16,6,8);g.fillStyle='#3a2a1a';g.fillRect(28,34,8,14)},['#4a5a6a','#1a2a36']);
  ICON.unload=iconCanvas(g=>{g.fillStyle='#e8dcc0';g.fillRect(14,24,22,22);g.strokeStyle='#bff0a8';g.lineWidth=3.5;g.beginPath();g.moveTo(30,36);g.lineTo(52,36);g.moveTo(44,28);g.lineTo(52,36);g.lineTo(44,44);g.stroke()},['#3e5a26','#1e2e12']);
@@ -1483,7 +1509,17 @@ function setTrade(trs,mk){const others=blds.filter(b=>b.o===0&&b.type==='market'
  for(const t of trs){if(t.type!=='trader')continue;let far=others[0];for(const o of others)if(Math.hypot(o.x-mk.x,o.y-mk.y)>Math.hypot(far.x-mk.x,far.y-mk.y))far=o;t.task={k:'trade',a:mk.id,b:far.id,leg:0};t.path=null}
  toast('Trade route set. Farther markets earn more gold.','good')}
 function spotsNear(w,n,nav){const cx=Math.floor(w.x),cy=Math.floor(w.y);const spots=[];for(let r=0;r<10&&spots.length<n;r++)for(let y=cy-r;y<=cy+r;y++)for(let x=cx-r;x<=cx+r;x++){if(Math.max(Math.abs(x-cx),Math.abs(y-cy))!==r)continue;if(passXY(x,y,0,nav))spots.push({x:x+.5,y:y+.5})}return spots}
-function groupTask(us,w,k){for(const nav of [0,1]){const grp=us.filter(u=>u.nav===nav);if(!grp.length)continue;if(grp.length===1){grp[0].task={k,x:w.x,y:w.y};grp[0].path=null;grp[0].home={x:w.x,y:w.y};continue}
+const FORMS={loose:'Loose',line:'Line',box:'Box',wedge:'Wedge'},FORM_K=['loose','line','box','wedge'];
+function formSlots(form,n){const sl=[];if(form==='line'){const wd=Math.max(3,Math.ceil(Math.sqrt(n*3)));for(let i=0;i<n;i++){const r=Math.floor(i/wd),c=i%wd,inRow=Math.min(wd,n-r*wd);sl.push([c-(inRow-1)/2,r])}}
+ else if(form==='box'){const wd=Math.ceil(Math.sqrt(n));for(let i=0;i<n;i++){const r=Math.floor(i/wd),c=i%wd,inRow=Math.min(wd,n-r*wd);sl.push([c-(inRow-1)/2,r])}}
+ else{let r=0,i=0;while(i<n){const inRow=Math.min(r+1,n-i);for(let c=0;c<inRow;c++){sl.push([c-(inRow-1)/2,r]);i++}r++}}return sl}
+function formationTask(grp,w,k){const form=S.form;let cx=0,cy=0;for(const u of grp){cx+=u.x;cy+=u.y}cx/=grp.length;cy/=grp.length;let dx=w.x-cx,dy=w.y-cy;const L=Math.hypot(dx,dy)||1;dx/=L;dy/=L;const rx=-dy,ry=dx,sp=.95;
+ const cat=u=>{const d=ud(u);return d.tag==='sie'?3:uRng(u)>0||d.heal?2:d.tag==='cav'&&form==='wedge'?0:1};const sorted=grp.slice().sort((a,b)=>cat(a)-cat(b));const slots=formSlots(form,grp.length);
+ const order=slots.map((s,i)=>i).sort((a,b)=>slots[a][1]-slots[b][1]||slots[a][0]-slots[b][0]);let gs=99;for(const u of grp)gs=Math.min(gs,uSpd(u));
+ let i=0;while(i<sorted.length){const row=slots[order[i]][1];const ids=[];while(i<sorted.length&&slots[order[i]][1]===row){ids.push(i);i++}
+  const us=ids.map(j=>sorted[j]).sort((a,b)=>(a.x*rx+a.y*ry)-(b.x*rx+b.y*ry));ids.forEach((j,n)=>{const s=slots[order[j]];let tx=w.x+rx*s[0]*sp-dx*s[1]*sp,ty=w.y+ry*s[0]*sp-dy*s[1]*sp;
+   if(!passXY(Math.floor(tx),Math.floor(ty),0,0)){const alt=spotsNear({x:tx,y:ty},1,0)[0];if(alt){tx=alt.x;ty=alt.y}}const u=us[n];u.task={k,x:tx,y:ty,gs:L>4?gs:0};u.path=null;u.home={x:tx,y:ty}})}}
+function groupTask(us,w,k){for(const nav of [0,1]){const grp=us.filter(u=>u.nav===nav);if(!grp.length)continue;if(!nav&&grp.length>1&&S.form&&S.form!=='loose'&&(k==='move'||k==='amove'||k==='patrol')&&grp.some(isMil)){formationTask(grp,w,k);continue}if(grp.length===1){grp[0].task={k,x:w.x,y:w.y};grp[0].path=null;grp[0].home={x:w.x,y:w.y};continue}
  const spots=spotsNear(w,grp.length,nav);const rem=grp.slice().sort((a,b)=>Math.hypot(a.x-w.x,a.y-w.y)-Math.hypot(b.x-w.x,b.y-w.y));
  for(const sp of spots){if(!rem.length)break;let bi=0,bd=1e9;rem.forEach((u,k2)=>{const d=Math.hypot(u.x-sp.x,u.y-sp.y);if(d<bd){bd=d;bi=k2}});const u=rem.splice(bi,1)[0];u.task={k,x:sp.x,y:sp.y};u.path=null;u.home={x:sp.x,y:sp.y}}
  for(const u of rem){u.task={k,x:w.x,y:w.y};u.path=null}}}
@@ -1521,10 +1557,10 @@ function renderPanel(){if(!S)return;const s=selection(),p=P[0];
   else{const g={};for(const u of es)g[u.type]=(g[u.type]||0)+1;info.innerHTML=`<div class="tx"><h4>${es.length} units selected</h4><div class="grp">${Object.keys(g).map(t=>`<button data-a="only:${t}"><img src="${ICON['u_'+t]}" alt=""><b>${g[t]}</b></button>`).join('')}</div></div>`}
   if(s.k==='enemy'){if(lastSig!=='en'){lastSig='en';acts.innerHTML=''}return}
   const workers=es.some(canBuild),mil=es.some(u=>isMil(u)&&canFight(u)),trd=es.some(u=>u.type==='trader');const da=delArm>performance.now();
-  let html='',sig='u'+workers+mil+tab+p.phase+(da?'d':'')+(cmdMode||'')+es.map(u=>u.stance).join('');
+  let html='',sig='u'+(S.form||'')+workers+mil+tab+p.phase+(da?'d':'')+(cmdMode||'')+es.map(u=>u.stance).join('');
   if(workers){html+=`<div class="tabs"><button data-a="tab:eco" class="${tab==='eco'?'on':''}">Economy</button><button data-a="tab:mil" class="${tab==='mil'?'on':''}">Military</button><button data-a="tab:def" class="${tab==='def'?'on':''}">Defense</button></div>`;
    for(const t of BUILD_TABS[tab]){const d=B[t];if(d.ph>p.phase){html+=`<button class="ab no" data-a="lock:${t}"><img src="${ICON['b_'+t]}" alt=""><span class="nm">${SHORT[d.n]||d.n}</span><span class="cs">${PHASE[d.ph]}</span></button>`;continue}const ok=afford(p,d.cost);sig+=ok?1:0;html+=btn('build:'+t,'b_'+t,d.n,d.cost,ok)}}
-  if(mil){const st=es.find(u=>isMil(u)).stance;for(const k of ['agg','def','hold','pas'])html+=btn('stance:'+k,'st_'+k,STN[k],null,true,st===k?'ok':'');html+=btn('amove','amove','Attack-move',null,true,cmdMode==='amove'?'ok':'');html+=btn('patrol','patrol','Patrol',null,true,cmdMode==='patrol'?'ok':'');}
+  if(mil){const st=es.find(u=>isMil(u)).stance;for(const k of ['agg','def','hold','pas'])html+=btn('stance:'+k,'st_'+k,STN[k],null,true,st===k?'ok':'');html+=btn('amove','amove','Attack-move',null,true,cmdMode==='amove'?'ok':'');html+=btn('patrol','patrol','Patrol',null,true,cmdMode==='patrol'?'ok':'');html+=btn('form','form_'+(S.form||'loose'),'Form: '+FORMS[S.form||'loose'],null,true,'');}
   if(es.some(u=>!u.nav))html+=btn('gar','gar','Garrison',null,true,cmdMode==='gar'?'ok':'');
   if(trd)html+=btn('trade','trade','Trade route',null,true,cmdMode==='trade'?'ok':'');
   html+=btn('stop','stop','Stop',null,true)+btn(da?'del2':'del','del',da?'Sure?':'Delete',null,true);
@@ -1556,6 +1592,7 @@ function act(a){const p=P[0];const [k,v]=a.split(':');const s=selection();
  if(k==='pok'){confirmPlace();lastSig='';return}if(k==='pno'){placing=null;lastSig='';panelDirty=true;return}
  if(k==='stop'){for(const u of s.es)if(u.k==='u'){u.task=null;u.path=null;u.home={x:u.x,y:u.y}}cmdMode=null;return}
  if(k==='stance'){for(const u of s.es)if(u.k==='u'&&isMil(u)){u.stance=v;u.home={x:u.x,y:u.y};if(v==='pas'&&u.task&&u.task.k==='atk')u.task=null}lastSig='';return}
+ if(k==='form'){S.form=FORM_K[(FORM_K.indexOf(S.form||'loose')+1)%FORM_K.length];lastSig='';panelDirty=true;toast('Formation: '+FORMS[S.form]+(S.form==='loose'?'':'. Melee in front, archers behind, siege at the back.'));return}
  if(k==='amove'||k==='patrol'||k==='gar'||k==='trade'){cmdMode=cmdMode===k?null:k;lastSig='';return}
  if(k==='del'){delArm=performance.now()+2500;lastSig='';return}
  if(k==='del2'){delArm=0;for(const e of s.es){if(e.o!==0)continue;if(e.k==='b'&&e.built<1)refund(p,B[e.type].cost,1-e.built);kill(e,0,true)}lastSig='';return}
@@ -1653,7 +1690,7 @@ function checkEnd(){if(!running)return;for(const p of P){if(!p.alive)continue;co
  if(S.wonderWin)for(const b of blds){if(b.type==='wonder'&&b.built>=1&&S.t-b.wonderT>=600&&P[b.o].alive){endGame(b.o===0,b.o===0?'Your Wonder stood for ten years. The crown is yours.':P[b.o].civN+' held their Wonder for ten years.');return}}}
 function endGame(win,msg){sfx(win?'win':'lose');running=false;try{localStorage.removeItem('boc-save2')}catch(e){}$('#hud').hidden=true;$('#end').hidden=false;$('#endTitle').textContent=win?'Victory':'Defeat';
  $('#endSub').textContent=msg||(win?'Every rival crown has fallen.':'Your town has fallen. Rebuild and try again.');const t=Math.floor(S.t);
- const rows=[['',...P.map(p=>p.i===0?'You':p.civN)],['Civilization',...P.map(p=>p.civN)],['Units trained',...P.map(p=>p.st.trained)],['Units killed',...P.map(p=>p.st.kills)],['Units lost',...P.map(p=>p.st.lost)],['Buildings razed',...P.map(p=>p.st.razed)],['Buildings captured',...P.map(p=>p.st.captured||0)],['Resources gathered',...P.map(p=>Math.floor(p.st.gath))],['Phase',...P.map(p=>PHASE[p.phase])]];
+ const rows=[['',...P.map(p=>p.i===0?'You':p.civN)],['Civilization',...P.map(p=>p.civN)],['Play style',...P.map(p=>p.ai?(AIPERS[p.ai.pers]||AIPERS.balanced).n:'—')],['Units trained',...P.map(p=>p.st.trained)],['Units killed',...P.map(p=>p.st.kills)],['Units lost',...P.map(p=>p.st.lost)],['Buildings razed',...P.map(p=>p.st.razed)],['Buildings captured',...P.map(p=>p.st.captured||0)],['Resources gathered',...P.map(p=>Math.floor(p.st.gath))],['Phase',...P.map(p=>PHASE[p.phase])]];
  $('#endStats').innerHTML=`<tr><td colspan="${P.length+1}">Game time ${Math.floor(t/60)} min</td></tr>`+rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}
 function frame(now){const dt=Math.min(.25,(now-last)/1000);last=now;sprNew=0;
  if(running&&!paused){acc+=dt*S.speed;let n=0;const maxT=S.speed>1?8:4;while(acc>=DT&&n<maxT){tick();acc-=DT;n++;if(!running)break}if(n>=maxT)acc=Math.min(acc,DT)}
