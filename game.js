@@ -2550,7 +2550,7 @@ function spectTick(){if(!S||!S.spectate)return;vis.fill(1);explored.fill(1);
  const alive=P.filter(p=>p.alive!==false);if(alive.length===1)endGame(true,'The '+alive[0].civN+' are the last kingdom standing.')}
 $('#watchBtn').onclick=startSpectate;
 /* ---------- end of game hooks ---------- */
-function endHook(win){$('#nextBtn').hidden=true;if(S.spectate){$('#endTitle').textContent='Game over';return}
+function endHook(win){$('#nextBtn').hidden=true;$('#cqBack').hidden=!S.conq;if(S.conq){cqResult(win);$('#cqBack').onclick=()=>{$('#end').hidden=true;showTitle();showConquest()}}if(S.spectate){$('#endTitle').textContent='Game over';return}
  if(win&&S.mission){missDone[S.mission.id]=1;try{localStorage.setItem('boc-missions',JSON.stringify(missDone))}catch(e){}const i=CAMP.findIndex(c=>c.id===S.mission.id);if(i>=0&&i<CAMP.length-1){$('#nextBtn').hidden=false;$('#nextBtn').onclick=()=>{$('#end').hidden=true;startChapter(CAMP[i+1])}}
   if(i===CAMP.length-1)$('#endSub').textContent=CAMP[i].outro+' The campaign is complete!'}
  if(S.daily){const r=DAILY[S.daily]||(DAILY[S.daily]={won:0,t:0,tries:1});if(win){r.won=1;r.t=r.t?Math.min(r.t,Math.floor(S.t)):Math.floor(S.t)}saveDaily();if(win)$('#endSub').textContent=`Daily challenge beaten in ${fmt(S.t)}! Streak: ${dailyStreak()} day${dailyStreak()===1?'':'s'}.`}}
@@ -2692,6 +2692,63 @@ function adviseTick2(){if(!S||!running||S.spectate||S.tut||!P[0]||P[0].alive===f
  if(strong&&!peace()&&strong[1]>Math.max(8,ma*1.8))return advise('marshal',`The ${strong[0].civN} field an army far larger than ours. We need more soldiers, or walls and towers.`);
  if(peace()&&S.opts&&S.opts.peace&&S.opts.peace*60-S.t<60&&S.opts.peace*60-S.t>0)return advise('marshal','The ceasefire ends within the minute. Ready the army!',1);
  if(p.phase>=1&&!blds.some(b=>b.o===0&&b.type==='market')&&S.t>900)return advise('chancellor','A market would let us trade surplus goods and send trade carts.')}
+
+/* ---------- conquest campaign: a world map of territories ---------- */
+const CQ_NAMES=['Ashford','Eastvale','Highmoor','Ravenhold','Stonebrook','Dunmere','Wolfden','Goldcrest','Thornwick','Saltmarsh','Ironpeak','Greywater','Brightmeadow','Kingsreach','Fenwood','Crowhaven'];
+const CQ_MAPS=['mainland','highlands','rivers','steppe','marsh','alpine','blackforest','goldrush','mediterranean','canyon','mountainpass','mainland','rivers','highlands','steppe','blackforest'];
+const CQ_YIELD=['food','wood','gold','stone'];
+let CQ=null;try{CQ=JSON.parse(localStorage.getItem('boc-conq')||'null')}catch(e){}
+const cqSave=()=>{try{localStorage.setItem('boc-conq',JSON.stringify(CQ))}catch(e){}};
+const CW=360,CH=230;let cqPix=null,cqFor=null;
+function cqRand(seed){return mulberry(seed)}
+function cqNew(){const r=cqRand((Math.random()*1e9)|0);const n=15;const T=[];let g=0;
+ while(T.length<n&&g++<4000){const x=30+r()*(CW-60),y=24+r()*(CH-48);if(((x-CW/2)/(CW*.46))**2+((y-CH/2)/(CH*.44))**2>1)continue;if(T.some(t=>Math.hypot(t.x-x,t.y-y)<42))continue;T.push({x,y})}
+ T.forEach((t,i)=>{t.id=i;t.n=CQ_NAMES[i];t.map=CQ_MAPS[(i*7+3)%CQ_MAPS.length];t.yl=CQ_YIELD[i%4];t.o=-1;t.cap=0});
+ const civs=CKEYS.filter(k=>k!==SETUP.civ).sort(()=>r()-.5).slice(0,3);const F=[{civ:SETUP.civ,n:'You',alive:1},...civs.map(c=>({civ:c,n:CIVS[c].n,alive:1}))];
+ CQ={seed:(r()*1e9)|0,T,F,turn:1,log:[],threat:null,over:0};cqPix=null;cqBuildPix();
+ const far=(a,list)=>Math.min(...list.map(b=>Math.hypot(a.x-b.x,a.y-b.y)));const caps=[];for(let f=0;f<F.length;f++){let best=null,bd=-1;for(const t of T){if(t.o>=0)continue;const d=caps.length?far(t,caps):Math.hypot(t.x-CW*.25,t.y-CH*.75);if(d>bd){bd=d;best=t}}best.o=f;best.cap=1;caps.push(best)}
+ for(let f=1;f<F.length;f++){const c=T.find(t=>t.cap&&t.o===f);for(const nb of c.nb.map(i=>T[i]).filter(t=>t.o<0).slice(0,2))nb.o=f}
+ CQ.log.unshift(`Turn 1: ${kName()} claims ${T.find(t=>t.o===0).n}. Three kingdoms and many free lands surround you.`);cqSave()}
+function cqBuildPix(){if(cqFor===CQ&&cqPix)return;cqFor=CQ;const T=CQ.T;const r=cqRand(CQ.seed);cqPix=new Int16Array(CW*CH).fill(-1);
+ const noise=(x,y)=>Math.sin(x*.09+CQ.seed%7)*Math.cos(y*.11)*6+Math.sin((x+y)*.05)*4;
+ for(let y=0;y<CH;y++)for(let x=0;x<CW;x++){const e=((x-CW/2)/(CW*.48))**2+((y-CH/2)/(CH*.46))**2+noise(x,y)*.012;if(e>1)continue;let b=-1,bd=1e9;for(const t of T){const d=(x-t.x)**2+(y-t.y)**2+noise(x*1.3,y*1.7)*30;if(d<bd){bd=d;b=t.id}}cqPix[y*CW+x]=b}
+ for(const t of T)t.nb=[];for(let y=0;y<CH-1;y++)for(let x=0;x<CW-1;x++){const a=cqPix[y*CW+x];for(const b of [cqPix[y*CW+x+1],cqPix[(y+1)*CW+x]]){if(a>=0&&b>=0&&a!==b&&!T[a].nb.includes(b)){T[a].nb.push(b);T[b].nb.push(a)}}}}
+const FCOL=['#3f7fd8','#d84a3a','#e0b020','#3aa060'];
+function cqDraw(){const cv=$('#cqMap');const g=cv.getContext('2d');cqBuildPix();const sc=cv.width/CW;const img=g.createImageData(CW,CH);const T=CQ.T;
+ const hex=c=>[parseInt(c.slice(1,3),16),parseInt(c.slice(3,5),16),parseInt(c.slice(5,7),16)];
+ for(let i=0;i<CW*CH;i++){const id=cqPix[i];let c;if(id<0){c=[38,72,110];const y=(i/CW)|0,x=i%CW;if(((x*7+y*13)%23)===0)c=[52,90,130]}else{const t=T[id];c=t.o<0?[150,140,110]:hex(FCOL[t.o]);const x=i%CW,y=(i/CW)|0;const edge=(x>0&&cqPix[i-1]!==id)||(y>0&&cqPix[i-CW]!==id)||(x<CW-1&&cqPix[i+1]!==id)||(y<CH-1&&cqPix[i+CW]!==id);
+  const sh=.78+.22*Math.sin(x*.3+y*.2)*Math.cos(y*.27);c=edge?[40,28,18]:c.map(v=>v*sh*(cqSel===id?1.18:1));if(CQ.threat&&CQ.threat.tid===id&&!edge&&((x+y)>>2)%2)c=[200,40,30]}img.data.set([c[0],c[1],c[2],255],i*4)}
+ const tmp=document.createElement('canvas');tmp.width=CW;tmp.height=CH;tmp.getContext('2d').putImageData(img,0,0);g.imageSmoothingEnabled=false;g.clearRect(0,0,cv.width,cv.height);g.drawImage(tmp,0,0,cv.width,cv.height);
+ g.textAlign='center';for(const t of T){const x=t.x*sc,y=t.y*sc;if(t.cap){g.fillStyle='#2a1a0c';g.fillRect(x-7,y-16,14,10);for(let k=-7;k<7;k+=4)g.fillRect(x+k,y-19,2.5,3);g.fillStyle=FCOL[t.o]||'#ccc';g.fillRect(x-1,y-26,1.5,8);g.fillRect(x+.5,y-26,6,4)}
+  g.font=`700 ${Math.round(16*sc/2.4)}px Cinzel,serif`;g.fillStyle='rgba(0,0,0,.55)';g.fillText(t.n,x+1,y+7);g.fillStyle="#fff6e0";g.fillText(t.n,x,y+6);g.font=`${Math.round(12*sc/2.4)}px system-ui`;g.fillStyle='#fff6e0cc';g.fillText(MAPS[t.map]?MAPS[t.map].n:"",x,y+22)}}
+let cqSel=-1;
+function showConquest(){if(!CQ){cqStart();return}cqBuildPix();$('#cqScr').hidden=false;const cv=$('#cqMap');const land=innerWidth>innerHeight;const w=Math.min(land?innerWidth*.6:innerWidth*.9,(land?innerHeight*.8:innerHeight*.45)*CW/CH,1000);cv.width=Math.round(w*2);cv.height=Math.round(cv.width*CH/CW);cv.style.width=w+'px';cv.style.height=(w*CH/CW)+'px';$('#cqScr .cqrow').classList.toggle('land',land);cqUI()}
+function cqStart(){$('#cqScr').hidden=false;$('#cqInfo').innerHTML=`<p>Conquer the realm one battle at a time. You start with one land as the ${CIVS[SETUP.civ].n}; three rival kingdoms and many free lands surround you. Attack lands that border yours; rivals expand and strike back between your turns.</p><button class="big" id="cqGo">Begin the conquest</button>`;$('#cqMap').getContext('2d').clearRect(0,0,9999,9999);$('#cqGo').onclick=()=>{cqNew();showConquest()}}
+function cqUI(){cqDraw();const T=CQ.T,F=CQ.F;const own=f=>T.filter(t=>t.o===f).length;
+ let h=`<div class="cqF">${F.map((f,i)=>`<span style="color:${FCOL[i]}">■</span> ${i?f.n:kName()} ${f.alive?own(i):'✝'}`).join(' · ')} · <span style="color:#968c6e">■</span> Free lands ${own(-1)}</div>`;
+ if(CQ.over)h+=`<p class="goal">${CQ.over===1?'👑 The realm is yours! The conquest is complete.':'💀 Your capital has fallen. The conquest is lost.'}</p><button class="big" id="cqNewBtn">Start a new conquest</button>`;
+ else{if(CQ.threat){const t=T[CQ.threat.tid],f=F[CQ.threat.by];h+=`<p class="goal">⚠ The ${f.n} march on ${t.n}! Defend it now, or it falls after your next battle.</p><button class="big" id="cqDef">Defend ${t.n}</button>`}
+  const s=T[cqSel];if(s){const mine=s.o===0,adj=s.nb.some(i=>T[i].o===0);h+=`<p><b>${s.n}</b> · ${MAPS[s.map]?MAPS[s.map].n:s.map} · yields extra ${s.yl} · ${s.o<0?'free land':s.o===0?'yours':'held by the '+F[s.o].n}${s.cap?' (capital)':''}</p>`;
+   if(!mine&&adj)h+=`<button class="big" id="cqAtk">Attack ${s.n}</button>`;else if(!mine)h+=`<p class="sub">Not next to your lands yet.</p>`}else h+='<p class="sub">Tap a land next to yours to attack it.</p>'}
+ h+=`<details><summary>Chronicle of the conquest</summary>${CQ.log.slice(0,12).map(l=>`<p class="sub">${l}</p>`).join('')}</details>`;$('#cqInfo').innerHTML=h;
+ const b=$('#cqAtk');if(b)b.onclick=()=>cqBattle(cqSel,'attack');const d=$('#cqDef');if(d)d.onclick=()=>cqBattle(CQ.threat.tid,'defend');const nb=$('#cqNewBtn');if(nb)nb.onclick=()=>{CQ=null;cqSave();cqStart()}}
+$('#cqMap').addEventListener('pointerdown',e=>{if(!CQ)return;const cv=$('#cqMap'),r=cv.getBoundingClientRect();const x=Math.floor((e.clientX-r.left)/r.width*CW),y=Math.floor((e.clientY-r.top)/r.height*CH);const id=cqPix&&cqPix[y*CW+x];cqSel=id>=0?id:-1;cqUI()});
+function cqBattle(tid,mode){const t=CQ.T[tid],foe=mode==='defend'?CQ.threat.by:t.o;const F=CQ.F;const own=CQ.T.filter(x=>x.o===0);const bonus={food:0,wood:0,gold:0,stone:0};for(const x of own)bonus[x.yl]+=40;
+ const fsize=foe>0?CQ.T.filter(x=>x.o===foe).length:1;const civ=foe>0?F[foe].civ:CKEYS.filter(k=>k!==F[0].civ)[(tid*5)%(CKEYS.length-1)];$('#cqScr').hidden=true;
+ launch({civ:F[0].civ,map:t.map,size:t.cap?'m':'s',rivals:1,diff:foe<0?0:Math.min(2,1+(fsize>=5?1:0)+(t.cap?1:0)),peace:mode==='defend'?2:4,vmode:'conquest',res:'std',pop:200,color:SETUP.color,roof:SETUP.roof,seasons:1,rcivs:[civ],wild:true},()=>{
+  S.conq={tid,mode,foe};for(const k in bonus)P[0].res[k]+=Math.min(400,bonus[k]);if(t.cap&&foe>0){const tc=blds.find(b=>b.o===1&&b.type==='tc');if(tc)fortressWalls(tc)}
+  toast(mode==='defend'?`Defend ${t.n}! Destroy the invaders.`:`The battle for ${t.n} begins! Your lands send ${Object.entries(bonus).filter(e=>e[1]).map(e=>'+'+Math.min(400,e[1])+' '+e[0]).join(', ')||'their best wishes'}.`,'good')})}
+function cqResult(win){const c=S.conq;if(!c||!CQ)return;S.conq=null;const t=CQ.T[c.tid],F=CQ.F;
+ if(c.mode==='attack'){if(win){const was=t.o;t.o=0;CQ.log.unshift(`Turn ${CQ.turn}: ${kName()} conquered ${t.n}${was>0?' from the '+F[was].n:''}.`);if(was>0&&t.cap){F[was].alive=0;for(const x of CQ.T)if(x.o===was)x.o=-1;CQ.log.unshift(`The ${F[was].n} kingdom collapsed when ${t.n} fell.`)}}else CQ.log.unshift(`Turn ${CQ.turn}: our attack on ${t.n} failed.`)}
+ else{if(win){CQ.log.unshift(`Turn ${CQ.turn}: we held ${t.n} against the ${F[c.foe].n}.`)}else{t.o=c.foe;CQ.log.unshift(`Turn ${CQ.turn}: ${t.n} fell to the ${F[c.foe].n}.`)}CQ.threat=null}
+ if(CQ.threat&&c.mode==='attack'){const th=CQ.T[CQ.threat.tid];th.o=CQ.threat.by;CQ.log.unshift(`Undefended, ${th.n} fell to the ${F[CQ.threat.by].n}.`);CQ.threat=null}
+ cqAITurn();CQ.turn++;cqCheck();cqSave()}
+function cqAITurn(){const T=CQ.T,F=CQ.F;for(let f=1;f<F.length;f++){if(!F[f].alive)continue;const mine=T.filter(t=>t.o===f);if(!mine.length){F[f].alive=0;continue}if(Math.random()<.3)continue;
+ const targets=[...new Set(mine.flatMap(t=>t.nb))].map(i=>T[i]).filter(t=>t.o!==f);if(!targets.length)continue;targets.sort((a,b)=>(a.o<0?0:1)-(b.o<0?0:1)+Math.random()-.5);const tg=targets[0];
+ if(tg.o<0){tg.o=f;CQ.log.unshift(`The ${F[f].n} seized the free land of ${tg.n}.`)}else if(tg.o===0){if(!CQ.threat&&!(tg.cap&&T.filter(t=>t.o===0).length>1&&Math.random()<.5))CQ.threat={tid:tg.id,by:f}}
+ else{const a=mine.length,d=T.filter(t=>t.o===tg.o).length;if(Math.random()<a/(a+d)){const was=tg.o;tg.o=f;CQ.log.unshift(`The ${F[f].n} took ${tg.n} from the ${F[was].n}.`);if(tg.cap){F[was].alive=0;for(const x of T)if(x.o===was)x.o=-1;CQ.log.unshift(`The ${F[was].n} kingdom was destroyed.`)}}}}}
+function cqCheck(){const T=CQ.T;for(let f=1;f<CQ.F.length;f++)if(!T.some(t=>t.o===f&&t.cap))CQ.F[f].alive=0;if(!T.some(t=>t.o===0&&t.cap))CQ.over=2;else if(CQ.F.slice(1).every(f=>!f.alive))CQ.over=1}
+$('#cqBtn').onclick=showConquest;$('#cqClose').onclick=()=>{$('#cqScr').hidden=true};
 
 /* ---------- game setup ---------- */
 const STARTRES={low:{food:200,wood:200,stone:100,gold:100},std:{food:300,wood:300,stone:200,gold:200},high:{food:1000,wood:1000,stone:1000,gold:1000}};
