@@ -656,7 +656,7 @@ function aiTick(p){const ai=p.ai,o=p.i;ai.t+=1;
 
 /* ---------- placement ---------- */
 function canPlace(type,x,y,o,margin){const d=B[type];if(x<0||y<0||x+d.w>W||y+d.h>H)return false;let landN=0;
- for(let yy=y;yy<y+d.h;yy++)for(let xx=x;xx<x+d.w;xx++){const i=yy*W+xx;if(block[i]||occ[i])return false;if(d.water?ter[i]!==1:ter[i]===1)return false;if(ter[i]===4)return false;if(o===0&&!explored[i])return false;if(!d.any&&terr[i]!==o+1)return false}
+ for(let yy=y;yy<y+d.h;yy++)for(let xx=x;xx<x+d.w;xx++){const i=yy*W+xx;if(block[i]||occ[i])return false;if(d.water?ter[i]!==1:ter[i]===1)return false;if(ter[i]===4)return false;if(o===0&&!explored[i])return false;if(!d.any&&o!==0&&terr[i]!==o+1)return false}
  if(d.water){for(let yy=y-1;yy<=y+d.h;yy++)for(let xx=x-1;xx<=x+d.w;xx++){if(xx<0||yy<0||xx>=W||yy>=H)continue;const i=yy*W+xx;if(ter[i]!==1&&!block[i])landN++}if(!landN)return false}
  if(margin){for(let yy=y-1;yy<=y+d.h;yy++)for(let xx=x-1;xx<=x+d.w;xx++){if(xx<0||yy<0||xx>=W||yy>=H)return false;if(yy>=y&&yy<y+d.h&&xx>=x&&xx<x+d.w)continue;const i=yy*W+xx;if(block[i]>=2)return false;if(occ[i]&&!B[ents.get(occ[i]).type].flat)return false}}
  for(const u of units)if(u.o!==o&&!u.gar&&u.x>x&&u.x<x+d.w&&u.y>y&&u.y<y+d.h)return false;
@@ -668,12 +668,12 @@ function selWorkers(){return sel.map(id=>ents.get(id)).filter(u=>u&&u.k==='u'&&u
 function assignBuild(ws,ids){if(!ids.length)return;for(const v of ws){const prev=v.task&&(v.task.k==='gather'||v.task.k==='field'||v.task.k==='hunt')?v.task:null;if(prev&&prev.ph!=='ret')prev.ph=null;
  let best=ids[0],bd=1e9;for(const id of ids){const e=ents.get(id);const d=rectDist(v.x,v.y,e.x,e.y,e.w,e.h);if(d<bd){bd=d;best=id}}
  v.task={k:'build',id:best,q:ids.filter(i=>i!==best),prev};v.path=null}}
-function placeWhy(type,x,y){const d=B[type];for(let yy=y;yy<y+d.h;yy++)for(let xx=x;xx<x+d.w;xx++){if(xx<0||yy<0||xx>=W||yy>=H)return'off the map';const i=yy*W+xx;if(!explored[i])return'unexplored ground';if(d.water&&ter[i]!==1)return'docks go on water next to the shore';if(!d.water&&ter[i]===1)return'water';if(ter[i]===4)return'rocky mountain';if(block[i]||occ[i])return'something is in the way';if(!d.any&&terr[i]!==1)return'outside your territory'}return'something is in the way'}
+function placeWhy(type,x,y){const d=B[type];for(let yy=y;yy<y+d.h;yy++)for(let xx=x;xx<x+d.w;xx++){if(xx<0||yy<0||xx>=W||yy>=H)return'off the map';const i=yy*W+xx;if(!explored[i])return'unexplored ground';if(d.water&&ter[i]!==1)return'docks go on water next to the shore';if(!d.water&&ter[i]===1)return'water';if(ter[i]===4)return'rocky mountain';if(block[i]||occ[i])return'something is in the way';}return'something is in the way'}
 function confirmPlace(){if(!placing||placing.tx==null)return;const p=P[0],d=B[placing.type];const ws=selWorkers();
- if(d.wall){if(placing.ax==null){placing.ax=placing.tx;placing.ay=placing.ty;panelDirty=true;lastSig='';return}
+ if(d.wall){if(placing.ax==null){placing.ax=placing.tx;placing.ay=placing.ty}
   const tiles=wallLine(placing.ax,placing.ay,placing.tx,placing.ty);const ids=[];
   for(const [x,y] of tiles){if(!canPlace(placing.type,x,y,0,false))continue;if(!afford(p,d.cost)){toast('Not enough '+Object.keys(d.cost)[0]+' for the whole wall','bad');break}pay(p,d.cost);ids.push(mkBld(placing.type,0,x,y,false).id)}
-  if(!ids.length){toast("Can't build there",'bad');return}assignBuild(ws,ids);placing=null;panelDirty=true;return}
+  if(!ids.length){toast("Can't build there",'bad');placing.ax=placing.ay=null;lastSig='';return}assignBuild(ws,ids);placing=null;panelDirty=true;return}
  if(!canPlace(placing.type,placing.tx,placing.ty,0,false)){toast("Can't build there: "+placeWhy(placing.type,placing.tx,placing.ty),'bad');return}
  if(!afford(p,d.cost)){toast('Need '+need(p,d.cost),'bad');return}
  pay(p,d.cost);const b=mkBld(placing.type,0,placing.tx,placing.ty,false);assignBuild(ws,[b.id]);
@@ -1127,7 +1127,7 @@ function render(){const z=cam.z;ctx.setTransform(DPR,0,0,DPR,0,0);ctx.fillStyle=
  for(const b of blds){if(!B[b.type].flat)continue;const c=PJ(b.x+b.w/2,b.y+b.h/2,0);if(!cull(c[0],c[1],0))continue;if(!showAll&&b.o!==0&&!explored[b.y*W+b.x])continue;
   const q=b.built<1?0:4;const sp=farmSprite(b.w,b.h,q,b.built>=1);const p=PJ(b.x,b.y,0);ctx.drawImage(sp,p[0]-sp.ox,p[1]-sp.oy,sp.w,sp.h)}
  DETAIL(x0,x1,y0,y1,cull,showAll);
- if(running)TERRITORY(cull);
+
  const selSet=new Set(sel);
  for(const id of sel){const e=ents.get(id);if(!e)continue;ctx.strokeStyle=e.o===0?'#f4f0d8':'#ff7a6a';ctx.lineWidth=1.6;
   if(e.k==='u'){if(e.gar)continue;const p=PJ(e.x,e.y,0);const r=e.r*1.25;ctx.beginPath();ctx.ellipse(p[0],p[1],r*HW*1.25,r*HH*1.25,0,0,7);ctx.stroke()}else{footprint(ctx,e.x-.05,e.y-.05,e.w+.1,e.h+.1);ctx.stroke()}}
@@ -1300,6 +1300,7 @@ cv.addEventListener('contextmenu',e=>e.preventDefault());
 cv.addEventListener('pointerdown',e=>{if(!S)return;cv.setPointerCapture(e.pointerId);ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});clearTimeout(lpTimer);
  if(ptrs.size===1){const mouse=e.pointerType==='mouse';gest={type:'pend',id:e.pointerId,sx:e.clientX,sy:e.clientY,cx:e.clientX,cy:e.clientY,mouse,btn:e.button,cam0:{x:cam.x,y:cam.y}};
   if(mouse&&e.button===1)gest.type='pan';
+  else if(placing&&running&&B[placing.type].wall&&!(mouse&&e.button===2)){gest.type='wall';setGhost(toWorld(e.clientX,e.clientY));placing.ax=placing.tx;placing.ay=placing.ty;lastSig='';panelDirty=true}
   if(!mouse&&running&&!placing)lpTimer=setTimeout(()=>{if(gest&&gest.type==='pend'){gest.type='box';if(navigator.vibrate)try{navigator.vibrate(12)}catch(_){}}},380)}
  else if(ptrs.size===2){const [a,b]=[...ptrs.values()];gest={type:'pinch',d0:Math.hypot(a.x-b.x,a.y-b.y),z0:cam.z,mx:(a.x+b.x)/2,my:(a.y+b.y)/2,cam0:{x:cam.x,y:cam.y}}}});
 cv.addEventListener('pointermove',e=>{if(!S)return;const p=ptrs.get(e.pointerId);
@@ -1307,11 +1308,13 @@ cv.addEventListener('pointermove',e=>{if(!S)return;const p=ptrs.get(e.pointerId)
  if(!p)return;p.x=e.clientX;p.y=e.clientY;if(!gest)return;
  if(gest.type==='pinch'&&ptrs.size>=2){const [a,b]=[...ptrs.values()];const d=Math.hypot(a.x-b.x,a.y-b.y);const mx=(a.x+b.x)/2,my=(a.y+b.y)/2;const wx=gest.mx/gest.z0+gest.cam0.x,wy=gest.my/gest.z0+gest.cam0.y;cam.z=clamp(gest.z0*d/Math.max(20,gest.d0),.45,2.4);cam.x=wx-mx/cam.z;cam.y=wy-my/cam.z;clampCam();return}
  if(gest.id!==e.pointerId)return;gest.cx=e.clientX;gest.cy=e.clientY;const moved=Math.hypot(gest.cx-gest.sx,gest.cy-gest.sy);
+ if(gest.type==='wall'){if(placing)setGhost(toWorld(e.clientX,e.clientY));return}
  if(gest.type==='pend'&&moved>9){clearTimeout(lpTimer);gest.type=(gest.mouse&&gest.btn===0&&!placing)||(boxMode&&!placing)?'box':gest.mouse&&gest.btn===2?'none':'pan'}
  if(gest.type==='pan'){cam.x=gest.cam0.x-(gest.cx-gest.sx)/cam.z;cam.y=gest.cam0.y-(gest.cy-gest.sy)/cam.z;clampCam()}});
 function endPtr(e){if(!ptrs.has(e.pointerId))return;ptrs.delete(e.pointerId);clearTimeout(lpTimer);if(!gest)return;
  if(gest.type==='pinch'){if(ptrs.size===0)gest=null;else gest={type:'none',id:-1};return}
  if(gest.id!==e.pointerId){if(ptrs.size===0)gest=null;return}
+ if(gest.type==='wall'){if(placing&&e.type==='pointerup'&&Math.hypot(gest.cx-gest.sx,gest.cy-gest.sy)>9)confirmPlace();gest=null;return}
  if(gest.type==='pend'&&running&&e.type==='pointerup')tap(gest.sx,gest.sy,gest.mouse?(gest.btn===2?'cmd':'sel'):'smart',e.shiftKey);
  else if(gest.type==='box'&&running)boxSelect(gest.sx,gest.sy,gest.cx,gest.cy,e.shiftKey);
  gest=null}
@@ -1401,9 +1404,9 @@ function taskText(u){const t=u.task;if(!t)return isMil(u)?'Ready':'Idle';const m
  if(t.k==='gather'){const v={wood:'Chopping wood',gold:'Mining gold',stone:'Mining stone',food:'Picking berries',fish:'Fishing'}[t.rt];return t.ph==='ret'?`Carrying ${t.rt} home`:`${v} (${Math.floor(u.carry)})`}return''}
 const RANKN=['','Advanced','Elite'];const STN={agg:'Aggressive',def:'Defensive',hold:'Hold ground',pas:'Passive'};
 function renderPanel(){if(!S)return;const s=selection(),p=P[0];
- if(placing){panel.hidden=false;const d=B[placing.type];const wallStage=d.wall?(placing.ax==null?'Tap where the wall starts, then press Start.':'Now tap where the wall ends, then press Place.'):d.water?'Tap the water next to the shore, then press the check.':d.any?'Tap the map, then press the check.':'Tap inside your territory (dashed line), then press the check.';
+ if(placing){panel.hidden=false;const d=B[placing.type];const wallStage=d.wall?'Drag along the ground from where the wall starts to where it ends. Lift your finger to build it.':d.water?'Tap the water next to the shore, then press the check.':d.any?'Tap the map, then press the check.':'Tap inside your territory (dashed line), then press the check.';
   info.innerHTML=`<div class="por"><img src="${ICON['b_'+placing.type]}" alt=""></div><div class="tx"><h4>${d.n}</h4><div class="st">${costStr(d.cost)}${d.wall?' per tile':''}</div><div class="st">${wallStage}</div></div>`;
-  const sig='place'+(placing.ax!=null)+(placing.tx!=null);if(sig!==lastSig){lastSig=sig;acts.innerHTML=btn('pok','ok',d.wall&&placing.ax==null?'Start':'Place',null,placing.tx!=null,'ok')+btn('pno','no','Cancel',null,true,'x')}return}
+  const sig='place'+(placing.ax!=null)+(placing.tx!=null);if(sig!==lastSig){lastSig=sig;acts.innerHTML=btn('pok','ok','Place',null,placing.tx!=null,'ok')+btn('pno','no','Cancel',null,true,'x')}return}
  if(s.k==='none'){panel.hidden=true;lastSig='';return}panel.hidden=false;
  if(s.es[0].k==='u'){const es=s.es;
   if(es.length===1){const u=es[0],d=ud(u),mx=uMaxHp(u);const f=u.hp/mx;
