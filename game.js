@@ -53,6 +53,14 @@ const U={
  militia:{n:'Swordsman',hp:65,atk:7,at:'m',rng:0,arm:[2,1],spd:1.3,los:5,cost:{food:60,gold:30},tm:14,ph:1,tag:'inf',rate:1.6,bon:{inf:2},cit:1,look:'militia',d:'Citizen soldier. Good against infantry and buildings.'},
  xbow:{n:'Crossbowman',hp:40,atk:6,at:'p',rng:6,arm:[1,1],spd:1.25,los:8,cost:{wood:50,gold:40},tm:14,ph:1,tag:'arc',rate:2.2,bon:{cav:2,inf:2},cit:1,look:'xbow',d:'Citizen soldier. Hits hard, pierces armor.'},
  knight:{n:'Knight',hp:130,atk:11,at:'m',rng:0,arm:[3,3],spd:1.9,los:6,cost:{food:100,gold:80},tm:20,ph:2,tag:'cav',rate:1.8,look:'knight',d:'Heavy cavalry. Strong against archers and infantry.'},
+ pikeman:{n:'Pikeman',hp:65,atk:5,at:'m',rng:0,arm:[1,2],spd:1.3,los:5,cost:{food:50,wood:40},tm:12,ph:1,tag:'inf',rate:1.8,bon:{cav:15},cit:1,look:'pikeman',d:'Upgraded spearman. Stops cavalry cold.'},
+ halberd:{n:'Halberdier',hp:80,atk:6,at:'m',rng:0,arm:[1,3],spd:1.3,los:5,cost:{food:50,wood:40},tm:12,ph:3,tag:'inf',rate:1.8,bon:{cav:20},cit:1,look:'halberd',d:'Best spearman.'},
+ manatarms:{n:'Man-at-Arms',hp:80,atk:9,at:'m',rng:0,arm:[2,2],spd:1.3,los:5,cost:{food:60,gold:30},tm:14,ph:1,tag:'inf',rate:1.6,bon:{inf:3},cit:1,look:'manatarms',d:'Upgraded swordsman.'},
+ longsword:{n:'Long Swordsman',hp:100,atk:11,at:'m',rng:0,arm:[3,2],spd:1.3,los:5,cost:{food:60,gold:30},tm:14,ph:2,tag:'inf',rate:1.6,bon:{inf:4},cit:1,look:'longsword',d:'Veteran swordsman.'},
+ elitearcher:{n:'Elite Archer',hp:45,atk:5,at:'p',rng:6,arm:[0,1],spd:1.3,los:8,cost:{food:50,wood:50},tm:12,ph:2,tag:'arc',rate:1.7,bon:{inf:3},cit:1,look:'elitearcher',d:'Upgraded archer with more range.'},
+ lightcav:{n:'Light Cavalry',hp:95,atk:7,at:'m',rng:0,arm:[1,3],spd:2.3,los:10,cost:{food:100},tm:14,ph:1,tag:'cav',rate:1.5,bon:{arc:5,sie:8},hunter:1,look:'lightcav',d:'Upgraded scout rider.'},
+ cavalier:{n:'Cavalier',hp:155,atk:13,at:'m',rng:0,arm:[3,4],spd:1.95,los:6,cost:{food:100,gold:80},tm:20,ph:2,tag:'cav',rate:1.8,look:'cavalier',d:'Upgraded knight.'},
+ paladin:{n:'Paladin',hp:185,atk:15,at:'m',rng:0,arm:[4,5],spd:2,los:7,cost:{food:100,gold:80},tm:20,ph:3,tag:'cav',rate:1.8,look:'paladin',d:'The finest knight.'},
  champ:{n:'Champion',hp:100,atk:13,at:'m',rng:0,arm:[3,2],spd:1.3,los:6,cost:{food:80,gold:60},tm:18,ph:2,tag:'inf',rate:1.7,bon:{inf:3},look:'champ',d:'Elite infantry. Cannot gather.'},
  king:{n:'King',hp:300,atk:7,at:'m',rng:0,arm:[3,3],spd:1.15,los:8,cost:{food:1},tm:1,ph:9,tag:'kng',rate:1.5,look:'king',d:'Your King. If he dies, you lose (Regicide).'},
  monk:{n:'Monk',hp:40,atk:0,at:'m',rng:0,arm:[0,0],spd:1.2,los:8,cost:{gold:100},tm:16,ph:1,tag:'mon',rate:1,heal:3,look:'monk',d:'Heals nearby wounded units. Tap a relic to carry it to a monastery for steady gold.'},
@@ -121,9 +129,9 @@ const B={
  field:{n:'Field',w:3,h:3,hp:300,cost:{wood:100},tm:14,ph:0,los:2,flat:1,slots:5,d:'Never runs out. Up to 5 farmers.'},
  corral:{n:'Corral',w:2,h:2,hp:500,cost:{wood:100},tm:16,ph:0,los:4,train:['sheep'],d:'Raises sheep. Send up to 3 villagers here to herd and butcher for steady food, or train sheep to hunt.'},
  dock:{n:'Dock',w:2,h:2,hp:1000,cost:{wood:150},tm:24,ph:0,drop:['food','wood'],los:7,train:['fishboat','cog','galley','fireship','demoship'],tech:['nets','shipwright'],water:1,any:1,d:'Build on the shore. Fishing boats and warships.'},
- barracks:{n:'Barracks',w:3,h:3,hp:1500,cost:{wood:200},tm:30,ph:0,los:6,train:['spear','militia','champ'],gar:10,d:'Trains infantry.'},
- range:{n:'Archery Range',w:3,h:3,hp:1500,cost:{wood:200},tm:30,ph:0,los:6,train:['archer','xbow'],d:'Trains archers.'},
- stable:{n:'Stable',w:3,h:3,hp:1500,cost:{wood:200},tm:30,ph:0,los:6,train:['scout','knight'],d:'Trains cavalry.'},
+ barracks:{n:'Barracks',w:3,h:3,hp:1500,cost:{wood:200},tm:30,ph:0,los:6,train:['spear','militia','champ'],tech:['t_pike','t_halberd','t_maa','t_long'],gar:10,d:'Trains infantry.'},
+ range:{n:'Archery Range',w:3,h:3,hp:1500,cost:{wood:200},tm:30,ph:0,los:6,train:['archer','xbow'],tech:['t_earcher'],d:'Trains archers.'},
+ stable:{n:'Stable',w:3,h:3,hp:1500,cost:{wood:200},tm:30,ph:0,los:6,train:['scout','knight'],tech:['t_lightcav','t_cavalier','t_paladin'],d:'Trains cavalry.'},
  sentry:{n:'Sentry Tower',w:1,h:1,hp:500,cost:{wood:100},tm:20,ph:0,los:10,arr:{n:1,r:6,a:4},gar:3,d:'Cheap lookout tower.'},
  outpost:{n:'Outpost',w:1,h:1,hp:300,cost:{wood:40},tm:10,ph:0,los:14,any:1,d:'Sees far. Can be built outside your territory.'},
  road:{n:'Stone Road',w:1,h:1,hp:250,cost:{stone:3},tm:3,ph:0,los:0,flat:1,road:1,any:1,nocap:1,d:'Units move 35% faster on roads, and pick roads when finding their way. Drag to lay a road.'},
@@ -136,7 +144,7 @@ const B={
  tower:{n:'Stone Tower',w:1,h:1,hp:1600,cost:{wood:100,stone:150},tm:40,ph:1,los:11,arr:{n:2,r:8,a:7},gar:5,d:'Strong tower. Garrison adds arrows.'},
  wall:{n:'Stone Wall',gar:2,arr:{n:0,r:6,a:6},w:1,h:1,hp:2200,cost:{stone:6},tm:6,ph:1,los:2,wall:1,any:1,nocap:1,d:'Thick stone wall.'},
  gate:{n:'Gate',gar:2,arr:{n:0,r:6,a:6},w:1,h:1,hp:2200,cost:{stone:30},tm:12,ph:1,los:3,wall:1,gate:1,any:1,nocap:1,d:'Your units can pass, enemies cannot. Build it on top of a wall to swap a piece out.'},
- castle:{n:'Castle',w:4,h:4,hp:5000,cost:{stone:700},tm:150,ph:1,pop:20,los:12,arr:{n:4,r:9,a:9},train:['UU','HERO','treb'],tech:['boil','murder'],gar:20,terr:12,d:'Fortress. Unique units and heroes. Claims territory.'},
+ castle:{n:'Castle',w:4,h:4,hp:5000,cost:{stone:700},tm:150,ph:1,pop:20,los:12,arr:{n:4,r:9,a:9},train:['UU','HERO','treb'],tech:['boil','murder','t_eliteuu'],gar:20,terr:12,d:'Fortress. Unique units and heroes. Claims territory.'},
  wonder:{n:'Wonder',w:5,h:5,hp:6000,cost:{wood:1000,stone:1000,gold:1000},tm:300,ph:2,los:10,d:'A marvel of your age. Can win the game.'}
 };
 const BUILD_TABS={eco:['house','farmstead','storehouse','field','road','corral','dock','market','tc','wonder'],mil:['barracks','range','stable','smith','temple','workshop','castle'],def:['palisade','pgate','sentry','outpost','wall','gate','tower']};
@@ -183,6 +191,15 @@ const TECH={
  spikes:{n:'Spiked Palisades',ph:1,cost:{wood:250,gold:50},tm:30,ic:'shield',d:'Enemies right next to your walls, palisades and gates take damage over time.',fx:m=>{m.spikes=1}},
  boil:{n:'Boiling Oil',ph:1,cost:{wood:200,gold:200},tm:40,ic:'shield',d:'Towers, castles and gates scald enemies right next to them.',fx:m=>{m.boil=1}},
  murder:{n:'Murder Holes',ph:2,cost:{stone:200,gold:200},tm:45,ic:'arrow',d:'Towers and castles shoot 1 more arrow and reach 2 tiles farther.',fx:m=>{m.towerArr+=1;m.towerRng=(m.towerRng||0)+2}},
+ t_pike:{n:'Pikeman',ph:1,cost:{food:160,wood:90},tm:35,ic:'shield',upg:{from:'spear',to:'pikeman'},d:'Spearmen become Pikemen: more health, armor and bonus against cavalry.'},
+ t_halberd:{n:'Halberdier',ph:3,cost:{food:300,wood:200},tm:45,ic:'shield',req:'t_pike',upg:{from:'pikeman',to:'halberd'},d:'Pikemen become Halberdiers.'},
+ t_maa:{n:'Man-at-Arms',ph:1,cost:{food:100,gold:40},tm:30,ic:'sword',upg:{from:'militia',to:'manatarms'},d:'Swordsmen become Men-at-Arms.'},
+ t_long:{n:'Long Swordsman',ph:2,cost:{food:200,gold:65},tm:40,ic:'sword',req:'t_maa',upg:{from:'manatarms',to:'longsword'},d:'Men-at-Arms become Long Swordsmen.'},
+ t_earcher:{n:'Elite Archer',ph:2,cost:{food:180,gold:100},tm:40,ic:'arrow',upg:{from:'archer',to:'elitearcher'},d:'Archers become Elite Archers: more range and attack.'},
+ t_lightcav:{n:'Light Cavalry',ph:1,cost:{food:150,gold:50},tm:30,ic:'sword',upg:{from:'scout',to:'lightcav'},d:'Scout Riders become Light Cavalry.'},
+ t_cavalier:{n:'Cavalier',ph:2,cost:{food:300,gold:300},tm:45,ic:'shield',upg:{from:'knight',to:'cavalier'},d:'Knights become Cavaliers.'},
+ t_paladin:{n:'Paladin',ph:3,cost:{food:600,gold:500},tm:55,ic:'shield',req:'t_cavalier',upg:{from:'cavalier',to:'paladin'},d:'Cavaliers become Paladins.'},
+ t_eliteuu:{n:'Elite Unique Unit',ph:2,cost:{food:600,gold:450},tm:50,ic:'shield',d:'Your unique unit gets 25% more health and attack.',fx:m=>{m.eliteUU=1}},
  herbal:{n:'Herbal Medicine',ph:1,cost:{gold:200},tm:30,ic:'wheat',d:'Monks and buildings heal 50% faster.',fx:m=>{m.heal+=.5}}
 };
 const RATE={berry:.55,farm:.45,wood:.6,gold:.45,stone:.45,hunt:1.2,fish:.6};
@@ -216,13 +233,13 @@ const isEnemy=(a,b)=>a!==b&&a>=0&&b>=0&&!(P[a]&&P[b]&&P[a].team!=null&&P[a].team
 const myTeam=o=>o===0||(o>0&&P[o]&&P[0]&&P[o].team!=null&&P[o].team===P[0].team);
 const peace=()=>S&&S.t<S.peace;
 function rankMul(u){return u.rank===2?1.2:u.rank===1?1.1:1}
-function uMaxHp(u){const d=ud(u),m=P[u.o].m;let h=d.hp;if(d.tag==='vil')h+=m.vhp;if(m.hp[d.tag])h*=1+m.hp[d.tag];return Math.round(h*rankMul(u))}
+function uMaxHp(u){const d=ud(u),m=P[u.o].m;let h=d.hp;if(d.uu&&m.eliteUU)h*=1.25;if(d.tag==='vil')h+=m.vhp;if(m.hp[d.tag])h*=1+m.hp[d.tag];return Math.round(h*rankMul(u))}
 const bMaxHp=b=>Math.round(B[b.type].hp*P[b.o].m.bhp);
 const cpMax=b=>Math.round(B[b.type].hp*.5);
-function uAtk(u){const d=ud(u),m=P[u.o].m;let a=d.atk+(d.tag==='vil'||d.tag==='sie'?0:m.atk[d.at]);a*=rankMul(u);if(u.aura==='atk')a*=1.2;return a}
+function uAtk(u){const d=ud(u),m=P[u.o].m;let a=d.atk+(d.tag==='vil'||d.tag==='sie'?0:m.atk[d.at]);if(d.uu&&m.eliteUU)a*=1.25;a*=rankMul(u);if(u.aura==='atk')a*=1.2;return a}
 function uArm(u,k){const d=ud(u),m=P[u.o].m,i=k==='m'?0:1;let a=d.arm[i];if(d.tag==='vil')a+=m.varm[i];else if(d.tag!=='sie'&&d.tag!=='shp'&&d.tag!=='trd')a+=m.arm[i];if(d.tag==='shp')a+=m.armT.shp;a+=u.rank||0;if(u.aura==='arm')a+=2;return a}
 function uRng(u){const d=ud(u),m=P[u.o].m;if(!d.rng)return 0;return d.rng+(d.at==='p'&&d.tag!=='sie'?m.rng:0)+(d.tag==='arc'?m.arcRng:0)}
-function uSpd(u){const d=ud(u),m=P[u.o].m;let s=d.spd;if(d.tag==='vil')s*=1+m.vspd;if(m.spd[d.tag])s*=1+m.spd[d.tag];if(u.aura==='spd')s*=1.15;return s}
+function uSpd(u){const d=ud(u),m=P[u.o].m;let s=d.spd;if(S&&S.wx&&S.wx.k!=='clear'){if(d.tag==='shp'){if(S.wx.k==='storm')s*=.7}else s*=.9}if(u.flee>S.t)s*=1.1;if(d.tag==='vil')s*=1+m.vspd;if(m.spd[d.tag])s*=1+m.spd[d.tag];if(u.aura==='spd')s*=1.15;return s}
 function uRate(u){const d=ud(u);return d.rate*(d.tag==='inf'?P[u.o].m.infRate:1)}
 function gRate(u,k){const p=P[u.o],m=p.m;let r=RATE[k]*(1+(m.rate[k]||0))*seasonRate(k);const d=ud(u);
  if(d.tag==='vil'){}else if(d.cit){r*=(k==='berry'||k==='farm'?.5:.75)*(1+m.citGather)}else if(d.hunter&&k==='hunt')r*=1.6;else if(d.tag==='shp')r*=1;else r*=.5;
@@ -389,7 +406,7 @@ function doAttack(u,t,dt){const e=ents.get(t.id);
  if(d<=reach){u.path=null;const c=ec(e);u.face=c.x<u.x?-1:1;
   if(u.cd<=0){u.cd=uRate(u);u.swing=.3;
    if(e.k==='b'&&capturer(u)&&capturable(e)&&!t.dmg){const cap=Math.max(.6,2.6*rankMul(u)*(u.aura==='atk'?1.2:1)-e.gar.length*.35)*uRate(u);e.cp-=cap;e.capT=S.t;e.capBy=u.o;if(e.o===0)alertAttack(e);gainXp(u,1.5);if(e.cp<=0)convert(e,u.o);return}
-   const dm=dmgTo(uAtk(u),D.at,D.bon,e)*(hg>0?1.25:hg<0?.85:1);
+   let dm=dmgTo(uAtk(u),D.at,D.bon,e)*(hg>0?1.25:hg<0?.85:1);if(rng>0&&wxWet())dm*=.85;if(!(rng>0)&&e.k==='u'){if(D.tag==='cav'&&(u.chg||0)>3){dm*=1.8;fx.push({k:'dust',x:e.x,y:e.y,t:0,life:.6,s:.6});if(u.o===0)sfx('thud',e.x,e.y)}else if(e.task&&e.task.k==='atk'&&e.task.id!==u.id)dm*=1.2;else if(e.flee>S.t||(e.task&&e.task.k==='move'))dm*=1.25}u.chg=0;
    if(rng>0){const k=D.multi||1;for(let i=0;i<k;i++)shoot(u.x,u.y-.35,e,dm,u.o,u.id,u.type==='treb'||u.type==='mangonel'?'rock':u.type==='jinete'?'jav':'arrow',D.splash)}else{hit(e,dm,u.o,u.id);sfx(e.k==='b'?'thud':'clang',u.x,u.y);if(ud(u).demo){demoBlast(u,e);return}}}return}
  if(u.stance==='hold'){if(t.auto){u.task=null}return}
  const leash=u.stance==='def'&&u.home?Math.hypot(u.x-u.home.x,u.y-u.home.y)>7:false;
@@ -485,7 +502,7 @@ function demoBlast(u,e){const x=e.k==='b'?e.x+e.w/2:e.x,y=e.k==='b'?e.y+e.h/2:e.
 function hiGround(u,e){if(!elevL||u.nav)return 0;const c=e.k==='b'?{x:e.x+e.w/2,y:e.y+e.h/2}:e;const a=elevL[(u.y|0)*W+(u.x|0)],b=elevL[(c.y|0)*W+(c.x|0)];return a>b?1:a<b?-1:0}
 
 /* ---------- buildings ---------- */
-function trainList(b){const d=B[b.type];if(!d.train)return[];const civ=CIVS[P[b.o].civ];return d.train.map(t=>t==='UU'?civ.uu:t==='HERO'?civ.hero:t)}
+function trainList(b){const d=B[b.type];if(!d.train)return[];const p=P[b.o],civ=CIVS[p.civ];return d.train.map(t=>{t=t==='UU'?civ.uu:t==='HERO'?civ.hero:t;let n=0;while(p.upg&&p.upg[t]&&n++<4)t=p.upg[t];return t})}
 function spawn(b,type){const nav=!!U[type].nav;const p=freeAround(b,null,null,nav);
  if(type==='sheep'){const a=mkAnimal('sheep',p.x,p.y,b.o);a.hx=p.x;a.hy=p.y;P[b.o].st.trained++;return a}
  const u=mkUnit(type,b.o,p.x,p.y);P[b.o].st.trained++;if(b.o===0)sfx('ready');u.home={x:p.x,y:p.y};
@@ -497,13 +514,13 @@ function spawn(b,type){const nav=!!U[type].nav;const p=freeAround(b,null,null,na
  return u}
 function phaseCount(p,ph){let n=0;for(const b of blds){if(b.o!==p.i||b.built<1)continue;const d=B[b.type];if(d.wall||d.flat||b.type==='outpost'||b.type==='palisade')continue;if(ph===0||d.ph>=1)n++}return n}
 function phaseReady(p,id){const t=TECH[id];if(!t.up)return true;return phaseCount(p,t.ph)>=t.need}
-function applyTech(p,id){const t=TECH[id];
+function applyTech(p,id){const t=TECH[id];if(t.upg){p.upg=p.upg||{};p.upg[t.upg.from]=t.upg.to;for(const u of units){if(u.o!==p.i||u.type!==t.upg.from)continue;const f=u.hp/uMaxHp(u);u.type=t.upg.to;u._sp=null;u.hp=f*uMaxHp(u)}for(const b of blds)if(b.o===p.i)for(const q of b.queue)if(q.u===t.upg.from)q.u=t.upg.to;if(p.i===0){toast(TECH[id].n+' upgrade complete!','good');sfx('ready')}panelDirty=true;lastSig='';}
  if(t.up){const bb=blds.filter(b=>b.o===p.i).map(b=>[b,b.hp/bMaxHp(b)]);evictSprites(p.i);p.phase=t.up;recomputeMods(p);for(const [b,f] of bb)b.hp=f*bMaxHp(b);if(p.i===0){toast('You have entered the '+PHASE[p.phase]+' Phase!','good');sfx('fanfare')}else if(vis0(p))toast(p.civN+' entered the '+PHASE[p.phase]+' Phase','bad');panelDirty=true;return}
  const before=blds.filter(b=>b.o===p.i).map(b=>[b,b.hp/bMaxHp(b)]);const ub=units.filter(u=>u.o===p.i).map(u=>[u,u.hp/uMaxHp(u)]);
  p.techs.push(id);recomputeMods(p);for(const [b,f] of before)b.hp=f*bMaxHp(b);for(const [u,f] of ub)u.hp=f*uMaxHp(u);
  if(p.i===0)toast(t.n+' researched','good');panelDirty=true}
 const vis0=p=>true;
-function recomputeMods(p){p.m=newMods();p.m.bhp+=[0,0,.1,.25][p.phase||0];CIVS[p.civ].mods(p.m);for(const k of p.techs)TECH[k].fx(p.m)}
+function recomputeMods(p){p.m=newMods();p.m.bhp+=[0,0,.1,.25][p.phase||0];CIVS[p.civ].mods(p.m);for(const k of p.techs)(TECH[k].fx&&TECH[k].fx(p.m))}
 function inQueue(o,id){return blds.some(b=>b.o===o&&b.queue.some(q=>q.t===id))}
 function techOk(p,id){const t=TECH[id];if(t.up)return p.phase===t.ph&&!inQueue(p.i,id);return p.phase>=t.ph&&p.techs.indexOf(id)<0&&!inQueue(p.i,id)&&(!t.req||p.techs.indexOf(t.req)>=0)}
 function unitOk(p,type,b){const d=U[type];if(p.phase<d.ph)return false;if(d.hero){if(p.hero&&ents.has(p.hero))return false;if(blds.some(x=>x.o===p.i&&x.queue.some(q=>q.u===type)))return false}return true}
@@ -728,7 +745,7 @@ function aiTick(p){const ai=p.ai,o=p.i;ai.t+=1;if(!ai.raid)ai.raid=[];if(ai.next
    if(ai.diff===2&&has('tower').length<3&&R.stone>=300)aiBuild(p,'tower',home.x+(Math.random()-.5)*16,home.y+(Math.random()-.5)*16,5,11);
    if(has('barracks').length<2&&R.wood>700)aiBuild(p,'barracks',home.x,home.y,7,17)}
   if(p.phase>=2&&ai.diff===2&&S.wonderWin&&!has('wonder').length&&R.wood>1300&&R.stone>1200&&R.gold>1200)aiBuild(p,'wonder',home.x,home.y,6,16)}
- if(!ai.saving){for(const tid of ['loom','gather','axe','collar','stonem','goldm','treadmill','wheel','forge','fletch','scale','saw','plow','goldm2','nets','masonry','iron','bodkin','chain','barding','herbal','conscript','architecture','shipwright','caravan','blast','plate','bracer','crop','twoman','deepmine','hoardings','royal','banking','spikes','boil','murder']){
+ if(!ai.saving){for(const tid of ['loom','gather','axe','collar','stonem','goldm','treadmill','wheel','forge','fletch','scale','saw','plow','goldm2','nets','masonry','iron','bodkin','chain','barding','herbal','conscript','architecture','shipwright','caravan','blast','plate','bracer','crop','twoman','deepmine','hoardings','royal','banking','spikes','boil','murder','t_pike','t_maa','t_earcher','t_lightcav','t_long','t_cavalier','t_eliteuu','t_halberd','t_paladin']){
   const t=TECH[tid];if(!techOk(p,tid))continue;if((tid==='loom'||tid==='treadmill')&&gatherers<12)continue;const bt=Object.keys(B).find(k=>B[k].tech&&B[k].tech.indexOf(tid)>=0);
   const b=has(bt,1).find(x=>!x.queue.length);if(!b)continue;const c=costOf(p,t.cost,'t');if(R4.every(r=>(R[r]||0)>=(c[r]||0)*1.3)){pay(p,c);b.queue.push({t:tid,p:0});break}}}
  if(!ai.saving||army.length<6||R.food>1000){const prod=mb.filter(b=>b.built>=1&&B[b.type].train&&b.type!=='corral'&&b.type!=='dock'&&b.type!=='market'&&b.type!=='temple'&&b.queue.length<1);let rm=room;
@@ -1283,6 +1300,8 @@ const LOOK={villager:{k:'vil'},spear:{k:'spear'},archer:{k:'archer'},militia:{k:
  samurai:{k:'champ',ov:{hat:'kabuto',wpn:'katana',shield:false}},chukonu:{k:'xbow',ov:{hat:'cap'}},heroinf:{k:'champ',ov:{hat:'crown',cape:1,wpn:'bigsword',shield:false}},
  scout:{rider:'scout'},knight:{rider:'knight',kn:1},gendarme:{rider:'knight',kn:1,coat:['#2e2a28','#3a3330','#4a3f38']},cataphract:{rider:'knight',kn:1,barding:1},
  jinete:{rider:'scout',ov:{wpn:'javelin',hat:'cap',shield:true}},mameluke:{rider:'scout',camel:1,ov:{hat:'turban',wpn:'sword',shield:false}},mangudai:{rider:'archer',ov:{hat:'cap'}},
+ pikeman:{k:'spear',ov:{hat:'cap3',armored:true}},halberd:{k:'spear',ov:{hat:'kettle',armored:true,cape:1}},manatarms:{k:'militia',ov:{armored:true,hat:'cap3'}},longsword:{k:'champ',ov:{wpn:'bigsword',shield:false}},elitearcher:{k:'archer',ov:{hat:'cap3',armored:true}},
+ lightcav:{rider:'scout',ov:{hat:'cap3',wpn:'sword',shield:true}},cavalier:{rider:'knight',kn:1,barding:1},paladin:{rider:'knight',kn:1,barding:1,ov:{cape:1}},
  highlander:{k:'champ',ov:{hat:null,armored:false,tunic:'#2f5a3a',wpn:'bigsword',shield:false}},druzhina:{k:'champ',ov:{hat:'cap3',wpn:'axe2',shield:true,tunic:'#8a2a22'}},
  janissary:{k:'xbow',ov:{hat:'turban',tunic:'#3a4f8a',armored:false}},hwarang:{k:'archer',ov:{hat:'cap',tunic:'#9a3a3a'}},gbeto:{k:'militia',ov:{hat:null,armored:false,wpn:'javelin',shield:true,tunic:'#c08a2a'}},shotel:{k:'militia',ov:{hat:null,armored:false,wpn:'katana',shield:true,tunic:'#f0e6d0'}},
  hussar:{rider:'knight',kn:1,ov:{cape:1,wpn:'javelin'}},savaran:{rider:'knight',kn:1,barding:1,ov:{hat:'turban'}},
@@ -1432,7 +1451,7 @@ function render(){const z=cam.z;ctx.setTransform(DPR,0,0,DPR,0,0);ctx.fillStyle=
   else if(f.k==='die'){ctx.globalAlpha=(1-k)*.85;ctx.fillStyle='#7a1515';ctx.beginPath();ctx.ellipse(p[0]+2,p[1],9,4,0,0,7);ctx.fill();ctx.fillStyle=f.c;ctx.beginPath();ctx.ellipse(p[0]-2,p[1]-2,7,3,0,0,7);ctx.fill();ctx.globalAlpha=1}
   else if(f.k==='dust'){ctx.fillStyle=`rgba(120,105,85,${.6*(1-k)})`;for(let j=0;j<7;j++){ctx.beginPath();ctx.arc(p[0]+Math.cos(j)*k*f.s*22,p[1]+Math.sin(j*1.7)*k*f.s*10-k*20,8+k*14,0,7);ctx.fill()}}}
  if(running){ctx.save();ctx.transform(HW,HH,-HW,HH,0,0);ctx.imageSmoothingEnabled=true;ctx.drawImage(fogCv,0,0);ctx.restore()}
- NIGHT();
+ NIGHT();WEATHER();
  for(const id of sel){const e=ents.get(id);if(e)hpBar(e)}
  for(const u of units)if(!u.gar&&!selSet.has(u.id)&&u.hp<uMaxHp(u)&&(u.o===0||vis[(u.y|0)*W+(u.x|0)])&&S.t-(u.dmgT||-9)<4)hpBar(u);
  for(const b of blds)if(!selSet.has(b.id)&&b.built>=1&&b.hp<bMaxHp(b)&&S.t-(b.dmgT||-9)<5&&(b.o===0||vis[b.y*W+b.x]))hpBar(b);
@@ -1466,7 +1485,7 @@ function WATERFX(){if(!S)return;const t=performance.now()/1000;const cs=[toWorld
  for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){const i=y*W+x;if(ter[i]!==1)continue;const h=(x*73856093^y*19349663)>>>0;if(h%5)continue;const ph=(t*.5+(h%100)/100)%1;const p=PJ(x+.5+ph*.6-.3,y+.5,0);const w=6*Math.sin(ph*Math.PI);if(w<1)continue;ctx.moveTo(p[0]-w,p[1]);ctx.quadraticCurveTo(p[0],p[1]-2,p[0]+w,p[1])}ctx.stroke()}
 function TERRITORY(cull){ctx.lineWidth=1.6;ctx.setLineDash([5,4]);for(let o=0;o<P.length;o++){ctx.strokeStyle=PCOL[o];ctx.globalAlpha=.75;ctx.beginPath();let n=0;
  for(const e of terrEdges){if(e[4]!==o)continue;if(!explored[Math.min(N-1,e[1]*W+e[0])]&&o!==0)continue;const a=PJ(e[0],e[1],0),b=PJ(e[2],e[3],0);if(!cull(a[0],a[1],0)&&!cull(b[0],b[1],0))continue;ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);n++}if(n)ctx.stroke()}ctx.setLineDash([]);ctx.globalAlpha=1}
-function OVERLAYS(selSet){for(const u of units){if(!u.cargo||!u.cargo.length||(u.o!==0&&!vis[(u.y|0)*W+(u.x|0)]))continue;const p=PJ(u.x,u.y,0);ctx.fillStyle='rgba(20,14,8,.85)';ctx.beginPath();ctx.arc(p[0]+16,p[1]-30,7,0,7);ctx.fill();ctx.strokeStyle=PCOL[u.o];ctx.lineWidth=1.5;ctx.stroke();ctx.fillStyle='#fff';ctx.font='800 10px Alegreya Sans,sans-serif';ctx.textAlign='center';ctx.fillText(u.cargo.length,p[0]+16,p[1]-26.5);ctx.textAlign='left'}const now=S.t;
+function OVERLAYS(selSet){for(const u of units){if(!(u.flee>S.t)||u.gar||(u.o!==0&&!vis[(u.y|0)*W+(u.x|0)]))continue;const p=PJ(u.x,u.y,0);ctx.strokeStyle='#3a2a1a';ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(p[0]+8,p[1]-30);ctx.lineTo(p[0]+8,p[1]-46);ctx.stroke();ctx.fillStyle='#f4f2ea';ctx.fillRect(p[0]+8,p[1]-46,9,6)}for(const u of units){if(!u.cargo||!u.cargo.length||(u.o!==0&&!vis[(u.y|0)*W+(u.x|0)]))continue;const p=PJ(u.x,u.y,0);ctx.fillStyle='rgba(20,14,8,.85)';ctx.beginPath();ctx.arc(p[0]+16,p[1]-30,7,0,7);ctx.fill();ctx.strokeStyle=PCOL[u.o];ctx.lineWidth=1.5;ctx.stroke();ctx.fillStyle='#fff';ctx.font='800 10px Alegreya Sans,sans-serif';ctx.textAlign='center';ctx.fillText(u.cargo.length,p[0]+16,p[1]-26.5);ctx.textAlign='left'}const now=S.t;
  for(const b of blds){if(b.o!==0&&!vis[(b.y|0)*W+(b.x|0)])continue;const c=PJ(b.x+b.w/2,b.y+b.h/2,0);const top=c[1]-(ZMX[b.type]||100)*.62;
   if(b.cp<cpMax(b)-1&&b.built>=1){const f=clamp(b.cp/cpMax(b),0,1),w=Math.min(72,b.w*22);ctx.fillStyle='rgba(0,0,0,.65)';ctx.fillRect(c[0]-w/2-1,top+5,w+2,5);ctx.fillStyle=PCOL[b.o];ctx.fillRect(c[0]-w/2,top+6,w*f,3);ctx.fillStyle=b.capBy!=null?PCOL[b.capBy]:'#888';ctx.fillRect(c[0]-w/2+w*f,top+6,w*(1-f),3)}
   if(b.gar.length){ctx.fillStyle='rgba(20,14,8,.85)';ctx.beginPath();ctx.arc(c[0]+18,top-2,8,0,7);ctx.fill();ctx.fillStyle='#f6ecd5';ctx.font='800 10px Alegreya Sans,sans-serif';ctx.textAlign='center';ctx.fillText(b.gar.length,c[0]+18,top+1.5)}
@@ -1568,12 +1587,13 @@ const SFX={
  ackV:(d,t,v,p)=>{tone(d,'triangle',360*p,t,.11,.07*v,{slide:300*p,at:.015});tone(d,'sine',720*p,t,.08,.02*v)},
  chain:(d,t,v)=>{for(let k=0;k<9;k++){noiz(d,'bandpass',2600+Math.random()*900,t+k*.07,.05,.07*v,{q:6});tone(d,'square',900+Math.random()*300,t+k*.07,.03,.015*v,{lp:3000})}tone(d,'sine',70,t,.7,.06*v)},
  creak:(d,t,v)=>{tone(d,'sawtooth',180,t,.5,.04*v,{slide:120,bp:900,q:8,at:.05});tone(d,'sawtooth',260,t+.08,.35,.025*v,{slide:200,bp:1400,q:8,at:.05})},
+ thunder:(d,t,v)=>{noiz(d,'lowpass',260,t+.15,2.4,.4*v,{to:60,at:.08});noiz(d,'lowpass',900,t,.3,.25*v)},
  click:(d,t,v)=>{tone(d,'sine',1250,t,.035,.05*v)},
  horn:(d,t,v)=>{tone(d,'sawtooth',196,t,.42,.1*v,{lp:1100,vib:5,at:.06});tone(d,'sawtooth',262,t+.45,.75,.1*v,{lp:1200,vib:5,at:.06})},
  fanfare:(d,t,v)=>{[[392,0,.2],[523,.2,.2],[659,.4,.2],[784,.6,.7]].forEach(([f,o,l])=>{tone(d,'sawtooth',f,t+o,l,.07*v,{lp:2000,at:.02});tone(d,'square',f/2,t+o,l,.03*v,{lp:900,at:.02})})},
  win:(d,t,v)=>{[[392,0],[523,.25],[659,.5],[784,.75],[1047,1.1]].forEach(([f,o],i)=>tone(d,'sawtooth',f,t+o,i===4?1.6:.3,.08*v,{lp:2200,at:.02,vib:i===4?5:0}))},
  lose:(d,t,v)=>{[[294,0],[262,.4],[220,.8],[147,1.3]].forEach(([f,o],i)=>tone(d,'sawtooth',f,t+o,i===3?1.8:.45,.07*v,{lp:900,at:.04}))}};
-const GAP={chain:.6,creak:.6,clang:.07,thud:.1,bow:.08,sling:.2,chop:.22,mine:.22,hammer:.18,die:.12,crash:.5,built:.4,ready:.3,ackS:.25,ackV:.25,click:.06,horn:2,fanfare:1,win:1,lose:1};
+const GAP={thunder:3,chain:.6,creak:.6,clang:.07,thud:.1,bow:.08,sling:.2,chop:.22,mine:.22,hammer:.18,die:.12,crash:.5,built:.4,ready:.3,ackS:.25,ackV:.25,click:.06,horn:2,fanfare:1,win:1,lose:1};
 function sfx(name,x,y){if(!SFX[name]||!AU.ctx||!AU.set.sfx||!running&&name!=='win'&&name!=='lose'&&name!=='click')return;const c=AU.ctx,t=c.currentTime;if((AU.last[name]||0)+GAP[name]>t)return;let v=1;
  if(x!=null){const p=PJ(x,y,0),sx=(p[0]-cam.x)*cam.z,sy=(p[1]-cam.y)*cam.z;if(sx<-80||sy<-80||sx>VW+80||sy>VH+80)return;v=clamp(cam.z,.45,1.15);const dx=sx/VW-.5;v*=1-Math.abs(dx)*.3}
  if(AU.voices>14)return;AU.last[name]=t;AU.voices++;setTimeout(()=>AU.voices--,250);SFX[name](AU.sfxG,t+.005,v,.92+Math.random()*.16)}
@@ -1619,6 +1639,24 @@ function nearMill(f){if(f.millT>S.t)return f.mill;f.millT=S.t+5;f.mill=blds.some
 const COLORS={blue:'#2f6fe0',red:'#d6392b',green:'#3a9a46',gold:'#d9a521',purple:'#8a4ad0',teal:'#1fa3a3',orange:'#e0742a'};
 const ROOFS={red:{roof:'#a8492e',roofTex:'tile'},blue:{roof:'#3e5a8a',roofTex:'slate'},green:{roof:'#2e6a58',roofTex:'slate'},slate:{roof:'#585e6c',roofTex:'slate'},gold:{roof:'#c89a3a',roofTex:'tile'},black:{roof:'#33302e',roofTex:'slate'}};
 function applyColors(o){const pick=COLORS[o&&o.color]||COLORS.blue;const rest=['blue','red','green','gold','purple','teal','orange'].map(k=>COLORS[k]).filter(c=>c!==pick);PCOL[0]=pick;for(let i=1;i<PCOL.length;i++)PCOL[i]=rest[i-1];sprC.clear();uC.clear()}
+
+/* ---------- morale: badly beaten soldiers run for home ---------- */
+let fleeToastT=-99;
+function moraleTick(){if(peace())return;for(const u of units){if(u.gar||u.nav||!isMil(u))continue;const d=ud(u);if(d.hero||d.tag==='sie'||d.tag==='kng'||u.stance==='hold'||u.flee>S.t)continue;if(u.hp>uMaxHp(u)*.2)continue;
+ let foe=0,friend=0;for(const e of units){if(e.gar||!isMil(e))continue;const dd=Math.abs(e.x-u.x)+Math.abs(e.y-u.y);if(dd>8)continue;if(isEnemy(u.o,e.o))foe++;else friend++}
+ if(foe<2*Math.max(1,friend))continue;let home=null,hd=1e9;for(const b of blds){if(b.o!==u.o||b.built<1||!(b.type==='tc'||b.type==='castle'||b.type==='tower'))continue;const dd=Math.hypot(b.x-u.x,b.y-u.y);if(dd<hd){hd=dd;home=b}}if(!home)continue;
+ u.flee=S.t+7;u.task={k:'move',x:home.x+home.w/2,y:home.y+home.h+.6};u.path=null;if(u.o===0&&S.t-fleeToastT>20){fleeToastT=S.t;toast('Some of your soldiers are fleeing!','bad',{x:u.x,y:u.y})}}}
+/* ---------- weather: rain and storms ---------- */
+const wxWet=()=>!!(S&&S.wx&&(S.wx.k==='rain'||S.wx.k==='storm'));
+let flash=0,rainDrops=null;
+function weatherTick(){if(!S)return;if(!S.wx)S.wx={k:'clear',until:0,next:S.t+200+Math.random()*200};const w=S.wx;if(!seasonsOn()){w.k='clear';return}
+ if(w.k!=='clear'&&S.t>=w.until){w.k='clear';w.next=S.t+150+Math.random()*180;if(running)toast('The weather clears.')}
+ else if(w.k==='clear'&&S.t>=w.next){if(seasonIx()===3){w.next=S.t+120;return}w.k=Math.random()<.3?'storm':'rain';w.until=S.t+60+Math.random()*70;if(running)toast(w.k==='storm'?'A storm rolls in: everyone moves slower, ships much slower, and arrows fly poorly.':'It starts to rain: units move a little slower and arrows do less damage.')}
+ if(w.k==='storm'&&Math.random()<.12){flash=1;sfx('thunder')}}
+function WEATHER(){if(!wxWet())return;const storm=S.wx.k==='storm';ctx.save();ctx.setTransform(DPR,0,0,DPR,0,0);ctx.fillStyle=storm?'rgba(18,24,40,.28)':'rgba(30,40,60,.16)';ctx.fillRect(0,0,VW,VH);
+ if(!rainDrops)rainDrops=Array.from({length:160},()=>({x:Math.random(),y:Math.random(),l:.6+Math.random()*.8,v:.9+Math.random()*.6}));const t=performance.now()/1000;ctx.strokeStyle=storm?'rgba(200,215,235,.55)':'rgba(190,205,230,.45)';ctx.lineWidth=1;ctx.beginPath();
+ const n=storm?160:100;for(let k=0;k<n;k++){const d=rainDrops[k];const y=((d.y+t*d.v*(storm?1.6:1.2))%1)*VH,x=((d.x+t*.05*(storm?3:1))%1)*VW;ctx.moveTo(x,y);ctx.lineTo(x-(storm?5:2.5)*d.l,y+12*d.l)}ctx.stroke();
+ if(flash>0){ctx.fillStyle=`rgba(235,240,255,${flash*.55})`;ctx.fillRect(0,0,VW,VH);flash=Math.max(0,flash-.08)}ctx.restore()}
 /* ---------- icons ---------- */
 const ICON={};
 function iconCanvas(f,bg){const c=document.createElement('canvas');c.width=c.height=64;const g=c.getContext('2d');if(bg){const gr=g.createRadialGradient(28,24,4,32,32,34);gr.addColorStop(0,bg[0]);gr.addColorStop(1,bg[1]);g.fillStyle=gr;rr(g,1,1,62,62,10);g.fill()}f(g);return c.toDataURL()}
@@ -1643,7 +1681,7 @@ function sym(g,k,cx,cy,s,c){g.save();g.translate(cx,cy);g.scale(s,s);g.strokeSty
 function makeIcons(sk){
  for(const t in U)ICON['u_'+t]=iconCanvas(g=>{const tg=U[t].tag;g.save();g.translate(32,tg==='cav'?54:tg==='sie'||tg==='trd'?50:tg==='shp'?48:tg==='ani'?44:56);const s=tg==='cav'?1.75:tg==='sie'?1.6:tg==='trd'?1.25:tg==='shp'?(t==='galley'?1.1:1.5):tg==='ani'?2.6:2.3;g.scale(s,s);if(tg==='ani')drawAnimal(g,'sheep',1,0,0,0);else drawUnit(g,t,0,1,0,'idle',null,true);g.restore()},isHero(t)?['#8a6a2e','#3a2a10']:U[t].uu?['#6a3a5a','#2a1020']:['#6a4b2e','#2a1b10']);
  for(const t in B)ICON['b_'+t]=iconCanvas(g=>{if(t==='field'){drawFarmAt(g,8,10,48,44,1,0,true);return}if(t==='road'){const sp=roadSprite(5);g.drawImage(sp,4,14,56,28);return}const c=bSprite(t,sk,0);const w=c.width/c.sc,h=c.height/c.sc;const s=Math.min(58/w,58/h);g.drawImage(c,32-w*s/2,32-h*s/2+2,w*s,h*s)},['#5a7a3a','#2b3d1c']);
- for(const t in TECH){const tc=TECH[t];ICON['t_'+t]=iconCanvas(g=>{if(tc.up){sym(g,'crown',32,30,1.6,'#f2cf6a');g.fillStyle='#f6ecd5';g.font='900 15px Cinzel,serif';g.textAlign='center';g.fillText(['II','III','IV'][tc.up-1],32,56);return}sym(g,tc.ic,32,32,1.7,'#f6ecd5')},tc.up?['#7a3a2a','#3a1a12']:['#3d5a7a','#1a2a3d'])}
+ for(const t in TECH){const tc=TECH[t];ICON['t_'+t]=iconCanvas(g=>{if(tc.up){sym(g,'crown',32,30,1.6,'#f2cf6a');g.fillStyle='#f6ecd5';g.font='900 15px Cinzel,serif';g.textAlign='center';g.fillText(['II','III','IV'][tc.up-1],32,56);return}sym(g,tc.ic,32,32,1.7,'#f6ecd5');if(tc.upg){g.fillStyle='#ffd34a';g.beginPath();g.moveTo(50,10);g.lineTo(58,22);g.lineTo(42,22);g.fill();g.fillRect(47,22,6,8)}},tc.upg?['#3a6a3a','#1a3a1a']:tc.up?['#7a3a2a','#3a1a12']:['#3d5a7a','#1a2a3d'])}
  ICON.food=iconCanvas(g=>{for(const [x,y] of [[24,36],[38,34],[31,24],[30,42]]){g.fillStyle='#b8283a';g.beginPath();g.arc(x,y,9,0,7);g.fill();g.fillStyle='#ff6b6b';g.beginPath();g.arc(x-3,y-3,3,0,7);g.fill()}g.fillStyle='#3f8436';g.beginPath();g.ellipse(34,14,8,4,-.5,0,7);g.fill()});
  ICON.wood=iconCanvas(g=>{for(const [x,y] of [[14,42],[30,42],[22,28],[46,42],[38,28]]){g.fillStyle='#7a5230';g.fillRect(x-10,y-7,12,14);g.fillStyle='#e2bd86';g.beginPath();g.arc(x+2,y,7,0,7);g.fill();g.strokeStyle='#9b7448';g.lineWidth=1.5;g.beginPath();g.arc(x+2,y,3.5,0,7);g.stroke()}});
  ICON.gold=iconCanvas(g=>{for(const [x,y,s] of [[22,40,12],[42,42,11],[32,26,12]]){g.fillStyle='#a87a10';g.beginPath();g.moveTo(x-s,y+s*.5);g.lineTo(x-s*.4,y-s*.6);g.lineTo(x+s*.6,y-s*.5);g.lineTo(x+s,y+s*.4);g.closePath();g.fill();g.fillStyle='#f2c63e';g.beginPath();g.moveTo(x-s*.7,y+s*.2);g.lineTo(x-s*.3,y-s*.5);g.lineTo(x+s*.5,y-s*.4);g.lineTo(x+s*.6,y+s*.1);g.closePath();g.fill();g.fillStyle='#fff3b0';g.fillRect(x-s*.2,y-s*.4,s*.4,s*.2)}});
@@ -1865,7 +1903,7 @@ panel.addEventListener('click',e=>{const t=e.target.closest('[data-a]');if(!t)re
 function updTop(){const p=P[0];for(const r of R4){const el=$('#r-'+r+' b');const v=Math.floor(p.res[r]);if(el.textContent!==String(v))el.textContent=v}
  $('#r-pop b').textContent=p.pop+'/'+p.popCap;$('#r-pop').classList.toggle('warn',p.pop>=p.popCap);
  let ag=PHASE[p.phase]+' Phase';for(const b of blds)if(b.o===0&&b.queue.length&&b.queue[0].t&&TECH[b.queue[0].t].up){ag=`${PHASE[p.phase+1]} ${Math.floor(b.queue[0].p/TECH[b.queue[0].t].tm*100)}%`}
- $('#age b').textContent=ag;const t=Math.floor(S.t);const pc=peace()?' · Peace '+Math.floor((S.peace-S.t)/60)+':'+String(Math.floor((S.peace-S.t)%60)).padStart(2,'0'):'';$('#age small').textContent=(seasonsOn()?SEAS[seasonIx()]+(nightF()>.3?' night':'')+' · ':'')+Math.floor(t/60)+':'+String(t%60).padStart(2,'0')+pc;
+ $('#age b').textContent=ag;const t=Math.floor(S.t);const pc=peace()?' · Peace '+Math.floor((S.peace-S.t)/60)+':'+String(Math.floor((S.peace-S.t)%60)).padStart(2,'0'):'';$('#age small').textContent=(seasonsOn()?SEAS[seasonIx()]+(nightF()>.3?' night':'')+(wxWet()?(S.wx.k==='storm'?' storm':' rain'):'')+' · ':'')+Math.floor(t/60)+':'+String(t%60).padStart(2,'0')+pc;
  const idle=units.filter(u=>u.o===0&&ud(u).tag==='vil'&&!u.task&&!u.gar).length;const bi=$('#bIdle .badge');bi.textContent=idle||'';
  const army=units.filter(u=>u.o===0&&isMil(u)).length;const ba=$('#bArmy .badge');ba.textContent=army||'';ba.style.background=army?'#3f6ea8':''}
 
@@ -1980,6 +2018,16 @@ function showAllies(){const al=allyList();if(!al.length){toast('You have no alli
   p.ai.req={k,x,y,until:p.ai.t+120,sent:0};$('#allyScr').hidden=true;toast(`${p.civN}: ${k==='defend'?'marching to your town':'attacking'}!`,'good',{x,y});sfx('ackS')})}
 $('#allyBtn').onclick=()=>{paused=true;showAllies();$('#allyScr').hidden=false};$('#allyClose').onclick=()=>{$('#allyScr').hidden=true;paused=false};
 
+/* ---------- tech tree ---------- */
+function showTree(){const ck=running&&P[0]?P[0].civ:SETUP.civ,p=running?P[0]:null,civ=CIVS[ck];const ph=n=>PHASE[n]||'';const st=(id)=>!p?'':p.techs.includes(id)?'<i class="ok">✓</i>':(p.phase>=TECH[id].ph&&(!TECH[id].req||p.techs.includes(TECH[id].req)))?'<i class="av">●</i>':'<i class="lk">🔒</i>';
+ const chain=t=>{const out=[U[t].n];let cur=t,n=0;for(;n<4;n++){const nx=Object.keys(TECH).find(k=>TECH[k].upg&&TECH[k].upg.from===cur);if(!nx)break;cur=TECH[nx].upg.to;out.push(`${U[cur].n} <small>(${ph(TECH[nx].ph)})</small>`)}return out.join(' → ')};
+ let h=`<p class="sub">${civ.n}: ${civ.bonus}</p>`;
+ for(const k of Object.keys(B)){const d=B[k];if(!d.train&&!d.tech)continue;const us=(d.train||[]).map(t=>t==='UU'?civ.uu:t==='HERO'?civ.hero:t).filter(t=>U[t]);const ts=(d.tech||[]).filter(t=>TECH[t]);
+  h+=`<div class="ach got"><b>${d.n} <small>(${ph(d.ph)})</small></b>`;if(us.length)h+=`<span>Trains: ${us.map(t=>U[t].uu?`<b>${U[t].n}</b> (unique)`:U[t].hero?`<b>${U[t].n}</b> (hero)`:chain(t)).join(' · ')}</span>`;
+  if(ts.length)h+=`<span>Upgrades: ${ts.map(t=>`${st(t)}${TECH[t].n} <small>(${ph(TECH[t].ph)})</small>`).join(' · ')}</span>`;h+='</div>'}
+ $('#treeList').innerHTML=h;$('#treeScr').hidden=false}
+$('#treeBtn').onclick=showTree;$('#treeBtn2').onclick=showTree;$('#treeClose').onclick=()=>{$('#treeScr').hidden=true};
+
 /* ---------- optional tutorial and scenario missions ---------- */
 let missDone={};try{missDone=JSON.parse(localStorage.getItem('boc-missions')||'{}')}catch(e){}
 function objBar(txt,sub){const b=$('#tutBar');if(!txt){b.hidden=true;return}b.hidden=false;$('#tutTxt').innerHTML=txt;$('#tutSub').textContent=sub||''}
@@ -2050,7 +2098,7 @@ function newGame(o,demo){const seed=(Math.random()*1e9)|0;units=[];blds=[];anima
 function setupHudIcons(){for(const r of R4)$('#r-'+r+' img').src=ICON[r];$('#r-pop img').src=ICON.pop;$('#bIdle img').src=ICON.u_villager;$('#bArmy img').src=ICON.army;$('#bBox img').src=ICON.box;$('#bHome img').src=ICON.b_tc}
 const enc=a=>{let s='';for(let i=0;i<a.length;i++)s+=a[i].toString(36);return s};
 function save(){if(!running||!S)return;try{const data={v:2,S:Object.assign({},S),W,H,
- P:P.map(p=>({i:p.i,civ:p.civ,res:p.res,phase:p.phase,techs:p.techs,bell:p.bell,autoRep:p.autoRep,king:p.king,team:p.team,st:p.st,barter:p.barter,hero:p.hero,alive:p.alive,ai:p.ai?Object.assign({},p.ai,{waves:[...p.ai.waves]}):null})),
+ P:P.map(p=>({i:p.i,civ:p.civ,res:p.res,phase:p.phase,techs:p.techs,bell:p.bell,autoRep:p.autoRep,king:p.king,team:p.team,upg:p.upg,st:p.st,barter:p.barter,hero:p.hero,alive:p.alive,ai:p.ai?Object.assign({},p.ai,{waves:[...p.ai.waves]}):null})),
  U:units.map(u=>({id:u.id,type:u.type,o:u.o,x:+u.x.toFixed(2),y:+u.y.toFixed(2),hp:u.hp,carry:u.carry,ct:u.ct,gar:u.gar,cargo:u.cargo,face:u.face,task:u.task,xp:u.xp,rank:u.rank,stance:u.stance,home:u.home})),
  B:blds.map(b=>({id:b.id,type:b.type,o:b.o,x:b.x,y:b.y,hp:b.hp,built:b.built,queue:b.queue,rally:b.rally,gar:b.gar,started:b.started,cp:b.cp,slots:b.slots,wonderT:b.wonderT,locked:b.locked})),
  A:animals.map(a=>({id:a.id,type:a.type,o:a.o,x:+a.x.toFixed(2),y:+a.y.toFixed(2),hp:a.hp,food:a.food,carc:a.carc,hx:a.hx,hy:a.hy})),
@@ -2059,7 +2107,7 @@ function save(){if(!running||!S)return;try{const data={v:2,S:Object.assign({},S)
 function hasSave(){try{return !!localStorage.getItem('boc-save2')}catch(e){return false}}
 function load(){let d;try{d=JSON.parse(localStorage.getItem('boc-save2'))}catch(e){return false}if(!d||d.v!==2)return false;
  applyColors(d.S.opts);alloc(d.W,d.H);units=[];blds=[];animals=[];ents=new Map();projs=[];fx=[];rubble=[];sel=[];placing=null;cmdMode=null;pings=[];uC.clear();lastSig='';S=Object.assign({},d.S);
- P=d.P.map(q=>{const p=newPlayer(q.i,q.civ,'std');Object.assign(p,{res:q.res,phase:q.phase,techs:q.techs,bell:q.bell,autoRep:q.autoRep,king:q.king,team:q.team,st:q.st,barter:q.barter,hero:q.hero,alive:q.alive});if(q.ai)p.ai=Object.assign({},q.ai,{waves:new Set(q.ai.waves)});recomputeMods(p);return p});
+ P=d.P.map(q=>{const p=newPlayer(q.i,q.civ,'std');Object.assign(p,{res:q.res,phase:q.phase,techs:q.techs,bell:q.bell,autoRep:q.autoRep,king:q.king,team:q.team,upg:q.upg,st:q.st,barter:q.barter,hero:q.hero,alive:q.alive});if(q.ai)p.ai=Object.assign({},q.ai,{waves:new Set(q.ai.waves)});recomputeMods(p);return p});
  for(let i=0;i<N;i++){if(d.el){elevL[i]=+d.el[i];cliffM[i]=+d.cl[i]}ter[i]=parseInt(d.ter[i],36);resT[i]=parseInt(d.rt[i],36);treeK[i]=parseInt(d.tk[i],36);explored[i]=+d.ex[i];resA[i]=d.ra[i];block[i]=resT[i]?1:0}
  for(const q of d.B){const b=Object.assign({k:'b',w:B[q.type].w,h:B[q.type].h,cd:Math.random(),dmgT:0},q);blds.push(b);ents.set(b.id,b);stampB(b,true)}
  for(const q of d.U){const u=Object.assign({k:'u',path:null,cd:0,an:0,th:Math.random(),rp:0,r:RAD[U[q.type].tag]||.3,swing:0,work:0,nav:U[q.type].nav?1:0,aura:null},q);units.push(u);ents.set(u.id,u)}
@@ -2071,11 +2119,11 @@ let last=performance.now(),acc=0,uiT=0,miniT=0;
 function updAuras(){for(const u of units)u.aura=null;for(const p of P){const h=p.hero&&ents.get(p.hero);if(!h||h.gar)continue;const k=ud(h).hero;for(const u of units){if(u.o!==p.i||u===h||u.gar||!isMil(u))continue;if(Math.hypot(u.x-h.x,u.y-h.y)<=7)u.aura=k}}}
 function tick(){S.t+=DT;S.tick++;pathBudget=0;
  for(const b of blds.slice())if(!b.dead)updBld(b,DT);
- for(const u of units.slice())if(!u.dead){u.work=0;updUnit(u,DT);if(u.work&&u.o===0)workSfx(u)}
+ for(const u of units.slice())if(!u.dead){const ox=u.x,oy=u.y;u.work=0;updUnit(u,DT);if(u.work&&u.o===0)workSfx(u);const mv=Math.abs(u.x-ox)+Math.abs(u.y-oy);u.chg=mv>.001?Math.min(12,(u.chg||0)+mv):Math.max(0,(u.chg||0)-DT*2)}
  for(const a of animals.slice())if(!a.dead)updAnimal(a,DT);
  if(roadDirty)roadSync();cargoFollow();
  if(S.tick%2===0)separate();
- if(S.tick%20===3){hillTick();relicTick()}if(S.tick%600===0)histTick();if(S.tick%40===0)achTick();
+ if(S.tick%20===3){hillTick();relicTick();moraleTick();weatherTick()}if(S.tick%600===0)histTick();if(S.tick%40===0)achTick();
  if(S.tick%20===7)for(const p of P)if(p.alive)autoRepair(p);
  for(const p of projs){p.t+=DT;if(p.t>=p.dur){const t=ents.get(p.tid);if(t&&!t.dead&&!(t.k==='u'&&t.gar))hit(t,p.d,p.o,p.aid);
    if(p.splash){for(const u of units){if(u.gar||!isEnemy(p.o,u.o)||u===t)continue;if(Math.hypot(u.x-p.tx,u.y-p.ty)<p.splash)hit(u,p.d*.6,p.o,p.aid)}fx.push({k:'dust',x:p.tx,y:p.ty,t:0,life:.8,s:.5})}p.done=1}
