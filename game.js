@@ -242,7 +242,7 @@ function rankMul(u){return u.rank===3?1.3:u.rank===2?1.2:u.rank===1?1.1:1}
 function uMaxHp(u){const d=ud(u),m=P[u.o].m;let h=d.hp;if(d.uu&&m.eliteUU)h*=1.25;if(d.tag==='vil')h+=m.vhp;if(m.hp[d.tag])h*=1+m.hp[d.tag];return Math.round(h*rankMul(u))}
 const bMaxHp=b=>Math.round(B[b.type].hp*P[b.o].m.bhp*(b.lvl&&UPG[b.type]&&UPG[b.type].hp?1+UPG[b.type].hp:1));
 const cpMax=b=>Math.round(B[b.type].hp*.5);
-function uAtk(u){const d=ud(u),m=P[u.o].m;let a=d.atk+(d.tag==='vil'||d.tag==='sie'?0:m.atk[d.at]);if(d.uu&&m.eliteUU)a*=1.25;a*=rankMul(u);if(u.aura==='atk')a*=1.2;if(u.insp>S.t)a*=1.2;if(u.hungry>=3)a*=.85;if(u.ab&&u.ab.until>S.t){if(u.ab.k==='charge')a*=1.5;else if(u.ab.k==='volley')a*=1.4}return a}
+function uAtk(u){const d=ud(u),m=P[u.o].m;let a=d.atk+(d.tag==='vil'||d.tag==='sie'?0:m.atk[d.at]);if(d.uu&&m.eliteUU)a*=1.25;a*=rankMul(u);if(u.aura==='atk')a*=1.2;if(u.insp>S.t)a*=1.2;if(u.hungry>=3)a*=.85;if(blessOn(u.o))a*=1.15;if(u.ab&&u.ab.until>S.t){if(u.ab.k==='charge')a*=1.5;else if(u.ab.k==='volley')a*=1.4}return a}
 function uArm(u,k){const d=ud(u),m=P[u.o].m,i=k==='m'?0:1;let a=d.arm[i];if(d.tag==='vil')a+=m.varm[i];else if(d.tag!=='sie'&&d.tag!=='shp'&&d.tag!=='trd')a+=m.arm[i];if(d.tag==='shp')a+=m.armT.shp;a+=u.rank||0;if(u.aura==='arm')a+=2;if(u.ab&&u.ab.k==='wall'&&u.ab.until>S.t)a+=k==='m'?4:6;return a}
 function uRng(u){const d=ud(u),m=P[u.o].m;if(!d.rng)return 0;return d.rng+(d.at==='p'&&d.tag!=='sie'?m.rng:0)+(d.tag==='arc'?m.arcRng:0)+(u.ab&&u.ab.k==='brace'&&u.ab.until>S.t?3:0)}
 function uSpd(u){const d=ud(u),m=P[u.o].m;let s=d.spd;if(S&&S.wx&&S.wx.k!=='clear'){if(d.tag==='shp'){if(S.wx.k==='storm')s*=.7}else s*=.9}if(u.flee>S.t)s*=1.1;if(d.tag==='vil')s*=1+m.vspd;if(m.spd[d.tag])s*=1+m.spd[d.tag];if(u.aura==='spd')s*=1.15;if(u.ab&&u.ab.until>S.t){if(u.ab.k==='charge')s*=1.6;else if(u.ab.k==='wall')s*=.5;else if(u.ab.k==='brace')s=0}return s}
@@ -1636,12 +1636,12 @@ function render(){const z=cam.z;ctx.setTransform(DPR,0,0,DPR,0,0);ctx.fillStyle=
    if(t===1){const sp=treeV[treeK[i]]||treeV[h%6];const s=(.88+((h>>4)%5)*.06)*1.45;const ox=((h>>8)%9)-4,oy=((h>>11)%5)-2;ctx.drawImage(sp,p[0]-24*s+ox,p[1]-51*s+oy,44*s,56*s)}
    else{const sp=resV[t][h%3];const f=(t===5?1:.7+.3*Math.min(1,resA[i]/RAMT[t]))*1.55;ctx.drawImage(sp,p[0]-17*f,p[1]-25*f+4,34*f,30*f)}}
   else if(it[1]===4){const i=it[2],x=i%W,y=(i/W)|0,p=it[3];const h=(x*73856093^y*19349663)>>>0;const sp=cliffM&&cliffM[i]?cliffSprite(h%3):rockSprite(h%4);const s=cliffM&&cliffM[i]?1:1.15+((h>>5)%5)*.08;ctx.drawImage(sp,p[0]-sp.w*s/2,p[1]-sp.h*s+16,sp.w*s,sp.h*s)}
-  else if(it[1]===1){drawBld(ctx,it[2]);if(it[2].lvl||it[2].upgT)upgFx(ctx,it[2])}
+  else if(it[1]===1){drawBld(ctx,it[2]);if(it[2].lvl||it[2].upgT)upgFx(ctx,it[2]);if(it[2].revolt)revoltFx(ctx,it[2])}
   else if(it[1]===5)drawSite(ctx,it[2]);
   else if(it[1]===6)drawFolk(ctx,it[2]);
   else if(it[1]===3){const a=it[2],p=it[3];if(!a.carc){ctx.fillStyle='rgba(0,0,0,.28)';ctx.beginPath();ctx.ellipse(p[0],p[1],9,3.4,0,0,7);ctx.fill()}const sp=animalSprite(a);ctx.drawImage(sp,p[0]-sp.ox,p[1]-sp.oy,sp.w,sp.h)}
   else{const u=it[2],p=it[3];const st=u.mv?'walk':u.work?'work':u.swing>0?'atk':'idle';const tg=U[u.type].tag;if(tg!=='shp'){ctx.fillStyle='rgba(0,0,0,.3)';ctx.beginPath();ctx.ellipse(p[0],p[1],(tg==='sie'?15:tg==='cav'?10:6.5)*US,(tg==='sie'?4.5:tg==='cav'?3.4:2.8)*US,0,0,7);ctx.fill()}
-   climbFx(ctx,u,p);if(u.ab)abilFx(ctx,u,p);const sp=unitSprite(u,st);ctx.drawImage(sp,p[0]-sp.ox,p[1]-sp.oy,sp.w,sp.h);if(u.flagB||u.drumB)drawBanner(ctx,u,p);if(u.dockW)bridgeFx(ctx,u,p);if(cam.z>=HI_Z)closeUpFx(ctx,u,p);if(u.hungry>=3)supplyFx(ctx,u,p)}}
+   climbFx(ctx,u,p);if(u.ab)abilFx(ctx,u,p);const sp=unitSprite(u,st);ctx.drawImage(sp,p[0]-sp.ox,p[1]-sp.oy,sp.w,sp.h);if(u.flagB||u.drumB)drawBanner(ctx,u,p);if(u.dockW)bridgeFx(ctx,u,p);if(cam.z>=HI_Z)closeUpFx(ctx,u,p);if(u.hungry>=3)supplyFx(ctx,u,p);blessFx(ctx,u,p)}}
  SMOKEFX(cull);FIREFX(cull);ARMSFX();
  for(const pr of projs){const f=Math.min(1,pr.t/pr.dur);const x=pr.x0+(pr.tx-pr.x0)*f,y=pr.y0+(pr.ty-pr.y0)*f;const arc=pr.kind==='rock'?70:26;const zz=16+Math.sin(f*Math.PI)*arc;const p=PJ(x,y,zz);
   if(pr.kind==='rock'){ctx.fillStyle='#4a4038';ctx.beginPath();ctx.arc(p[0],p[1],4.5,0,7);ctx.fill();ctx.strokeStyle='#1a140e';ctx.lineWidth=1;ctx.stroke()}
@@ -2220,6 +2220,7 @@ function renderPanel(){if(!S)return;const s=selection(),p=P[0];
   if(d.gar&&b.gar.length)html+=btn('unload','unload','Unload all',null,true);
   if(d.gate){html+=btn('lock','lock',b.locked?'Unlock gate':'Lock gate',null,true,b.locked?'ok':'');sig+=b.locked?'L':''}
   if(UPG[b.type]&&b.o===0&&b.built>=1&&!b.lvl){const U2=UPG[b.type];html+=btn('bupg','b_'+b.type,b.upgT?'Upgrading…':U2.n,b.upgT?null:U2.cost,!b.upgT&&p.phase>=U2.ph&&afford(p,U2.cost),'',p.phase<U2.ph?PHASE[U2.ph]:null);sig+=b.upgT?'U':'u'}
+  if(b.type==='temple'&&b.o===0&&b.built>=1){const [mh,ms]=mirButtons(b,p);html+=mh;sig+='m'+ms}
   if(INSIDE[b.type]&&b.built>=1)html+=btn('inside','b_'+b.type,'Look inside',null,true);
   if(b.type==='tc'){html+=btn('autorep','repair','Auto-repair: '+(p.autoRep?'On':'Off'),null,true,p.autoRep?'ok':'');sig+=p.autoRep?'R':''}
   if(d.market){for(const r of ['food','wood','stone']){const pr=p.barter[r];html+=btn('buy:'+r,r,'Buy 100',null,p.res.gold>=Math.round(pr*(1+.2*p.m.barter)),'',Math.round(pr*(1+.2*p.m.barter))+' gold')+btn('sell:'+r,r,'Sell 100',null,p.res[r]>=100,'',Math.round(pr*(1-.25*p.m.barter))+' gold')}sig+=JSON.stringify(p.barter)+Math.floor(p.res.gold/50)}}
@@ -2235,7 +2236,7 @@ function act(a){if(S&&S.spectate){toast('Spectating: the computer plays every ki
  if(k==='stop'){for(const u of s.es)if(u.k==='u'){u.task=null;u.path=null;u.home={x:u.x,y:u.y}}cmdMode=null;return}
  if(k==='stance'){for(const u of s.es)if(u.k==='u'&&isMil(u)){u.stance=v;u.home={x:u.x,y:u.y};if(v==='pas'&&u.task&&u.task.k==='atk')u.task=null}lastSig='';return}
  if(k==='unloadship'){for(const id of sel){const s=ents.get(id);if(isTransport(s)&&(s.cargo||[]).length)unloadShip(s)}lastSig='';return}
- if(k==='abil'){abilAct(v);return}if(k==='rally'){rallyAct();return}if(k==='bupg'){const bb=s.es.find(e=>e.k==='b');if(bb)bupgAct(bb);return}if(k==='inside'){const bb=s.es.find(e=>e.k==='b');if(bb)showInside(bb);return}if(k==='form'){S.form=FORM_K[(FORM_K.indexOf(S.form||'loose')+1)%FORM_K.length];lastSig='';panelDirty=true;toast('Formation: '+FORMS[S.form]+(S.form==='loose'?'':'. Melee in front, archers behind, siege at the back.'));return}
+ if(k==='abil'){abilAct(v);return}if(k==='rally'){rallyAct();return}if(k==='mir'){const bb=s.es.find(e=>e.k==='b');if(bb)miracle(0,v,bb);return}if(k==='bupg'){const bb=s.es.find(e=>e.k==='b');if(bb)bupgAct(bb);return}if(k==='inside'){const bb=s.es.find(e=>e.k==='b');if(bb)showInside(bb);return}if(k==='form'){S.form=FORM_K[(FORM_K.indexOf(S.form||'loose')+1)%FORM_K.length];lastSig='';panelDirty=true;toast('Formation: '+FORMS[S.form]+(S.form==='loose'?'':'. Melee in front, archers behind, siege at the back.'));return}
  if(k==='amove'||k==='patrol'||k==='gar'||k==='trade'){cmdMode=cmdMode===k?null:k;lastSig='';return}
  if(k==='del'){delArm=performance.now()+2500;lastSig='';return}
  if(k==='del2'){delArm=0;for(const e of s.es){if(e.o!==0)continue;if(e.k==='b'&&e.built<1)refund(p,B[e.type].cost,1-e.built);kill(e,0,true)}lastSig='';return}
@@ -2313,7 +2314,7 @@ function placeRelics(starts){S.relics=[];const n={s:4,m:6,l:8}[S.size]||6;let id
 function relicAt(w){for(const r of S.relics||[]){if(r.c||r.t)continue;if(Math.hypot(r.x-w.x,r.y-w.y)<.9)return r}return null}
 function dropRelic(r,x,y){r.c=0;r.t=0;r.claim=0;const sp=spotsNear({x,y},1,0)[0]||{x,y};r.x=sp.x;r.y=sp.y}
 function relicTick(){if(!S.relics)return;for(const r of S.relics){if(r.c&&!ents.has(r.c)){const u=r.lastPos||{x:r.x,y:r.y};dropRelic(r,u.x,u.y)}if(r.c){const u=ents.get(r.c);if(u){r.lastPos={x:u.x,y:u.y};r.x=u.x;r.y=u.y}}
- if(r.t){const b=ents.get(r.t);if(!b||b.dead){dropRelic(r,r.x,r.y);continue}P[b.o].res.gold+=.5;P[b.o].st.gath+=.5}}}
+ if(r.t){const b=ents.get(r.t);if(!b||b.dead){dropRelic(r,r.x,r.y);continue}{const g=isCath(b)?1:.5;P[b.o].res.gold+=g;P[b.o].st.gath+=g}}}}
 function doRelic(u,t,dt){const r=(S.relics||[]).find(q=>q.id===t.rid);if(!r||r.t){u.task=null;return}
  if(!r.c){if(Math.hypot(r.x-u.x,r.y-u.y)<.8){r.c=u.id;r.claim=0;u.path=null;if(u.o===0)toast('Relic picked up. Take it to a monastery.','good')}else{if(!u.path||!u.path.length){if(u.rp>0||pathBusy(u))return;u.rp=.4;goPoint(u,r.x,r.y);if(!u.path.length&&u.partial){u.task=null;return}}step(u,dt);return}}
  if(r.c!==u.id){u.task=null;return}let tb=null,bd=1e9;for(const b of blds){if(b.o!==u.o||b.type!=='temple'||b.built<1)continue;const d=rectDist(u.x,u.y,b.x,b.y,b.w,b.h);if(d<bd){bd=d;tb=b}}
@@ -2360,7 +2361,7 @@ function allyList(){return P.filter(p=>p.i&&myTeam(p.i)&&p.alive)}
 function showAllies(){const al=allyList();
  $('#allyList').innerHTML=al.map(p=>`<div class="ach got"><b><i class="sw" style="background:${PCOL[p.i]}"></i>${p.civN}</b><span>Food ${Math.floor(p.res.food)} · Wood ${Math.floor(p.res.wood)} · Stone ${Math.floor(p.res.stone)} · Gold ${Math.floor(p.res.gold)}</span>
   <div class="row wrap">${R4.map(r=>`<button class="seg1" data-gift="${p.i}:${r}">Send 100 ${r}</button>`).join('')}</div>
-  <div class="row"><button class="seg1 on" data-req="${p.i}:attack">Attack where I'm looking</button><button class="seg1 on" data-req="${p.i}:defend">Defend my town</button></div></div>`).join('')+prisonSection()+diploSection();bindDiplo();bindPrison();
+  <div class="row"><button class="seg1 on" data-req="${p.i}:attack">Attack where I'm looking</button><button class="seg1 on" data-req="${p.i}:defend">Defend my town</button></div></div>`).join('')+marriageSection()+prisonSection()+diploSection();bindDiplo();bindPrison();bindMarriage();
  $('#allyList').querySelectorAll('[data-gift]').forEach(b=>b.onclick=()=>{const [i,r]=b.dataset.gift.split(':');const me=P[0];if(me.res[r]<100){toast('Not enough '+r,'bad');return}me.res[r]-=100;P[+i].res[r]+=100;sfx('click');showAllies()});
  $('#allyList').querySelectorAll('[data-req]').forEach(b=>b.onclick=()=>{const [i,k]=b.dataset.req.split(':');const p=P[+i];let x,y;
   if(k==='defend'){const tc=blds.find(q=>q.o===0&&(q.type==='tc'||q.type==='castle'));if(!tc){toast('You have no town to defend','bad');return}x=tc.x+tc.w/2;y=tc.y+tc.h/2}
@@ -3029,6 +3030,68 @@ function prisonAITick(){if(!S||S.spectate)return;for(const p of P){if(!p.ai||!p.
   for(const q of P){if(q.i===p.i||!q.ai)continue}}
  const mine=P[0].prisoners||[];for(let k=0;k<mine.length;k++){const pr=mine[k];if(S.t-pr.t<90||pr.asked||!P[pr.o].ai||P[pr.o].alive===false)continue;const foe=P[pr.o],g=Math.round(ransomOf(pr)*1.2);if(foe.res.gold<g)continue;pr.asked=1;
   if($('#dipScr').hidden)dipAsk(foe,`“Return ${U[pr.type].hero?U[pr.type].n:pr.vn} to us and we will pay you ${g} gold.”`,()=>{const i=(P[0].prisoners||[]).indexOf(pr);if(i<0)return;foe.res.gold-=g;P[0].res.gold+=g;freePrisoner(0,i);toast(`+${g} gold ransom.`,'good')},()=>toast('You keep your prisoner.'),`Accept ${g} gold`,'Keep him');break}}
+/* ---------- cathedrals, faith and miracles ---------- */
+UPG.temple={n:'Cathedral',cost:{stone:300,gold:200},ph:2,tm:50,hp:.5,cath:1,d:'Relics give double gold and twice the faith. Unlocks Holy Day.'};
+const isCath=b=>b&&b.type==='temple'&&b.lvl;
+const MIR={bless:{n:'Blessing',f:100,d:'All your soldiers fight 15% harder for 40 seconds'},heal:{n:'Healing Light',f:80,d:'Fully heals your units near this monastery'},pilgrim:{n:'Pilgrims',f:60,d:'Pilgrims arrive with 120 gold'},holy:{n:'Holy Day',f:120,cath:1,d:'Calms all unrest and repairs every building by a quarter'}};
+const blessOn=o=>S&&S.bless&&S.bless[o]>S.t;
+function faithTick(){if(!S)return;for(const p of P){if(p.alive===false)continue;let f=0;for(const r of S.relics||[]){const b=r.t&&ents.get(r.t);if(b&&b.o===p.i)f+=isCath(b)?.3:.15}
+  for(const b of blds)if(b.o===p.i&&b.type==='temple'&&b.built>=1)f+=isCath(b)?.1:.05;for(const u of units)if(u.o===p.i&&u.type==='monk')f+=.03;p.faith=Math.min(300,(p.faith||0)+f)}
+ if(S.tick%400===120)for(const p of P){if(!p.ai||p.alive===false)continue;const tp=blds.find(b=>b.o===p.i&&b.type==='temple'&&b.built>=1);if(!tp)continue;
+  if((p.faith||0)>=150&&armyOf(p.i)>=8&&!blessOn(p.i))miracle(p.i,'bless',tp);else if((p.faith||0)>=200)miracle(p.i,isCath(tp)?'holy':'pilgrim',tp)}}
+function miracle(o,k,b){const m=MIR[k],p=P[o];if(!m||!b)return;if(m.cath&&!isCath(b)){if(o===0)toast('Only a Cathedral can call a Holy Day.','bad');return}if((p.faith||0)<m.f){if(o===0)toast(`Needs ${m.f} faith. Relics and monks build faith over time.`,'bad');return}
+ p.faith-=m.f;const cx=b.x+b.w/2,cy=b.y+b.h/2;fx.push({k:'ring',x:cx,y:cy,t:0,life:1.2,c:'#ffe58a'});
+ if(k==='bless'){S.bless=S.bless||{};S.bless[o]=S.t+40;for(const u of units)if(u.o===o&&isMil(u))fx.push({k:'ring',x:u.x,y:u.y,t:0,life:.8,c:'#ffe58a'})}
+ else if(k==='heal'){for(const u of units)if(u.o===o&&!u.gar&&Math.hypot(u.x-cx,u.y-cy)<14&&u.hp<uMaxHp(u)){u.hp=uMaxHp(u);fx.push({k:'ring',x:u.x,y:u.y,t:0,life:.8,c:'#9fe8a0'})}}
+ else if(k==='pilgrim'){p.res.gold+=120}
+ else if(k==='holy'){p.unrest=0;for(const q of blds)if(q.o===o&&q.built>=1)q.hp=Math.min(bMaxHp(q),q.hp+bMaxHp(q)*.25)}
+ if(o===0){sfx('fanfare');toast(`${m.n}! ${m.d}.`,'good',{x:cx,y:cy});panelDirty=true;lastSig='';if(k==='holy'&&typeof chron==='function')chron('A Holy Day was proclaimed at our cathedral, and the whole realm rejoiced.')}
+ else if(isEnemy(0,o)&&vis[(cy|0)*W+(cx|0)])toast(`The ${p.civN} call down a ${m.n.toLowerCase()}!`,'bad')}
+function mirButtons(b,p){let h='',s='';for(const k in MIR){const m=MIR[k];if(m.cath&&!isCath(b))continue;const ok=(p.faith||0)>=m.f;s+=ok?1:0;h+=btn('mir:'+k,k==='heal'||k==='holy'?'b_temple':'u_monk',m.n,null,ok,'',`✝ ${m.f} (${Math.floor(p.faith||0)})`)}return [h,s]}
+function blessFx(g,u,p){if(!blessOn(u.o)||!isMil(u)||(u.o!==0&&!vis[(u.y|0)*W+(u.x|0)]))return;g.globalAlpha=.5+.3*Math.sin(S.t*4+u.id);g.strokeStyle='#ffe58a';g.lineWidth=1.4;g.beginPath();g.ellipse(p[0],p[1]-44,6,2,0,0,7);g.stroke();g.globalAlpha=1}
+
+/* ---------- unrest and rebellions ---------- */
+function unrestTick(){if(!S||S.editor||S.tut||S.mission||S.spectate)return;for(const p of P){if(p.alive===false)continue;const o=p.i;let d=-.35;const vil=units.filter(u=>u.o===o&&ud(u).tag==='vil').length;
+  if(vil>8&&p.res.food<40)d+=1.5;if(S.plague&&S.plague[o]&&S.plague[o].until>S.t)d+=1;if(S.drought&&S.drought[o]>S.t)d+=.6;if(p.pop>=p.popCap&&p.popCap<200)d+=.4;
+  const lost=p.st.lost-(p._lostSeen||0);p._lostSeen=p.st.lost;d+=Math.min(3,lost*.35);
+  const homes=blds.filter(b=>b.o===o&&(b.type==='tc'||b.type==='castle')&&b.built>=1);let far=0;for(const b of blds){if(b.o!==o||B[b.type].wall||B[b.type].flat)continue;if(!homes.some(h=>Math.hypot(h.x-b.x,h.y-b.y)<28))far++}d+=Math.min(1.5,far*.1);
+  let calm=0;for(const b of blds)if(b.o===o&&b.built>=1){if(b.type==='temple')calm+=isCath(b)?1.6:.8;else if(b.type==='market')calm+=.3}d-=Math.min(2.4,calm);
+  if(S.fest&&S.fest[o]>S.t)d-=2;if(blessOn(o))d-=1;if(p.reb)d=Math.min(d,0);
+  p.unrest=clamp((p.unrest||0)+d,0,100);
+  if(o===0&&!p.reb){if(p.unrest>=60&&!p._uw){p._uw=1;if(typeof advise==='function')advise('steward','Sire, the people grow restless. Feed them, build a monastery, or hold a festival before they rise against us.',1);toast('Your people are growing restless (unrest '+Math.round(p.unrest)+'). Check the 🤝 screen.','bad')}if(p.unrest<45)p._uw=0}
+  if(p.unrest>=100&&!p.reb&&!peace()&&S.t>300)rebellion(o)}
+ rebelTick()}
+function rebellion(o){const p=P[o];const homes=blds.filter(b=>b.o===o&&(b.type==='tc'||b.type==='castle'));if(!homes.length)return;let tgt=null,bd=-1;
+ for(const b of blds){if(b.o!==o||b.built<1||B[b.type].wall||B[b.type].flat||b.type==='tc'||b.type==='castle')continue;const d=Math.min(...homes.map(h=>Math.hypot(h.x-b.x,h.y-b.y)));if(d>bd){bd=d;tgt=b}}
+ if(!tgt)return;const n=Math.min(12,3+p.phase*2+Math.floor(S.t/900));const cx=tgt.x+tgt.w/2,cy=tgt.y+tgt.h/2;const q=freeAround(tgt);const ids=[];
+ for(let k=0;k<n;k++){const a=mkAnimal('bandit',q.x+Math.random()*1.6-.8,q.y+Math.random()*1.6-.8);if(a){a.reb=o;a.hx=cx;a.hy=cy;a.hp=75;ids.push(a.id)}}
+ p.reb={b:tgt.id,ids,t:S.t,n:ids.length};p.unrest=55;tgt.revolt=1;
+ if(o===0){sfx('horn');toast(`Rebellion! Peasants have seized your ${B[tgt.type].n.toLowerCase()} ${where(cx,cy)}.`,'bad',{x:cx,y:cy});if(typeof chron==='function')chron(`The people rose in rebellion and seized our ${B[tgt.type].n.toLowerCase()} ${where(cx,cy)}.`);
+  const g=150+p.phase*50;if($('#dipScr').hidden&&!S.hot)dipAsk({i:0,civN:'The rebel leaders'},`“Lower our taxes and pay us ${g} gold, and we will lay down our arms. Refuse, and we fight!”`,()=>{if(p.res.gold<g){toast('Not enough gold! The rebels fight on.','bad');return}p.res.gold-=g;endRebellion(o,true)},()=>toast('Send soldiers to crush the rebels.','bad'),`Pay ${g} gold`,'Crush them')}
+ else if(p.ai&&p.res.gold>400){p.res.gold-=200;endRebellion(o,true)}else if(p.ai){const ar=units.filter(u=>u.o===o&&isMil(u)&&canFight(u)&&!u.gar).slice(0,10);for(const u of ar){u.task={k:'move',x:cx,y:cy};u.path=null}}}
+function endRebellion(o,paid){const p=P[o],r=p.reb;if(!r)return;for(const id of r.ids){const a=ents.get(id);if(a&&!a.carc){a.dead=true;ents.delete(id);const i=animals.indexOf(a);if(i>=0)animals.splice(i,1)}}const b=ents.get(r.b);if(b)b.revolt=0;p.reb=null;
+ if(paid){p.unrest=10;if(o===0){toast('The rebels go home. Peace returns to the realm.','good');if(typeof chron==='function')chron('We paid the rebels and lowered taxes, and they went home in peace.')}}
+ else{p.unrest=Math.max(0,p.unrest-25);if(o===0){toast('The rebellion has been crushed!','good');sfx('fanfare');if(typeof chron==='function')chron('Our soldiers crushed the rebellion.')}}}
+function rebelTick(){for(const p of P){const r=p.reb;if(!r)continue;const b=ents.get(r.b);const alive=r.ids.filter(id=>{const a=ents.get(id);return a&&!a.carc&&!a.dead});
+  if(!alive.length){endRebellion(p.i,false);continue}if(!b||b.dead){r.b=-1}
+  for(const id of alive){const a=ents.get(id);if(b&&!b.dead&&!a.tgt&&rectDist(a.x,a.y,b.x,b.y,b.w,b.h)<1.6&&S.tick%40<20)hit(b,4,-1,0)}}}
+function revoltFx(g,b){if(!b.revolt)return;const q=PJ(b.x+.3,b.y+.3,0);g.strokeStyle='#2a1a0c';g.lineWidth=1.4;g.beginPath();g.moveTo(q[0],q[1]);g.lineTo(q[0],q[1]-30);g.stroke();g.fillStyle='#1a1a1a';g.beginPath();g.moveTo(q[0],q[1]-30);g.lineTo(q[0]-10,q[1]-27);g.lineTo(q[0],q[1]-23);g.fill()}
+const moodOf=u=>u<25?['Content','#7fe06a']:u<50?['Uneasy','#e8d070']:u<75?['Restless','#f0a050']:['On the brink of revolt','#f06050'];
+
+/* ---------- royal marriages ---------- */
+function canWed(p){return p&&p.ai&&p.alive!==false&&isEnemy(0,p.i)&&!p.wed&&rivalsOf0().length>1&&!S.hot&&!S.conq}
+function wed(p,fromThem){p.wed=1;P[0].wed=(P[0].wed||0)+1;joinTeam(p.i);P[0].unrest=Math.max(0,(P[0].unrest||0)-30);p.res.food+=200;
+ const tc=blds.find(b=>b.o===0&&(b.type==='castle'||b.type==='tc'));if(tc){const cx=tc.x+tc.w/2,cy=tc.y+tc.h/2;for(let k=0;k<14;k++)fx.push({k:'ring',x:cx+Math.random()*4-2,y:cy+Math.random()*4-2,t:-k*.12,life:1,c:['#ffe58a','#f0a0c0','#ffffff',PCOL[p.i]][k%4]})}
+ sfx('win');toast(`A royal wedding! The ${p.civN} are now your allies by marriage.`,'good');if(typeof chron==='function')chron(`A royal wedding joined our house with the ${p.civN}. ${fromThem?'They':'We'} asked for the match, and the whole realm feasted.`)}
+function marriageSection(){const me=P[0];const [mood,col]=moodOf(me.unrest||0);let h=`<h3>Your realm</h3><div class="ach got"><b>People: <span style="color:${col}">${mood}</span></b><span>Unrest ${Math.round(me.unrest||0)}/100 · Faith ✝ ${Math.floor(me.faith||0)}${me.reb?' · <b style="color:#f06050">Rebellion in progress!</b>':''}</span><span>Hunger, plague, heavy losses and far-flung towns raise unrest. Monasteries, markets, festivals and blessings calm it.</span></div>`;
+ const rv=rivalsOf0().filter(canWed);if(rv.length&&!S.mission&&!S.tut&&!S.spectate)h+='<h3>Royal marriages</h3>'+rv.map(p=>`<div class="ach"><b><i class="sw" style="background:${PCOL[p.i]}"></i>Marry into the ${p.civN}</b><span>Dowry 300 gold. A wedding makes them a lasting ally.</span><div class="row"><button class="seg1 on" data-wed="${p.i}">Propose marriage</button></div></div>`).join('');return h}
+function bindMarriage(){$('#allyList').querySelectorAll('[data-wed]').forEach(b=>b.onclick=()=>{const p=P[+b.dataset.wed],me=P[0];if(!canWed(p)){showAllies();return}if(me.res.gold<300){toast('A dowry of 300 gold is needed.','bad');return}
+  if(S.t<(p.ai.wedT||0)){toast(`The ${p.civN} court will not hear another proposal so soon.`,'bad');return}p.ai.wedT=S.t+240;
+  const ok=armyOf(p.i)<=Math.max(6,armyOf(0))*1.4&&!(p.ai.pers==='rusher'&&Math.random()<.5);
+  if(ok){me.res.gold-=300;p.res.gold+=300;wed(p,false);$('#allyScr').hidden=true;paused=false}else{toast(`The ${p.civN} refuse. They think you too weak to be worth the match.`,'bad');showAllies()}})}
+function marriageTick(){if(!S||S.mission||S.tut||S.spectate||S.hot||S.conq||S.t<480||!P[0]||P[0].alive===false||peace())return;if(!$('#dipScr').hidden)return;
+ const rv=rivalsOf0().filter(canWed);for(const p of rv){if(S.t<(p.ai.wedOfferT||0))continue;p.ai.wedOfferT=S.t+600+Math.random()*300;
+  if(armyOf(0)>armyOf(p.i)*1.2&&Math.random()<.4){dipAsk(p,`“Our prince seeks a bride from your noble house. Join our families, and our swords will be yours.”`,()=>wed(p,true),()=>toast(`You turn down the ${p.civN} match.`),'Accept the marriage','Decline');return}}}
 
 /* ---------- game setup ---------- */
 const STARTRES={low:{food:200,wood:200,stone:100,gold:100},std:{food:300,wood:300,stone:200,gold:200},high:{food:1000,wood:1000,stone:1000,gold:1000}};
@@ -3044,7 +3107,7 @@ function newGame(o,demo){const seed=o.seed!=null?o.seed:(Math.random()*1e9)|0;un
 function setupHudIcons(){for(const r of R4)$('#r-'+r+' img').src=ICON[r];for(const r of STRAT){ICON[r]=ICON[r]||stratIcon(r);const im=$('#r-'+r+' img');if(im)im.src=ICON[r]}$('#r-pop img').src=ICON.pop;$('#bIdle img').src=ICON.u_villager;$('#bArmy img').src=ICON.army;$('#bBox img').src=ICON.box;$('#bHome img').src=ICON.b_tc}
 const enc=a=>{let s='';for(let i=0;i<a.length;i++)s+=a[i].toString(36);return s};
 function save(key='boc-save2'){if(!running||!S||S.editor)return false;try{const data={v:2,meta:{civ:P[0].civN,map:(MAPS[S.mapType]||{}).n||S.mapType||'',t:Math.floor(S.t),when:Date.now(),phase:PHASE[P[0].phase]},S:Object.assign({},S),W,H,
- P:P.map(p=>({i:p.i,civ:p.civ,res:p.res,phase:p.phase,techs:p.techs,bell:p.bell,autoRep:p.autoRep,king:p.king,prisoners:p.prisoners,team:p.team,upg:p.upg,st:p.st,barter:p.barter,hero:p.hero,alive:p.alive,ai:p.ai?Object.assign({},p.ai,{waves:[...p.ai.waves]}):null})),
+ P:P.map(p=>({i:p.i,civ:p.civ,res:p.res,phase:p.phase,techs:p.techs,bell:p.bell,autoRep:p.autoRep,king:p.king,prisoners:p.prisoners,faith:p.faith,unrest:p.unrest,wed:p.wed,team:p.team,upg:p.upg,st:p.st,barter:p.barter,hero:p.hero,alive:p.alive,ai:p.ai?Object.assign({},p.ai,{waves:[...p.ai.waves]}):null})),
  U:units.map(u=>({id:u.id,type:u.type,o:u.o,x:+u.x.toFixed(2),y:+u.y.toFixed(2),hp:u.hp,carry:u.carry,ct:u.ct,gar:u.gar,cargo:u.cargo,face:u.face,task:u.task,xp:u.xp,rank:u.rank,hungry:u.hungry,spyCd:u.spyCd,exposed:u.exposed,ab:u.ab,abCd:u.abCd,insp:u.insp,kills:u.kills,vn:u.vn,ve:u.ve,stance:u.stance,home:u.home})),
  B:blds.map(b=>({id:b.id,type:b.type,o:b.o,x:b.x,y:b.y,hp:b.hp,built:b.built,queue:b.queue,rally:b.rally,gar:b.gar,started:b.started,cp:b.cp,slots:b.slots,wonderT:b.wonderT,locked:b.locked,lvl:b.lvl,upgT:b.upgT,burn:b.burn})),
  A:animals.map(a=>({id:a.id,type:a.type,o:a.o,x:+a.x.toFixed(2),y:+a.y.toFixed(2),hp:a.hp,food:a.food,carc:a.carc,hx:a.hx,hy:a.hy})),
@@ -3053,7 +3116,7 @@ function save(key='boc-save2'){if(!running||!S||S.editor)return false;try{const 
 function hasSave(){try{return !!localStorage.getItem('boc-save2')}catch(e){return false}}
 function load(key='boc-save2'){let d;try{d=JSON.parse(localStorage.getItem(key))}catch(e){return false}if(!d||d.v!==2)return false;
  applyColors(d.S.opts);alloc(d.W,d.H);units=[];blds=[];animals=[];ents=new Map();projs=[];fx=[];rubble=[];sel=[];placing=null;cmdMode=null;pings=[];uC.clear();lastSig='';S=Object.assign({},d.S);
- P=d.P.map(q=>{const p=newPlayer(q.i,q.civ,'std');Object.assign(p,{res:Object.assign({iron:0,horse:0},q.res),phase:q.phase,techs:q.techs,bell:q.bell,autoRep:q.autoRep,king:q.king,team:q.team,upg:q.upg,st:q.st,barter:q.barter,hero:q.hero,alive:q.alive});if(q.ai)p.ai=Object.assign({},q.ai,{waves:new Set(q.ai.waves)});recomputeMods(p);return p});
+ P=d.P.map(q=>{const p=newPlayer(q.i,q.civ,'std');Object.assign(p,{res:Object.assign({iron:0,horse:0},q.res),phase:q.phase,techs:q.techs,bell:q.bell,autoRep:q.autoRep,king:q.king,team:q.team,upg:q.upg,st:q.st,barter:q.barter,hero:q.hero,alive:q.alive,prisoners:q.prisoners,faith:q.faith||0,unrest:q.unrest||0,wed:q.wed});if(q.ai)p.ai=Object.assign({},q.ai,{waves:new Set(q.ai.waves)});recomputeMods(p);return p});
  for(let i=0;i<N;i++){if(d.el){elevL[i]=+d.el[i];cliffM[i]=+d.cl[i]}ter[i]=parseInt(d.ter[i],36);resT[i]=parseInt(d.rt[i],36);treeK[i]=parseInt(d.tk[i],36);explored[i]=+d.ex[i];resA[i]=d.ra[i];block[i]=resT[i]?1:0}
  for(const q of d.B){const b=Object.assign({k:'b',w:B[q.type].w,h:B[q.type].h,cd:Math.random(),dmgT:0},q);blds.push(b);ents.set(b.id,b);stampB(b,true)}
  for(const q of d.U){const u=Object.assign({k:'u',path:null,cd:0,an:0,th:Math.random(),rp:0,r:RAD[U[q.type].tag]||.3,swing:0,work:0,nav:U[q.type].nav?1:0,aura:null},q);units.push(u);ents.set(u.id,u)}
@@ -3069,7 +3132,7 @@ function tick(){S.t+=DT;S.tick++;pathBudget=0;
  for(const a of animals.slice())if(!a.dead)updAnimal(a,DT);
  if(roadDirty)roadSync();cargoFollow();
  if(S.tick%2===0)separate();
- if(S.tick%20===3){hillTick();relicTick();moraleTick();weatherTick();wildTick();spectTick();iceTick();siegeTick();afterTick();wxEventTick();routTick();upgTick();if(S.tick%400===201)prisonAITick();if(S.tick%100===63)supplyTick();if(S.tick%600===301)aiSpyTick();if(!S.court&&!S.editor&&!S.spectate)courtInit();battleTick();eventTick();eventEffects();courtTick();if(S.tick%100===7)adviseTick();if(S.tick%200===3)dipTick()}if(S.tick%40===9)seaTradeTick();if(S.tick%10===5)wolfTick();if(S.tick%20===13)ferryTick();if(S.tick%10===0)abilTick();if(S.tick%40===21){aiSiegeTick();tauntTick()}if(S.tick%600===37)stratAITick();if(S.tick%600===0)histTick();if(S.tick%40===0)achTick();
+ if(S.tick%20===3){hillTick();relicTick();moraleTick();weatherTick();wildTick();spectTick();iceTick();siegeTick();afterTick();wxEventTick();routTick();upgTick();faithTick();if(S.tick%100===43)unrestTick();if(S.tick%200===123)marriageTick();if(S.tick%400===201)prisonAITick();if(S.tick%100===63)supplyTick();if(S.tick%600===301)aiSpyTick();if(!S.court&&!S.editor&&!S.spectate)courtInit();battleTick();eventTick();eventEffects();courtTick();if(S.tick%100===7)adviseTick();if(S.tick%200===3)dipTick()}if(S.tick%40===9)seaTradeTick();if(S.tick%10===5)wolfTick();if(S.tick%20===13)ferryTick();if(S.tick%10===0)abilTick();if(S.tick%40===21){aiSiegeTick();tauntTick()}if(S.tick%600===37)stratAITick();if(S.tick%600===0)histTick();if(S.tick%40===0)achTick();
  if(S.tick%20===7)for(const p of P)if(p.alive)autoRepair(p);
  for(const p of projs){p.t+=DT;if(p.t>=p.dur){const t=ents.get(p.tid);if(t&&!t.dead&&!(t.k==='u'&&t.gar)){hit(t,p.d,p.o,p.aid);if(p.kind==='rock')impact(p.tx,p.ty,t.k==='b'?3:1.5,t.k==='b'?5:0,t.k==='b'?debCol(t):DEBC_STONE,t.o===0&&t.k==='b'?18:0)}
    if(p.splash){for(const u of units){if(u.gar||!isEnemy(p.o,u.o)||u===t)continue;if(Math.hypot(u.x-p.tx,u.y-p.ty)<p.splash)hit(u,p.d*.6,p.o,p.aid)}fx.push({k:'dust',x:p.tx,y:p.ty,t:0,life:.8,s:.5})}p.done=1}
