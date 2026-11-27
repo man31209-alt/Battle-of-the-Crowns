@@ -86,7 +86,7 @@ const isHero=t=>t.startsWith('h_');
 /* ---------- buildings ---------- */
 // terr: territory radius when this building is a territory root. any: may be built outside your territory. gar: garrison slots.
 const B={
- tc:{n:'Town Center',w:4,h:4,hp:3000,cost:{wood:300,stone:300,gold:200},tm:120,ph:1,pop:20,drop:['food','wood','stone','gold'],los:10,arr:{n:3,r:7,a:6},train:['villager','spear','archer'],tech:['loom','treadmill','wheel','masonry','conscript','architecture','town','city','kingdom','royal','hoardings'],gar:20,terr:16,d:'Center of your town. Trains villagers. Claims territory.'},
+ tc:{n:'Town Center',w:4,h:4,hp:3000,cost:{wood:300,stone:300,gold:200},tm:120,ph:1,pop:20,drop:['food','wood','stone','gold'],los:10,arr:{n:3,r:7,a:6},train:['villager','spear','archer'],tech:['loom','treadmill','wheel','masonry','conscript','architecture','town','city','kingdom','royal','hoardings','spikes'],gar:20,terr:16,d:'Center of your town. Trains villagers. Claims territory.'},
  house:{n:'House',w:2,h:2,hp:600,cost:{wood:60},tm:16,ph:0,pop:10,los:4,d:'+10 population.'},
  farmstead:{n:'Farmstead',w:2,h:2,hp:700,cost:{wood:100},tm:20,ph:0,drop:['food'],los:6,tech:['gather','collar','plow','crop'],d:'Drop off food. Farming upgrades.'},
  storehouse:{n:'Storehouse',w:2,h:2,hp:700,cost:{wood:100},tm:20,ph:0,drop:['wood','stone','gold'],los:6,tech:['axe','saw','stonem','goldm','goldm2','twoman','deepmine'],d:'Drop off wood, stone and gold. Gathering upgrades.'},
@@ -104,9 +104,9 @@ const B={
  temple:{n:'Monastery',w:3,h:3,hp:2000,cost:{stone:300},tm:40,ph:1,los:7,train:['monk'],tech:['herbal'],gar:10,heal:3,d:'Trains monks. Heals units inside.'},
  workshop:{n:'Siege Workshop',w:3,h:3,hp:1500,cost:{wood:300},tm:40,ph:1,los:6,train:['ram','mangonel','treb'],d:'Builds siege weapons.'},
  tower:{n:'Stone Tower',w:1,h:1,hp:1600,cost:{wood:100,stone:150},tm:40,ph:1,los:11,arr:{n:2,r:8,a:7},gar:5,d:'Strong tower. Garrison adds arrows.'},
- wall:{n:'Stone Wall',w:1,h:1,hp:2200,cost:{stone:6},tm:6,ph:1,los:2,wall:1,any:1,nocap:1,d:'Thick stone wall.'},
- gate:{n:'Gate',w:1,h:1,hp:2200,cost:{stone:30},tm:12,ph:1,los:3,wall:1,gate:1,any:1,nocap:1,d:'Your units can pass, enemies cannot.'},
- castle:{n:'Castle',w:4,h:4,hp:5000,cost:{stone:700},tm:150,ph:1,pop:20,los:12,arr:{n:4,r:9,a:9},train:['UU','HERO','treb'],gar:20,terr:12,d:'Fortress. Unique units and heroes. Claims territory.'},
+ wall:{n:'Stone Wall',gar:2,arr:{n:0,r:6,a:6},w:1,h:1,hp:2200,cost:{stone:6},tm:6,ph:1,los:2,wall:1,any:1,nocap:1,d:'Thick stone wall.'},
+ gate:{n:'Gate',gar:2,arr:{n:0,r:6,a:6},w:1,h:1,hp:2200,cost:{stone:30},tm:12,ph:1,los:3,wall:1,gate:1,any:1,nocap:1,d:'Your units can pass, enemies cannot.'},
+ castle:{n:'Castle',w:4,h:4,hp:5000,cost:{stone:700},tm:150,ph:1,pop:20,los:12,arr:{n:4,r:9,a:9},train:['UU','HERO','treb'],tech:['boil','murder'],gar:20,terr:12,d:'Fortress. Unique units and heroes. Claims territory.'},
  wonder:{n:'Wonder',w:5,h:5,hp:6000,cost:{wood:1000,stone:1000,gold:1000},tm:300,ph:2,los:10,d:'A marvel of your age. Can win the game.'}
 };
 const BUILD_TABS={eco:['house','farmstead','storehouse','field','corral','dock','market','tc','wonder'],mil:['barracks','range','stable','smith','temple','workshop','castle'],def:['palisade','sentry','outpost','wall','gate','tower']};
@@ -150,6 +150,9 @@ const TECH={
  twoman:{n:'Two-Man Saw',ph:3,cost:{food:400,wood:300},tm:50,ic:'axe',req:'saw',d:'Wood +25%.',fx:m=>{m.rate.wood+=.25}},
  deepmine:{n:'Deep Mining',ph:3,cost:{food:400,wood:300},tm:50,ic:'picks',req:'goldm2',d:'Gold and stone +25%.',fx:m=>{m.rate.gold+=.25;m.rate.stone+=.25}},
  banking:{n:'Banking',ph:3,cost:{food:400,gold:300},tm:50,ic:'wheel',req:'caravan',d:'Trade carts +30% gold.',fx:m=>{m.trade+=.3}},
+ spikes:{n:'Spiked Palisades',ph:1,cost:{wood:250,gold:50},tm:30,ic:'shield',d:'Enemies right next to your walls, palisades and gates take damage over time.',fx:m=>{m.spikes=1}},
+ boil:{n:'Boiling Oil',ph:1,cost:{wood:200,gold:200},tm:40,ic:'shield',d:'Towers, castles and gates scald enemies right next to them.',fx:m=>{m.boil=1}},
+ murder:{n:'Murder Holes',ph:2,cost:{stone:200,gold:200},tm:45,ic:'arrow',d:'Towers and castles shoot 1 more arrow and reach 2 tiles farther.',fx:m=>{m.towerArr+=1;m.towerRng=(m.towerRng||0)+2}},
  herbal:{n:'Herbal Medicine',ph:1,cost:{gold:200},tm:30,ic:'wheat',d:'Monks and buildings heal 50% faster.',fx:m=>{m.heal+=.5}}
 };
 const RATE={berry:.55,farm:.45,wood:.6,gold:.45,stone:.45,hunt:1.2,fish:.6};
@@ -197,7 +200,7 @@ const canBuild=u=>{const d=ud(u);return d.tag==='vil'||!!d.cit};
 function costStr(c){const m={food:'cf',wood:'cw',gold:'cg',stone:'cs2'};return Object.keys(c).map(k=>`<i class="${m[k]}"></i>${c[k]}`).join('')}
 function need(p,c){const out=[];for(const r in c){const d=c[r]-(p.res[r]||0);if(d>0)out.push(Math.ceil(d)+' more '+r)}return out.join(' and ')}
 const land=i=>ter[i]!==1&&ter[i]!==4;
-const pass=(i,o,nav)=>{if(nav)return ter[i]===1&&block[i]===0;if(ter[i]===1||ter[i]===4)return false;const b=block[i];if(b===0)return true;if(b===3){const g=ents.get(occ[i]);return !!g&&g.o===o}return false};
+const pass=(i,o,nav)=>{if(nav)return ter[i]===1&&block[i]===0;if(ter[i]===1||ter[i]===4)return false;const b=block[i];if(b===0)return true;if(b===3){const g=ents.get(occ[i]);return !!g&&g.o===o&&!g.locked}return false};
 const passXY=(x,y,o,nav)=>x>=0&&y>=0&&x<W&&y<H&&pass(y*W+x,o,nav);
 
 /* ---------- entities ---------- */
@@ -400,7 +403,7 @@ function doBuild(u,t,dt){const b=ents.get(t.id);
  const d=rectDist(u.x,u.y,b.x,b.y,b.w,b.h);
  if(d<=.85){u.path=null;u.work=1;u.an+=dt*7;const c=ec(b);u.face=c.x<u.x?-1:1;const mx=bMaxHp(b),tm=B[b.type].tm;const k=P[u.o].m.build*(ud(u).tag==='vil'?1:.7);
   if(b.built<1){if(!b.started){b.started=1;evict(b)}b.built=Math.min(1,b.built+k*dt/tm);b.hp=Math.min(mx,b.hp+mx*k*dt/tm);if(b.built>=1)onBuilt(b)}
-  else b.hp=Math.min(mx,b.hp+mx*k*dt/(tm*2));return}
+  else{const add=Math.min(mx-b.hp,mx*k*dt/(tm*2)),f=add/mx*.5,pp=P[u.o],c=B[b.type].cost;if(R4.some(r=>c[r]&&pp.res[r]<c[r]*f)){if(u.o===0)toastOnce('rep','Not enough resources to keep repairing',15);return nextBuild(u,t,null)}for(const r in c)pp.res[r]-=c[r]*f;b.hp+=add}return}
  if(!u.path||!u.path.length){if(u.rp>0||pathBusy(u))return;u.rp=.4;pathRect(u,b.x,b.y,b.x+b.w-1,b.y+b.h-1,true);if(u.partial&&!u.path.length){t.bad=(t.bad||0)+1;if(t.bad>3)return nextBuild(u,t,null)}}
  step(u,dt)}
 function nextBuild(u,t,b){u.path=null;let nb=null;
@@ -455,10 +458,17 @@ function updBld(b,dt){const d=B[b.type],p=P[b.o];
   if(q.u&&q.p>=tm){const n=q.n||1;const room=q.u==='sheep'?n:p.popCap-p.pop;if(room>=1){const k=Math.min(n-(q.done||0),room);for(let i=0;i<k;i++)spawn(b,q.u);q.done=(q.done||0)+k;if(q.done>=n)b.queue.shift()}else if(b.o===0)toastOnce('house','You need more houses! Population is full.',20)}}
  if(b.cp<cpMax(b)&&(!b.capT||S.t-b.capT>1.5))b.cp=Math.min(cpMax(b),b.cp+(3+b.gar.length*2)*dt);
  if(b.gar.length){const h=(d.heal||1)*p.m.heal*dt;for(const id of b.gar){const u=ents.get(id);if(u&&u.hp<uMaxHp(u))u.hp=Math.min(uMaxHp(u),u.hp+h)}}
- if(d.arr&&!peace()){b.cd-=dt;if(b.cd<=0){const r=d.arr.r+p.m.rng+Math.max(b.w,b.h)/2;const c=ec(b);let e=null,bd=r;
+ if(!peace()&&b.built>=1&&(S.tick+b.id)%20===0&&((d.wall&&p.m.spikes)||(p.m.boil&&(b.type==='tower'||b.type==='castle'||b.type==='gate'))))scald(b,p);
+ if(d.arr&&!peace()&&(!d.wall||b.gar.length)){b.cd-=dt;if(b.cd<=0){const r=d.arr.r+p.m.rng+Math.max(b.w,b.h)/2+((b.type==='tower'||b.type==='castle')?(p.m.towerRng||0):0);const c=ec(b);let e=null,bd=r;
   for(const u of units){if(!isEnemy(b.o,u.o)||u.gar)continue;const dd=Math.hypot(u.x-c.x,u.y-c.y);if(dd<bd){bd=dd;e=u}}
   if(e){const n=Math.min(12,d.arr.n+(d.arr.n?p.m.towerArr*(b.type==='tower'||b.type==='sentry'?1:0):0)+b.gar.filter(id=>{const g=ents.get(id);return g&&ud(g).tag!=='vil'||b.type==='tc'}).length),a=d.arr.a+p.m.atk.p;
    for(let k=0;k<n;k++)shoot(c.x+(Math.random()-.5)*b.w*.6,c.y-.8-(Math.random()*.4),e,dmgTo(a,'p',null,e),b.o,b.id,'arrow');b.cd=2}else b.cd=.4}}}
+function scald(b,p){const dm=(b.type==='tower'||b.type==='castle'||b.type==='gate')&&p.m.boil?12:0,sp=B[b.type].wall&&p.m.spikes?2:0;const dmg=dm+sp;if(!dmg)return;
+ for(const u of units){if(u.gar||!isEnemy(b.o,u.o))continue;if(rectDist(u.x,u.y,b.x,b.y,b.w,b.h)<.9){hit(u,dmg,b.o);if(Math.random()<.5)fx.push({k:'dust',x:u.x,y:u.y,t:0,life:.5,s:.3})}}}
+function autoRepair(p){if(!p.autoRep||peace()&&false)return;let n=0;for(const b of blds){if(n>=3)break;if(b.o!==p.i||b.built<1||b.hp>=bMaxHp(b)*.96||B[b.type].flat||S.t-(b.dmgT||-99)<6)continue;
+ const on=units.filter(u=>u.o===p.i&&u.task&&u.task.k==='build'&&u.task.id===b.id).length;if(on>=(b.w>=3?3:1))continue;let best=null,bd=18;
+ for(const u of units){if(u.o!==p.i||u.gar||ud(u).tag!=='vil')continue;const t=u.task;if(t&&!(t.k==='gather'||t.k==='field'))continue;const d=rectDist(u.x,u.y,b.x,b.y,b.w,b.h);if(d<bd){bd=d;best=u}}
+ if(best){assignBuild([best],[b.id]);n++}}}
 function ringBell(o,on){const p=P[o];p.bell=on;
  if(on){const tcs=blds.filter(b=>b.o===o&&(b.type==='tc'||b.type==='castle'||b.type==='tower')&&b.built>=1);if(!tcs.length)return;
   for(const u of units){if(u.o!==o||ud(u).tag!=='vil'||u.gar)continue;let best=null,bd=20;for(const b of tcs){if(b.gar.length+units.filter(x=>x.task&&x.task.k==='gar'&&x.task.id===b.id).length>=(B[b.type].gar||0))continue;const d=rectDist(u.x,u.y,b.x,b.y,b.w,b.h);if(d<bd){bd=d;best=b}}
@@ -592,7 +602,7 @@ function computeFog(){vis.fill(0);const mark=(cx,cy,r)=>{const r2=r*r+r;const x0
 const AIPERS={balanced:{n:'Balanced',w:1,g:1,s:1,v:1},rusher:{n:'Aggressive',w:.6,g:.8,s:.7,v:.85},boomer:{n:'Builder',w:1.35,g:1,s:1.3,v:1.25},turtle:{n:'Defender',w:1.45,g:1.15,s:1.2,v:1.05}};
 function aiInit(p,diff){const pk=Object.keys(AIPERS);const pers=pk[Math.floor(Math.random()*pk.length)],q=AIPERS[pers];
  p.ai={diff,pers,t:0,nextWave:S.peace+Math.round([900,620,430][diff]*q.w),gap:Math.round([360,250,180][diff]*q.g),wave:Math.round([5,8,11][diff]*q.s),vilT:Math.round([22,34,46][diff]*q.v),bonus:[.85,1.05,1.3][diff],waves:new Set(),saving:false,target:-1,
-  nextRaid:diff?S.peace+[0,520,380][diff]*(pers==='rusher'?.7:pers==='turtle'?1.6:1)+Math.random()*90:1e9,raid:[],raidT:0,waveN:0,regroup:0}}
+  autoRep0:p.autoRep=true,nextRaid:diff?S.peace+[0,520,380][diff]*(pers==='rusher'?.7:pers==='turtle'?1.6:1)+Math.random()*90:1e9,raid:[],raidT:0,waveN:0,regroup:0}}
 function aiSpot(o,type,cx,cy,r0,r1){const d=B[type];for(let r=r0;r<=r1;r++){const cand=[];const X=Math.round(cx),Y=Math.round(cy);for(let y=Y-r;y<=Y+r;y++)for(let x=X-r;x<=X+r;x++){if(Math.max(Math.abs(x-X),Math.abs(y-Y))!==r)continue;cand.push([x-(d.w>>1),y-(d.h>>1)])}
  for(let k=cand.length-1;k>0;k--){const j=Math.floor(Math.random()*(k+1));const t=cand[k];cand[k]=cand[j];cand[j]=t}
  for(const [x,y] of cand)if(canPlace(type,x,y,o,!d.flat&&!d.water))return[x,y]}return null}
@@ -650,7 +660,7 @@ function aiTick(p){const ai=p.ai,o=p.i;ai.t+=1;if(!ai.raid)ai.raid=[];if(ai.next
    if(ai.diff===2&&has('tower').length<3&&R.stone>=300)aiBuild(p,'tower',home.x+(Math.random()-.5)*16,home.y+(Math.random()-.5)*16,5,11);
    if(has('barracks').length<2&&R.wood>700)aiBuild(p,'barracks',home.x,home.y,7,17)}
   if(p.phase>=2&&ai.diff===2&&S.wonderWin&&!has('wonder').length&&R.wood>1300&&R.stone>1200&&R.gold>1200)aiBuild(p,'wonder',home.x,home.y,6,16)}
- if(!ai.saving){for(const tid of ['loom','gather','axe','collar','stonem','goldm','treadmill','wheel','forge','fletch','scale','saw','plow','goldm2','nets','masonry','iron','bodkin','chain','barding','herbal','conscript','architecture','shipwright','caravan','blast','plate','bracer','crop','twoman','deepmine','hoardings','royal','banking']){
+ if(!ai.saving){for(const tid of ['loom','gather','axe','collar','stonem','goldm','treadmill','wheel','forge','fletch','scale','saw','plow','goldm2','nets','masonry','iron','bodkin','chain','barding','herbal','conscript','architecture','shipwright','caravan','blast','plate','bracer','crop','twoman','deepmine','hoardings','royal','banking','spikes','boil','murder']){
   const t=TECH[tid];if(!techOk(p,tid))continue;if((tid==='loom'||tid==='treadmill')&&gatherers<12)continue;const bt=Object.keys(B).find(k=>B[k].tech&&B[k].tech.indexOf(tid)>=0);
   const b=has(bt,1).find(x=>!x.queue.length);if(!b)continue;const c=costOf(p,t.cost,'t');if(R4.every(r=>(R[r]||0)>=(c[r]||0)*1.3)){pay(p,c);b.queue.push({t:tid,p:0});break}}}
  if(!ai.saving||army.length<6||R.food>1000){const prod=mb.filter(b=>b.built>=1&&B[b.type].train&&b.type!=='corral'&&b.type!=='dock'&&b.type!=='market'&&b.type!=='temple'&&b.queue.length<1);let rm=room;
@@ -1175,6 +1185,7 @@ function drawBld(g,b){const c=bSprite(b.type,P[b.o].style,b.o,bTier(b.o));const 
   if(b.built>0){g.save();g.beginPath();g.rect(X,cy,w,h);g.clip();g.globalAlpha=.55+.45*b.built;g.drawImage(c,X,Y,w,h);g.restore()}
   g.strokeStyle='#8a6640';g.lineWidth=1.8;g.beginPath();for(const [a,bb] of [[b.x+.1,b.y+b.h-.1],[b.x+b.w-.1,b.y+b.h-.1],[b.x+b.w-.1,b.y+.1]]){const q=PJ(a,bb,0);g.moveTo(q[0],q[1]);g.lineTo(q[0],Math.max(cy-4,q[1]-70))}g.stroke();return}
  g.drawImage(c,X,Y,w,h);
+ if(B[b.type].wall&&b.gar.length&&(b.o===0||vis[b.y*W+b.x])){const gu=ents.get(b.gar[0]);if(gu){const sp=unitSprite(gu,'idle'),q=PJ(b.x+.5,b.y+.5,(ZMX[b.type]||56)*.82);g.drawImage(sp,q[0]-sp.ox*.8,q[1]-sp.oy*.8,sp.w*.8,sp.h*.8)}}
  const f=b.hp/bMaxHp(b);if(f<.6&&!B[b.type].wall){const n=f<.3?3:1,cc=PJ(b.x+b.w/2,b.y+b.h/2,(ZMX[b.type]||100)*.35);for(let k=0;k<n;k++){const t=(performance.now()/1000+k*.7+b.id)%2;g.fillStyle=`rgba(60,55,50,${.5*(1-t/2)})`;g.beginPath();g.arc(cc[0]+(k-1)*12,cc[1]-t*20,5+t*7,0,7);g.fill()}
   g.fillStyle='rgba(255,140,40,.85)';g.beginPath();g.arc(cc[0],cc[1]+6+Math.sin(performance.now()/90),3.5,0,7);g.fill()}}
 let lastTapT=0,lastTapId=0;
@@ -1410,6 +1421,8 @@ function makeIcons(sk){
  ICON.ok=iconCanvas(g=>sym(g,'check',32,32,1.7,'#e8ffd8'));ICON.no=iconCanvas(g=>sym(g,'x',32,32,1.5,'#ffe0d8'));
  for(const f of ['loose','line','box','wedge'])ICON['form_'+f]=iconCanvas(g=>{const pts=f==='loose'?[[18,20],[34,16],[46,26],[24,34],[40,40],[20,48],[44,50]]:f==='line'?[[12,24],[22,24],[32,24],[42,24],[52,24],[12,38],[22,38],[32,38],[42,38],[52,38]]:f==='box'?[[20,18],[32,18],[44,18],[20,32],[32,32],[44,32],[20,46],[32,46],[44,46]]:[[32,14],[25,26],[39,26],[18,38],[32,38],[46,38],[11,50],[25,50],[39,50],[53,50]];
   pts.forEach(([x,y],i)=>{g.fillStyle=(f==='loose'?i%2:y>30)?'#9fd0ff':'#f6ecd5';g.beginPath();g.arc(x,y,4,0,7);g.fill()});g.fillStyle='#ffd34a';g.beginPath();g.moveTo(32,4);g.lineTo(27,10);g.lineTo(37,10);g.fill()},['#3a4a5a','#1a2430']);
+ ICON.lock=iconCanvas(g=>{g.strokeStyle='#e8dcc0';g.lineWidth=5;g.beginPath();g.arc(32,26,10,Math.PI,0);g.stroke();g.fillStyle='#e8c15a';g.fillRect(18,26,28,22);g.fillStyle='#3a2a1a';g.beginPath();g.arc(32,35,3.5,0,7);g.fill();g.fillRect(30.5,36,3,7)},['#4a3a2a','#20160c']);
+ ICON.repair=iconCanvas(g=>{g.save();g.translate(32,32);g.rotate(-.7);g.fillStyle='#8a5a30';g.fillRect(-3,-4,6,26);g.fillStyle='#c8ccd4';g.fillRect(-11,-14,22,10);g.restore();g.fillStyle='#7fe06a';g.beginPath();g.arc(47,46,7,0,7);g.fill();g.fillStyle='#fff';g.fillRect(43.5,45,7,2);g.fillRect(46,42.5,2,7)},['#3a4a2a','#1a2410']);
  ICON.patrol=iconCanvas(g=>{g.strokeStyle='#f6ecd5';g.fillStyle='#f6ecd5';g.lineWidth=4;g.lineCap='round';g.beginPath();g.moveTo(16,24);g.lineTo(44,24);g.stroke();g.beginPath();g.moveTo(48,24);g.lineTo(39,17);g.lineTo(39,31);g.fill();g.strokeStyle='#ffd34a';g.fillStyle='#ffd34a';g.beginPath();g.moveTo(48,42);g.lineTo(20,42);g.stroke();g.beginPath();g.moveTo(16,42);g.lineTo(25,35);g.lineTo(25,49);g.fill();g.fillStyle='#e8dcc0';g.beginPath();g.arc(32,33,3,0,7);g.fill()},['#5a4a2a','#2a1e0c']);
  ICON.amove=iconCanvas(g=>{sym(g,'sword',26,34,1.2,'#f6ecd5');sym(g,'arrow',40,26,1,'#ffb0a0')},['#6a3a2a','#2a120c']);ICON.gar=iconCanvas(g=>{g.fillStyle='#e8dcc0';g.fillRect(18,22,28,26);g.fillRect(16,16,6,8);g.fillRect(29,16,6,8);g.fillRect(42,16,6,8);g.fillStyle='#3a2a1a';g.fillRect(28,34,8,14)},['#4a5a6a','#1a2a36']);
  ICON.unload=iconCanvas(g=>{g.fillStyle='#e8dcc0';g.fillRect(14,24,22,22);g.strokeStyle='#bff0a8';g.lineWidth=3.5;g.beginPath();g.moveTo(30,36);g.lineTo(52,36);g.moveTo(44,28);g.lineTo(52,36);g.lineTo(44,44);g.stroke()},['#3e5a26','#1e2e12']);
@@ -1580,6 +1593,8 @@ function renderPanel(){if(!S)return;const s=selection(),p=P[0];
   for(const t of d.tech||[]){if(!techOk(p,t))continue;const tc=TECH[t];const c=costOf(p,tc.cost,'t');let ok=afford(p,c)&&b.queue.length<5;let sub=null;if(tc.up){const n=phaseCount(p,tc.ph);ok=ok&&n>=tc.need;sig+=n;if(n<tc.need){html+=btn('tech:'+t,'t_'+t,tc.n,null,false,'',`${n}/${tc.need} bldgs`);continue}}sig+=ok?1:0;html+=btn('tech:'+t,'t_'+t,tc.n,c,ok)}
   if(b.type==='tc')html+=p.bell?btn('clear','clear','All clear',null,true):btn('bell','bell','Ring bell',null,true);
   if(d.gar&&b.gar.length)html+=btn('unload','unload','Unload all',null,true);
+  if(d.gate){html+=btn('lock','lock',b.locked?'Unlock gate':'Lock gate',null,true,b.locked?'ok':'');sig+=b.locked?'L':''}
+  if(b.type==='tc'){html+=btn('autorep','repair','Auto-repair: '+(p.autoRep?'On':'Off'),null,true,p.autoRep?'ok':'');sig+=p.autoRep?'R':''}
   if(d.market){for(const r of ['food','wood','stone']){const pr=p.barter[r];html+=btn('buy:'+r,r,'Buy 100',null,p.res.gold>=Math.round(pr*(1+.2*p.m.barter)),'',Math.round(pr*(1+.2*p.m.barter))+' gold')+btn('sell:'+r,r,'Sell 100',null,p.res[r]>=100,'',Math.round(pr*(1-.25*p.m.barter))+' gold')}sig+=JSON.stringify(p.barter)+Math.floor(p.res.gold/50)}}
  html+=btn(da?'del2':'del','del',da?'Sure?':'Delete',null,true);
  if(d.train&&b.built>=1)html+=`<div class="hint">Tap the map to set a rally point. Tap a tree, mine or field to send new workers straight there.</div>`;
@@ -1603,6 +1618,8 @@ function act(a){const p=P[0];const [k,v]=a.split(':');const s=selection();
  if(k==='cancel'){const it=b.queue[+v];if(!it)return;const c=it.cost||(it.u?costOf(p,U[it.u].cost,'u',it.u):costOf(p,TECH[it.t].cost,'t'));refund(p,c,it.done?1-it.done/(it.n||1):1);b.queue.splice(+v,1);lastSig='';return}
  if(k==='bell'){ringBell(0,true);lastSig='';return}if(k==='clear'){ringBell(0,false);lastSig='';return}
  if(k==='unload'){unload(b);lastSig='';return}
+ if(k==='lock'){b.locked=!b.locked;lastSig='';toast(b.locked?'Gate locked. Nobody can pass, not even your units.':'Gate unlocked');return}
+ if(k==='autorep'){p.autoRep=!p.autoRep;lastSig='';toast(p.autoRep?'Auto-repair on: nearby villagers fix damaged buildings once the fighting stops there. Repairs cost a little of the building\'s price.':'Auto-repair off');return}
  if(k==='buy'||k==='sell'){if(!barter(p,v,k==='buy'))toast(k==='buy'?'Not enough gold':'Need 100 '+v,'bad');lastSig='';return}}
 panel.addEventListener('click',e=>{const t=e.target.closest('[data-a]');if(!t)return;act(t.dataset.a);renderPanel()});
 function updTop(){const p=P[0];for(const r of R4){const el=$('#r-'+r+' b');const v=Math.floor(p.res[r]);if(el.textContent!==String(v))el.textContent=v}
@@ -1652,16 +1669,16 @@ function newGame(o,demo){const seed=(Math.random()*1e9)|0;units=[];blds=[];anima
 function setupHudIcons(){for(const r of R4)$('#r-'+r+' img').src=ICON[r];$('#r-pop img').src=ICON.pop;$('#bIdle img').src=ICON.u_villager;$('#bArmy img').src=ICON.army;$('#bBox img').src=ICON.box;$('#bHome img').src=ICON.b_tc}
 const enc=a=>{let s='';for(let i=0;i<a.length;i++)s+=a[i].toString(36);return s};
 function save(){if(!running||!S)return;try{const data={v:2,S:Object.assign({},S),W,H,
- P:P.map(p=>({i:p.i,civ:p.civ,res:p.res,phase:p.phase,techs:p.techs,bell:p.bell,st:p.st,barter:p.barter,hero:p.hero,alive:p.alive,ai:p.ai?Object.assign({},p.ai,{waves:[...p.ai.waves]}):null})),
+ P:P.map(p=>({i:p.i,civ:p.civ,res:p.res,phase:p.phase,techs:p.techs,bell:p.bell,autoRep:p.autoRep,st:p.st,barter:p.barter,hero:p.hero,alive:p.alive,ai:p.ai?Object.assign({},p.ai,{waves:[...p.ai.waves]}):null})),
  U:units.map(u=>({id:u.id,type:u.type,o:u.o,x:+u.x.toFixed(2),y:+u.y.toFixed(2),hp:u.hp,carry:u.carry,ct:u.ct,gar:u.gar,face:u.face,task:u.task,xp:u.xp,rank:u.rank,stance:u.stance,home:u.home})),
- B:blds.map(b=>({id:b.id,type:b.type,o:b.o,x:b.x,y:b.y,hp:b.hp,built:b.built,queue:b.queue,rally:b.rally,gar:b.gar,started:b.started,cp:b.cp,slots:b.slots,wonderT:b.wonderT})),
+ B:blds.map(b=>({id:b.id,type:b.type,o:b.o,x:b.x,y:b.y,hp:b.hp,built:b.built,queue:b.queue,rally:b.rally,gar:b.gar,started:b.started,cp:b.cp,slots:b.slots,wonderT:b.wonderT,locked:b.locked})),
  A:animals.map(a=>({id:a.id,type:a.type,o:a.o,x:+a.x.toFixed(2),y:+a.y.toFixed(2),hp:a.hp,food:a.food,carc:a.carc,hx:a.hx,hy:a.hy})),
  ter:enc(ter),rt:enc(resT),tk:enc(treeK),ex:enc(explored),ra:Array.from(resA,v=>Math.round(v)),cam:{x:cam.x,y:cam.y,z:cam.z}};
  localStorage.setItem('boc-save2',JSON.stringify(data))}catch(e){}}
 function hasSave(){try{return !!localStorage.getItem('boc-save2')}catch(e){return false}}
 function load(){let d;try{d=JSON.parse(localStorage.getItem('boc-save2'))}catch(e){return false}if(!d||d.v!==2)return false;
  alloc(d.W,d.H);units=[];blds=[];animals=[];ents=new Map();projs=[];fx=[];rubble=[];sel=[];placing=null;cmdMode=null;pings=[];uC.clear();lastSig='';S=Object.assign({},d.S);
- P=d.P.map(q=>{const p=newPlayer(q.i,q.civ,'std');Object.assign(p,{res:q.res,phase:q.phase,techs:q.techs,bell:q.bell,st:q.st,barter:q.barter,hero:q.hero,alive:q.alive});if(q.ai)p.ai=Object.assign({},q.ai,{waves:new Set(q.ai.waves)});recomputeMods(p);return p});
+ P=d.P.map(q=>{const p=newPlayer(q.i,q.civ,'std');Object.assign(p,{res:q.res,phase:q.phase,techs:q.techs,bell:q.bell,autoRep:q.autoRep,st:q.st,barter:q.barter,hero:q.hero,alive:q.alive});if(q.ai)p.ai=Object.assign({},q.ai,{waves:new Set(q.ai.waves)});recomputeMods(p);return p});
  for(let i=0;i<N;i++){ter[i]=parseInt(d.ter[i],36);resT[i]=parseInt(d.rt[i],36);treeK[i]=parseInt(d.tk[i],36);explored[i]=+d.ex[i];resA[i]=d.ra[i];block[i]=resT[i]?1:0}
  for(const q of d.B){const b=Object.assign({k:'b',w:B[q.type].w,h:B[q.type].h,cd:Math.random(),dmgT:0},q);blds.push(b);ents.set(b.id,b);stampB(b,true)}
  for(const q of d.U){const u=Object.assign({k:'u',path:null,cd:0,an:0,th:Math.random(),rp:0,r:RAD[U[q.type].tag]||.3,swing:0,work:0,nav:U[q.type].nav?1:0,aura:null},q);units.push(u);ents.set(u.id,u)}
@@ -1676,6 +1693,7 @@ function tick(){S.t+=DT;S.tick++;pathBudget=0;
  for(const u of units.slice())if(!u.dead){u.work=0;updUnit(u,DT);if(u.work&&u.o===0)workSfx(u)}
  for(const a of animals.slice())if(!a.dead)updAnimal(a,DT);
  if(S.tick%2===0)separate();
+ if(S.tick%20===7)for(const p of P)if(p.alive)autoRepair(p);
  for(const p of projs){p.t+=DT;if(p.t>=p.dur){const t=ents.get(p.tid);if(t&&!t.dead&&!(t.k==='u'&&t.gar))hit(t,p.d,p.o,p.aid);
    if(p.splash){for(const u of units){if(u.gar||!isEnemy(p.o,u.o)||u===t)continue;if(Math.hypot(u.x-p.tx,u.y-p.ty)<p.splash)hit(u,p.d*.6,p.o,p.aid)}fx.push({k:'dust',x:p.tx,y:p.ty,t:0,life:.8,s:.5})}p.done=1}
   else{const t=ents.get(p.tid);if(t&&!t.gar){const c=ec(t);p.tx=c.x;p.ty=c.y}}}
