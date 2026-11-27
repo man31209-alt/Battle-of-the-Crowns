@@ -70,6 +70,7 @@ const U={
  treb:{n:'Trebuchet',hp:180,atk:2,at:'p',rng:12,arm:[1,150],spd:.65,los:12,cost:{wood:300,gold:250},tm:34,ph:2,tag:'sie',rate:8,bon:{bld:260},look:'treb',d:'Huge range. Destroys walls and castles.'},
  sheep:{n:'Sheep',hp:10,atk:0,at:'m',rng:0,arm:[0,0],spd:.8,los:3,cost:{food:50},tm:8,ph:0,tag:'ani',rate:1,look:'sheep',d:'Fattened at the corral. Hunt it for 100 food.'},
  fishboat:{n:'Fishing Boat',hp:80,atk:0,at:'m',rng:0,arm:[0,2],spd:1.6,los:7,cost:{wood:80},tm:14,ph:0,tag:'shp',rate:1,nav:1,look:'fishboat',d:'Catches fish and brings it to the dock.'},
+ merchant:{n:'Merchant Ship',hp:180,atk:0,at:'m',rng:0,arm:[1,3],spd:1.7,los:6,cost:{wood:110,gold:60},tm:20,ph:1,tag:'shp',rate:1,nav:1,look:'cog',d:'Sails on its own between your dock and the farthest other dock, yours or an ally’s, for gold. Allied docks pay 40% more.'},
  cog:{n:'Transport Cog',hp:220,atk:0,at:'m',rng:0,arm:[1,4],spd:1.6,los:7,cost:{wood:125},tm:18,ph:0,tag:'shp',rate:1,nav:1,cap:10,look:'cog',d:'Carries up to 10 land units. Select land units and tap the cog to board; select the cog and tap the shore to land them.'},
  fireship:{n:'Fire Ship',hp:170,atk:3,at:'p',rng:2.5,arm:[0,3],spd:1.8,los:7,cost:{wood:90,gold:40},tm:18,ph:1,tag:'shp',rate:.45,bon:{shp:7},nav:1,look:'fireship',d:'Sprays fire at close range. Burns other ships fast.'},
  demoship:{n:'Demolition Ship',hp:70,atk:140,at:'m',rng:0,arm:[0,2],spd:2,los:6,cost:{wood:70,gold:50},tm:14,ph:1,tag:'shp',rate:1,demo:1,nav:1,look:'demoship',d:'Rams a ship or shore building and blows up, hurting everything close by.'},
@@ -129,7 +130,7 @@ const B={
  storehouse:{n:'Storehouse',w:2,h:2,hp:700,cost:{wood:100},tm:20,ph:0,drop:['wood','stone','gold'],los:6,tech:['axe','saw','stonem','goldm','goldm2','twoman','deepmine'],d:'Drop off wood, stone and gold. Gathering upgrades.'},
  field:{n:'Field',w:3,h:3,hp:300,cost:{wood:100},tm:14,ph:0,los:2,flat:1,slots:5,d:'Never runs out. Up to 5 farmers.'},
  corral:{n:'Corral',w:2,h:2,hp:500,cost:{wood:100},tm:16,ph:0,los:4,train:['sheep'],d:'Raises sheep. Send up to 3 villagers here to herd and butcher for steady food, or train sheep to hunt.'},
- dock:{n:'Dock',w:2,h:2,hp:1000,cost:{wood:150},tm:24,ph:0,drop:['food','wood'],los:7,train:['fishboat','cog','galley','fireship','demoship'],tech:['nets','shipwright'],water:1,any:1,d:'Build on the shore. Fishing boats and warships.'},
+ dock:{n:'Dock',w:2,h:2,hp:1000,cost:{wood:150},tm:24,ph:0,drop:['food','wood'],los:7,train:['fishboat','merchant','cog','galley','fireship','demoship'],tech:['nets','shipwright'],water:1,any:1,d:'Build on the shore. Fishing boats and warships.'},
  barracks:{n:'Barracks',w:3,h:3,hp:1500,cost:{wood:200},tm:30,ph:0,los:6,train:['spear','militia','champ'],tech:['t_pike','t_halberd','t_maa','t_long'],gar:10,d:'Trains infantry.'},
  range:{n:'Archery Range',w:3,h:3,hp:1500,cost:{wood:200},tm:30,ph:0,los:6,train:['archer','xbow'],tech:['t_earcher'],d:'Trains archers.'},
  stable:{n:'Stable',w:3,h:3,hp:1500,cost:{wood:200},tm:30,ph:0,los:6,train:['scout','knight'],tech:['t_lightcav','t_cavalier','t_paladin'],d:'Trains cavalry.'},
@@ -230,7 +231,7 @@ const edist=(u,e)=>e.k==='b'?rectDist(u.x,u.y,e.x,e.y,e.w,e.h):Math.hypot(u.x-e.
 const ud=u=>U[u.type];
 const isMil=u=>{const t=ud(u).tag;return t!=='vil'&&t!=='mon'&&t!=='trd'&&t!=='kng'&&!(u.type==='fishboat')&&t!=='ani'};
 const canFight=u=>ud(u).atk>0&&u.type!=='fishboat';
-const isEnemy=(a,b)=>a!==b&&a>=0&&b>=0&&!(P[a]&&P[b]&&P[a].team!=null&&P[a].team===P[b].team);
+const isEnemy=(a,b)=>a!==b&&a>=0&&b>=0&&!(P[a]&&P[b]&&P[a].team!=null&&P[a].team===P[b].team)&&!(S&&S.truceT&&S.truceT[a*4+b]>S.t);
 const myTeam=o=>o===0||(o>0&&P[o]&&P[0]&&P[o].team!=null&&P[o].team===P[0].team);
 const peace=()=>S&&S.t<S.peace;
 function rankMul(u){return u.rank===2?1.2:u.rank===1?1.1:1}
@@ -472,8 +473,8 @@ function nextBuild(u,t,b){u.path=null;let nb=null;
   if(ty==='farmstead'){if(autoGather(u,['food'],b))return;const f=freeField(u.o,b.x,b.y,8);if(f){u.task={k:'field',id:f.id};return}}}
  if(t.prev){u.task=t.prev;return}
  u.task=null}
-function doTrade(u,t,dt){let a=ents.get(t.a),b=ents.get(t.b);if(!a||!b||a.dead||b.dead||a.o!==u.o||b.o!==u.o){u.task=null;return}
- const dest=t.leg?a:b;if(rectDist(u.x,u.y,dest.x,dest.y,dest.w,dest.h)<=.9){const d=Math.hypot(a.x-b.x,a.y-b.y);const g=Math.max(5,Math.round(.03*d*d*P[u.o].m.trade));P[u.o].res.gold+=g;P[u.o].st.gath+=g;if(u.o===0&&isVisibleTo0(u))fx.push({k:'gold',x:u.x,y:u.y,t:0,life:1.2,v:g});t.leg=t.leg?0:1;u.path=null;return}
+function doTrade(u,t,dt){let a=ents.get(t.a),b=ents.get(t.b);if(!a||!b||a.dead||b.dead||a.o!==u.o||(b.o!==u.o&&!(t.sea&&!isEnemy(u.o,b.o)))){u.task=null;return}
+ const dest=t.leg?a:b;if(rectDist(u.x,u.y,dest.x,dest.y,dest.w,dest.h)<=.9){const d=Math.hypot(a.x-b.x,a.y-b.y);const g=Math.max(5,Math.round(.03*d*d*P[u.o].m.trade*(t.sea?(b.o!==u.o?1.4:1.1):1)));P[u.o].res.gold+=g;P[u.o].st.gath+=g;if(u.o===0&&isVisibleTo0(u))fx.push({k:'gold',x:u.x,y:u.y,t:0,life:1.2,v:g});t.leg=t.leg?0:1;u.path=null;return}
  if(!u.path||!u.path.length){if(u.rp>0||pathBusy(u))return;u.rp=.5;pathRect(u,dest.x,dest.y,dest.x+dest.w-1,dest.y+dest.h-1,true)}step(u,dt)}
 const isVisibleTo0=u=>vis[(u.y|0)*W+(u.x|0)];
 function separate(){const n=units.length;const cell=new Map();for(let i=0;i<n;i++){const a=units[i];if(a.gar)continue;const k=((a.x|0)>>1)*4096+((a.y|0)>>1);let l=cell.get(k);if(!l){l=[];cell.set(k,l)}l.push(a)}
@@ -1385,7 +1386,7 @@ function cart(g,col,an,walk){const s=walk?Math.sin(an):0;horse(g,{an,walk,coat:'
  g.fillStyle=shade(col,.15);g.beginPath();g.moveTo(-9,-12);g.quadraticCurveTo(-2,-21,5,-12);g.closePath();g.fill();g.strokeStyle='rgba(0,0,0,.4)';g.stroke();
  g.fillStyle='#9a6a3a';g.beginPath();g.ellipse(-5,-13.5,1.8,2,0,0,7);g.fill();g.strokeStyle='#4a3020';g.lineWidth=1.6;g.beginPath();g.moveTo(5,-9);g.lineTo(13,-11);g.stroke();
  for(const wx of [-6,2]){g.fillStyle='#3a2716';g.beginPath();g.arc(wx,-4,3.2,0,7);g.fill();g.strokeStyle='#8a6a40';g.lineWidth=.6;g.beginPath();for(let a=0;a<3;a++){const r=a+s*.3;g.moveTo(wx+Math.cos(r)*3,-4+Math.sin(r)*3);g.lineTo(wx-Math.cos(r)*3,-4-Math.sin(r)*3)}g.stroke()}g.restore()}
-function ship(g,type,col,an,u){if(type==='cog'||type==='fireship'||type==='demoship')return ship2(g,type,col,an,u);const bob=Math.sin(an*.6)*.6;g.translate(0,bob);const L=type==='galley'?22:14;
+function ship(g,type,col,an,u){if(type==='merchant'){ship2(g,'cog',col,an,u);g.fillStyle='#b8823a';g.strokeStyle='#3a2410';g.lineWidth=.6;for(const [x,y,s] of [[3,-14,5],[9,-13,4.4],[-5,-13,4]]){g.fillRect(x,y,s,s);g.strokeRect(x,y,s,s)}g.fillStyle='#e8c050';g.beginPath();g.arc(12,-15,1.8,0,7);g.fill();return}if(type==='cog'||type==='fireship'||type==='demoship')return ship2(g,type,col,an,u);const bob=Math.sin(an*.6)*.6;g.translate(0,bob);const L=type==='galley'?22:14;
  g.fillStyle='rgba(255,255,255,.35)';g.beginPath();g.ellipse(0,1,L+3,3.2,0,0,7);g.fill();
  const hull=type==='galley'?'#5a3a22':'#7a5634';const gr=g.createLinearGradient(0,-8,0,2);gr.addColorStop(0,shade(hull,.25));gr.addColorStop(1,shade(hull,-.35));g.fillStyle=gr;
  g.beginPath();g.moveTo(-L,-6);g.quadraticCurveTo(-L+2,1.5,-L*.4,2);g.lineTo(L*.5,2);g.quadraticCurveTo(L+1,1,L+3,-7);g.lineTo(L-1,-6);g.lineTo(-L,-6);g.closePath();g.fill();g.strokeStyle='#2a1a0e';g.lineWidth=.6;g.stroke();
@@ -2089,10 +2090,10 @@ function aiAlly(p,army,home){const ai=p.ai;if(peace())return;
  const rq=ai.req;if(rq&&ai.t<rq.until){if(!rq.sent){rq.sent=1;const fs=army.filter(u=>ud(u).tag!=='kng'&&!u.gar);for(const u of fs){u.task={k:'amove',x:rq.x+(Math.random()-.5)*5,y:rq.y+(Math.random()-.5)*5};u.path=null;ai.waves.add(u.id)}ai.waveN=ai.waves.size}}
  if(ai.t%60===0){const me=P[0];for(const r of R4){if(me.res[r]<80&&p.res[r]>600){const n=150;p.res[r]-=n;me.res[r]+=n;toast(`${p.civN} sent you ${n} ${r}.`,'good');break}}}}
 function allyList(){return P.filter(p=>p.i&&myTeam(p.i)&&p.alive)}
-function showAllies(){const al=allyList();if(!al.length){toast('You have no allies in this game.');return}
+function showAllies(){const al=allyList();
  $('#allyList').innerHTML=al.map(p=>`<div class="ach got"><b><i class="sw" style="background:${PCOL[p.i]}"></i>${p.civN}</b><span>Food ${Math.floor(p.res.food)} · Wood ${Math.floor(p.res.wood)} · Stone ${Math.floor(p.res.stone)} · Gold ${Math.floor(p.res.gold)}</span>
   <div class="row wrap">${R4.map(r=>`<button class="seg1" data-gift="${p.i}:${r}">Send 100 ${r}</button>`).join('')}</div>
-  <div class="row"><button class="seg1 on" data-req="${p.i}:attack">Attack where I'm looking</button><button class="seg1 on" data-req="${p.i}:defend">Defend my town</button></div></div>`).join('');
+  <div class="row"><button class="seg1 on" data-req="${p.i}:attack">Attack where I'm looking</button><button class="seg1 on" data-req="${p.i}:defend">Defend my town</button></div></div>`).join('')+diploSection();bindDiplo();
  $('#allyList').querySelectorAll('[data-gift]').forEach(b=>b.onclick=()=>{const [i,r]=b.dataset.gift.split(':');const me=P[0];if(me.res[r]<100){toast('Not enough '+r,'bad');return}me.res[r]-=100;P[+i].res[r]+=100;sfx('click');showAllies()});
  $('#allyList').querySelectorAll('[data-req]').forEach(b=>b.onclick=()=>{const [i,k]=b.dataset.req.split(':');const p=P[+i];let x,y;
   if(k==='defend'){const tc=blds.find(q=>q.o===0&&(q.type==='tc'||q.type==='castle'));if(!tc){toast('You have no town to defend','bad');return}x=tc.x+tc.w/2;y=tc.y+tc.h/2}
@@ -2236,6 +2237,38 @@ function customGen(name,np,seed){const d=myMaps()[name];if(!d)return genMap(seed
  return starts}
 regMaps();
 
+/* ---------- shifting diplomacy ---------- */
+const truceOn=(a,b)=>S&&S.truceT&&S.truceT[a*4+b]>S.t;
+function setTruce(a,b,secs){if(!S.truceT)S.truceT=new Array(16).fill(0);S.truceT[a*4+b]=S.truceT[b*4+a]=S.t+secs;for(const u of units)if(u.task&&u.task.k==='atk'){const e=ents.get(u.task.id);if(e&&!isEnemy(u.o,e.o))u.task=null}}
+const armyOf=o=>units.reduce((n,u)=>n+(u.o===o&&isMil(u)&&canFight(u)?1:0),0);
+function rivalsOf0(){return P.filter(p=>p.i&&p.alive!==false&&p.ai&&isEnemy(0,p.i))}
+function joinTeam(i){if(P[0].team==null)P.forEach((p,k)=>{if(p.team==null)p.team=10+k});P[i].team=P[0].team;S.allies=(S.allies||0)+1;$('#allyBtn').hidden=false;
+ for(const u of units)if(u.task&&u.task.k==='atk'){const e=ents.get(u.task.id);if(e&&!isEnemy(u.o,e.o))u.task=null}if(P[i].ai)P[i].ai.waves=new Set();terrDirty=true;if(typeof computeFog==='function')computeFog()}
+let dipQ=null;
+function dipAsk(p,msg,yes,no,yesTxt,noTxt){dipQ={yes,no};$('#dipTxt').innerHTML=`<i class="sw" style="background:${PCOL[p.i]}"></i><b>${p.civN}</b><br>${msg}`;$('#dipYes').textContent=yesTxt;$('#dipNo').textContent=noTxt;$('#dipScr').hidden=false;paused=true;sfx('alert')}
+$('#dipYes').onclick=()=>{$('#dipScr').hidden=true;paused=false;const q=dipQ;dipQ=null;if(q&&q.yes)q.yes()};
+$('#dipNo').onclick=()=>{$('#dipScr').hidden=true;paused=false;const q=dipQ;dipQ=null;if(q&&q.no)q.no()};
+function dipTick(){if(!S||S.mission||S.tut||S.spectate||peace()||!P[0]||P[0].alive===false)return;if(!$('#dipScr').hidden||!$('#mercScr').hidden)return;
+ const rv=rivalsOf0();if(!rv.length)return;const me=P[0],ma=armyOf(0);
+ for(const p of rv){const ai=p.ai;if(ai.dipT==null){ai.dipT=S.t+300+Math.random()*240;continue}if(S.t<ai.dipT)continue;ai.dipT=S.t+420+Math.random()*300;
+  const ta=armyOf(p.i),others=rv.filter(q=>q!==p);const strongest=others.slice().sort((a,b)=>armyOf(b.i)-armyOf(a.i))[0];
+  if(others.length&&strongest&&armyOf(strongest.i)>ta*1.3&&armyOf(strongest.i)>ma*.8&&Math.random()<.6){
+   dipAsk(p,`“The power of the ${strongest.civN} grows too great. Stand with us and we will fight them together.”`,()=>{joinTeam(p.i);toast('Alliance formed with the '+p.civN+'!','good');sfx('win')},()=>{toast('No alliance with the '+p.civN+'.')},'Form an alliance','Refuse');return}
+  if(ta>ma*1.3&&me.res.gold>=100){const amt=Math.min(400,Math.max(100,Math.round(me.res.gold*.3/50)*50));
+   dipAsk(p,`“Pay us ${amt} gold and we will leave you in peace for a while. Refuse, and our army marches.”`,()=>{if(me.res.gold<amt){toast('Not enough gold!','bad');ai.nextWave=Math.min(ai.nextWave,ai.t+45);return}me.res.gold-=amt;p.res.gold+=amt;setTruce(0,p.i,300);toast(`Paid ${amt} gold. Peace with the ${p.civN} for 5 minutes.`,'good')},()=>{ai.nextWave=Math.min(ai.nextWave,ai.t+60);toast('The '+p.civN+' army is gathering against you!','bad')},`Pay ${amt} gold`,'Refuse');return}
+  if(ma>ta*1.3){const gift=Math.min(300,Math.round(p.res.gold*.4/50)*50);
+   dipAsk(p,`“We ask for a truce of 5 minutes.${gift>0?` Take ${gift} gold as a sign of good faith.`:''}”`,()=>{if(gift>0){p.res.gold-=gift;me.res.gold+=gift}setTruce(0,p.i,300);toast('Truce with the '+p.civN+' for 5 minutes.','good')},()=>{toast('You refused the truce.')},'Accept truce','Refuse');return}}}
+function diploSection(){const rv=rivalsOf0();if(!rv.length)return '';const me=P[0],ma=armyOf(0);
+ return '<h3>Rivals</h3>'+rv.map(p=>{const tr=truceOn(0,p.i),left=tr?Math.ceil((S.truceT[p.i]-S.t)/60):0;return `<div class="ach got"><b><i class="sw" style="background:${PCOL[p.i]}"></i>${p.civN}</b><span>${tr?`Truce: ${left} min left`:'At war'} · army about ${armyOf(p.i)} (yours ${ma})</span>
+  <div class="row"><button class="seg1 on" data-trib="${p.i}">Send 150 gold</button><button class="seg1 ${tr?'':'on'}" data-truce="${p.i}">Ask for a truce</button></div></div>`}).join('')}
+function bindDiplo(){$('#allyList').querySelectorAll('[data-trib]').forEach(b=>b.onclick=()=>{const p=P[+b.dataset.trib],me=P[0];if(me.res.gold<150){toast('Not enough gold','bad');return}me.res.gold-=150;p.res.gold+=150;p.ai.tribT=S.t;p.ai.nextWave=Math.max(p.ai.nextWave,p.ai.t+180);toast('The '+p.civN+' envoy accepts your gold. Their attacks are delayed.','good');showAllies()});
+ $('#allyList').querySelectorAll('[data-truce]').forEach(b=>b.onclick=()=>{const p=P[+b.dataset.truce];if(truceOn(0,p.i)){toast('You already have a truce.');return}if(S.t<(p.ai.truceAskT||0)){toast('The '+p.civN+' envoy will not talk again so soon.','bad');return}p.ai.truceAskT=S.t+300;
+  const ok=armyOf(p.i)<=armyOf(0)*1.2||S.t-(p.ai.tribT||-999)<180;if(ok){setTruce(0,p.i,300);toast('The '+p.civN+' agree to a 5-minute truce.','good')}else toast('The '+p.civN+' envoy laughs at your offer. Send gold first, or grow your army.','bad');showAllies()})}
+/* ---------- sea trade ---------- */
+function seaTradeTick(){for(const u of units){if(u.type!=='merchant'||u.task||u.gar)continue;const docks=blds.filter(b=>b.type==='dock'&&b.built>=1&&!isEnemy(u.o,b.o));const home=docks.filter(b=>b.o===u.o).sort((a,b)=>Math.hypot(a.x-u.x,a.y-u.y)-Math.hypot(b.x-u.x,b.y-u.y))[0];
+ if(!home)continue;let far=null,fd=8;for(const d of docks){if(d===home)continue;const dd=Math.hypot(d.x-home.x,d.y-home.y);if(dd>fd){fd=dd;far=d}}
+ if(!far){if(u.o===0)toastOnce('seatrade','Merchant ships need a second dock far away (yours or an ally’s) to trade with.',60);continue}u.task={k:'trade',a:home.id,b:far.id,leg:0,sea:1};u.path=null}}
+
 /* ---------- game setup ---------- */
 const STARTRES={low:{food:200,wood:200,stone:100,gold:100},std:{food:300,wood:300,stone:200,gold:200},high:{food:1000,wood:1000,stone:1000,gold:1000}};
 function newPlayer(i,civ,rl){const p={i,civ,civN:CIVS[civ].n,style:CIVS[civ].style,res:Object.assign({},STARTRES[rl]||STARTRES.std),phase:0,techs:[],m:null,pop:0,popCap:0,ai:null,bell:false,hero:0,alive:true,barter:{food:100,wood:100,stone:100},st:{trained:0,kills:0,lost:0,razed:0,gath:0,captured:0}};recomputeMods(p);return p}
@@ -2275,7 +2308,7 @@ function tick(){S.t+=DT;S.tick++;pathBudget=0;
  for(const a of animals.slice())if(!a.dead)updAnimal(a,DT);
  if(roadDirty)roadSync();cargoFollow();
  if(S.tick%2===0)separate();
- if(S.tick%20===3){hillTick();relicTick();moraleTick();weatherTick();wildTick()}if(S.tick%10===5)wolfTick();if(S.tick%600===0)histTick();if(S.tick%40===0)achTick();
+ if(S.tick%20===3){hillTick();relicTick();moraleTick();weatherTick();wildTick();if(S.tick%200===3)dipTick()}if(S.tick%40===9)seaTradeTick();if(S.tick%10===5)wolfTick();if(S.tick%600===0)histTick();if(S.tick%40===0)achTick();
  if(S.tick%20===7)for(const p of P)if(p.alive)autoRepair(p);
  for(const p of projs){p.t+=DT;if(p.t>=p.dur){const t=ents.get(p.tid);if(t&&!t.dead&&!(t.k==='u'&&t.gar))hit(t,p.d,p.o,p.aid);
    if(p.splash){for(const u of units){if(u.gar||!isEnemy(p.o,u.o)||u===t)continue;if(Math.hypot(u.x-p.tx,u.y-p.ty)<p.splash)hit(u,p.d*.6,p.o,p.aid)}fx.push({k:'dust',x:p.tx,y:p.ty,t:0,life:.8,s:.5})}p.done=1}
@@ -2319,7 +2352,7 @@ function showTitle(){running=false;paused=false;$('#hud').hidden=true;$('#pause'
  computeTerritory();explored.fill(1);buildTitle();cam.z=VW<700?.7:.9;const t0=blds[0];centerOn(t0.x+2,t0.y+2)}
 function startGame(){$('#title').hidden=true;$('#end').hidden=true;$('#loading').hidden=false;setTimeout(()=>{newGame(Object.assign({},SETUP),false);$('#loading').hidden=true;beginPlay();
  toast('Tap a villager, then tap a tree, bush or animal to start gathering.','good')},30)}
-function beginPlay(){running=true;paused=false;lastAtk=null;$('#allyBtn').hidden=!(S.allies>0);$('#hud').hidden=false;lastSig='';panelDirty=true;updTop();drawMini();setSpeedUI();setSpeedLbl();updGroups()}
+function beginPlay(){running=true;paused=false;lastAtk=null;$('#allyBtn').hidden=!(S.allies>0||P.length>1);$('#hud').hidden=false;lastSig='';panelDirty=true;updTop();drawMini();setSpeedUI();setSpeedLbl();updGroups()}
 function setSpeedUI(){$('#speed').querySelectorAll('button').forEach(b=>b.classList.toggle('on',+b.dataset.s===S.speed))}
 $('#newBtn').onclick=startGame;
 $('#contBtn').onclick=()=>{$('#loading').hidden=false;setTimeout(()=>{const ok=load();$('#loading').hidden=true;if(ok){$('#title').hidden=true;beginPlay();toast('Welcome back.','good')}else{toast('That save could not be loaded','bad');$('#contBtn').hidden=true}},30)};
