@@ -99,6 +99,7 @@ const B={
  stable:{n:'Stable',w:3,h:3,hp:1500,cost:{wood:200},tm:30,ph:0,los:6,train:['scout','knight'],d:'Trains cavalry.'},
  sentry:{n:'Sentry Tower',w:1,h:1,hp:500,cost:{wood:100},tm:20,ph:0,los:10,arr:{n:1,r:6,a:4},gar:3,d:'Cheap lookout tower.'},
  outpost:{n:'Outpost',w:1,h:1,hp:300,cost:{wood:40},tm:10,ph:0,los:14,any:1,d:'Sees far. Can be built outside your territory.'},
+ pgate:{n:'Palisade Gate',w:1,h:1,hp:500,cost:{wood:25},tm:8,ph:0,los:3,wall:1,gate:1,any:1,nocap:1,d:'Wooden gate. Your units pass, enemies cannot. Build it on top of a palisade to swap a piece out.'},
  palisade:{n:'Palisade',w:1,h:1,hp:350,cost:{wood:3},tm:4,ph:0,los:2,wall:1,any:1,nocap:1,d:'Wooden wall.'},
  smith:{n:'Blacksmith',w:3,h:3,hp:1500,cost:{wood:200},tm:30,ph:1,los:6,tech:['forge','iron','fletch','bodkin','scale','chain','barding','plate','blast','bracer'],d:'Attack and armor upgrades.'},
  market:{n:'Market',w:3,h:3,hp:1500,cost:{wood:300},tm:40,ph:1,los:6,train:['trader'],tech:['caravan','guilds','banking'],market:1,d:'Barter goods. Trade carts run between markets.'},
@@ -106,11 +107,11 @@ const B={
  workshop:{n:'Siege Workshop',w:3,h:3,hp:1500,cost:{wood:300},tm:40,ph:1,los:6,train:['ram','mangonel','treb'],d:'Builds siege weapons.'},
  tower:{n:'Stone Tower',w:1,h:1,hp:1600,cost:{wood:100,stone:150},tm:40,ph:1,los:11,arr:{n:2,r:8,a:7},gar:5,d:'Strong tower. Garrison adds arrows.'},
  wall:{n:'Stone Wall',gar:2,arr:{n:0,r:6,a:6},w:1,h:1,hp:2200,cost:{stone:6},tm:6,ph:1,los:2,wall:1,any:1,nocap:1,d:'Thick stone wall.'},
- gate:{n:'Gate',gar:2,arr:{n:0,r:6,a:6},w:1,h:1,hp:2200,cost:{stone:30},tm:12,ph:1,los:3,wall:1,gate:1,any:1,nocap:1,d:'Your units can pass, enemies cannot.'},
+ gate:{n:'Gate',gar:2,arr:{n:0,r:6,a:6},w:1,h:1,hp:2200,cost:{stone:30},tm:12,ph:1,los:3,wall:1,gate:1,any:1,nocap:1,d:'Your units can pass, enemies cannot. Build it on top of a wall to swap a piece out.'},
  castle:{n:'Castle',w:4,h:4,hp:5000,cost:{stone:700},tm:150,ph:1,pop:20,los:12,arr:{n:4,r:9,a:9},train:['UU','HERO','treb'],tech:['boil','murder'],gar:20,terr:12,d:'Fortress. Unique units and heroes. Claims territory.'},
  wonder:{n:'Wonder',w:5,h:5,hp:6000,cost:{wood:1000,stone:1000,gold:1000},tm:300,ph:2,los:10,d:'A marvel of your age. Can win the game.'}
 };
-const BUILD_TABS={eco:['house','farmstead','storehouse','field','corral','dock','market','tc','wonder'],mil:['barracks','range','stable','smith','temple','workshop','castle'],def:['palisade','sentry','outpost','wall','gate','tower']};
+const BUILD_TABS={eco:['house','farmstead','storehouse','field','corral','dock','market','tc','wonder'],mil:['barracks','range','stable','smith','temple','workshop','castle'],def:['palisade','pgate','sentry','outpost','wall','gate','tower']};
 
 /* ---------- technologies ---------- */
 const TECH={
@@ -686,7 +687,8 @@ function aiTick(p){const ai=p.ai,o=p.i;ai.t+=1;if(!ai.raid)ai.raid=[];if(ai.next
  for(const id of ai.waves){const u=ents.get(id);if(!u||u.gar)continue;if(u.task&&u.task.k==='atk')continue;const t=aiNearestEnemyBld(p,{x:u.x,y:u.y});if(t)u.task={k:'atk',id:t.id,wave:1,dmg:ud(u).tag==='sie'?1:0};else{const e=nearestEnemy(u,999,false);if(e)u.task={k:'atk',id:e.id,wave:1}}}}
 
 /* ---------- placement ---------- */
-function canPlace(type,x,y,o,margin){const d=B[type];if(x<0||y<0||x+d.w>W||y+d.h>H)return false;let landN=0;
+function swapWall(type,x,y,o){if(!B[type].gate||x<0||y<0||x>=W||y>=H)return null;const w=ents.get(occ[y*W+x]);if(!w||w.k!=='b'||w.o!==o||w.built<1)return null;const wood=type==='pgate';if(wood?w.type!=='palisade':(w.type!=='wall'&&w.type!=='palisade'))return null;return w}
+function canPlace(type,x,y,o,margin){const d=B[type];if(x<0||y<0||x+d.w>W||y+d.h>H)return false;if(swapWall(type,x,y,o))return true;let landN=0;
  for(let yy=y;yy<y+d.h;yy++)for(let xx=x;xx<x+d.w;xx++){const i=yy*W+xx;if(block[i]||occ[i])return false;if(d.water?ter[i]!==1:ter[i]===1)return false;if(ter[i]===4)return false;if(o===0&&!explored[i])return false;if(!d.any&&o!==0&&terr[i]!==o+1)return false}
  if(d.water){for(let yy=y-1;yy<=y+d.h;yy++)for(let xx=x-1;xx<=x+d.w;xx++){if(xx<0||yy<0||xx>=W||yy>=H)continue;const i=yy*W+xx;if(ter[i]!==1&&!block[i])landN++}if(!landN)return false}
  if(margin){for(let yy=y-1;yy<=y+d.h;yy++)for(let xx=x-1;xx<=x+d.w;xx++){if(xx<0||yy<0||xx>=W||yy>=H)return false;if(yy>=y&&yy<y+d.h&&xx>=x&&xx<x+d.w)continue;const i=yy*W+xx;if(block[i]>=2)return false;if(occ[i]&&!B[ents.get(occ[i]).type].flat)return false}}
@@ -703,7 +705,7 @@ function placeWhy(type,x,y){const d=B[type];for(let yy=y;yy<y+d.h;yy++)for(let x
 function confirmPlace(){if(!placing||placing.tx==null)return;const p=P[0],d=B[placing.type];const ws=selWorkers();
  if(d.wall){if(placing.ax==null){placing.ax=placing.tx;placing.ay=placing.ty}
   const tiles=wallLine(placing.ax,placing.ay,placing.tx,placing.ty);const ids=[];
-  for(const [x,y] of tiles){if(!canPlace(placing.type,x,y,0,false))continue;if(!afford(p,d.cost)){toast('Not enough '+Object.keys(d.cost)[0]+' for the whole wall','bad');break}pay(p,d.cost);ids.push(mkBld(placing.type,0,x,y,false).id)}
+  for(const [x,y] of tiles){if(!canPlace(placing.type,x,y,0,false))continue;if(!afford(p,d.cost)){toast('Not enough '+Object.keys(d.cost)[0]+' for the whole wall','bad');break}pay(p,d.cost);const sw=swapWall(placing.type,x,y,0);if(sw)kill(sw,0,true);ids.push(mkBld(placing.type,0,x,y,false).id)}
   if(!ids.length){toast("Can't build there",'bad');placing.ax=placing.ay=null;lastSig='';return}assignBuild(ws,ids);placing=null;panelDirty=true;return}
  if(!canPlace(placing.type,placing.tx,placing.ty,0,false)){toast("Can't build there: "+placeWhy(placing.type,placing.tx,placing.ty),'bad');return}
  if(!afford(p,d.cost)){toast('Need '+need(p,d.cost),'bad');return}
@@ -814,7 +816,7 @@ function sroof(g,st,x,y,z,w,d,rh,ov,axis,wcol){const k=st.kind;
  if(k==='pagoda')return hip(g,x,y,z,w,d,rh*.85,ov+.12,st.roof,st.roofTex,true);
  merlons(g,x,y,z,w,d,shade(wcol,-.06))}
 function hut(g,st,x,y,w,d,h,rh,axis,o={}){const flat=st.kind==='flat';const wc=o.wall||st.wall;box3(g,x,y,0,w,d,h,wc,o.tex||st.wallTex,flat?st.roof:null,null,o.feat);sroof(g,st,x,y,h,w,d,rh,o.ov??.12,axis,wc)}
-const ZMX={tc:150,castle:150,tower:140,palisade:46,wall:56,gate:62,field:10,farmstead:100,storehouse:70,dock:70,market:100,temple:170,sentry:100,outpost:80,corral:44,wonder:240,barracks:110,range:110,stable:100,smith:110,workshop:110,house:90};
+const ZMX={pgate:52,tc:150,castle:150,tower:140,palisade:46,wall:56,gate:62,field:10,farmstead:100,storehouse:70,dock:70,market:100,temple:170,sentry:100,outpost:80,corral:44,wonder:240,barracks:110,range:110,stable:100,smith:110,workshop:110,house:90};
 function model(g,type,sk,col,tier=2,o=-1){let st=tierStyle(sk,tier);if(o===0&&tier>=1&&S&&S.opts&&ROOFS[S.opts.roof]&&st.kind!=='flat')st=Object.assign({},st,ROOFS[S.opts.roof]);const bigO=(feat)=>({wall:st.big,tex:st.bigTex,feat});
  switch(type){
  case 'house':{shadow3(g,.3,.35,1.4,1.3,40);hut(g,st,.3,.35,1.4,1.3,20,16,'x',{feat:{y:f=>{door(g,f,.2,.62,.3,col);win(g,f,.72)},x:f=>win(g,f,.5)}});
@@ -909,10 +911,10 @@ case 'storehouse':{shadow3(g,.25,.25,1.5,1.1,40);for(const [a,b] of [[.3,.3],[1.
    hut(g,st,1.7,.3,1.6,4.4,34,36,'y',{wall:st.big,tex:'plank'});box3(g,2.2,2.2,60,.6,.6,40,st.big,'plank',null);hip(g,2.2,2.2,100,.6,.6,40,.1,st.roof,'thatch');banner(g,2.5,2.5,150,col,22)}
   break}
  }}
-function makeBSprite(type,sk,o,tier){const d=B[type],w=d.w,h=d.h,zm=ZMX[type]||100,pad=22,sc=2.5;const c=document.createElement('canvas');
+function makeBSprite(type,sk,o,tier,mask){const d=B[type],w=d.w,h=d.h,zm=ZMX[type]||100,pad=22,sc=2.5;const c=document.createElement('canvas');
  c.width=Math.ceil(((w+h)*HW+pad*2+40)*sc);c.height=Math.ceil(((w+h)*HH+zm+pad*2)*sc);const g=c.getContext('2d');g.scale(sc,sc);c.ox=h*HW+pad;c.oy=zm+pad;c.sc=sc;g.translate(c.ox,c.oy);
- model(g,type,sk,PCOL[o],tier,o);if(tier>=3&&!B[type].wall&&!B[type].flat&&B[type].w>=2)royalTrim(g,type,PCOL[o]);if(tier===0&&!B[type].wall&&!B[type].flat&&B[type].w>=2&&type!=='dock')rusticBits(g,type);return defineEdges(c,2,'#1c120a')}
-function bSprite(type,sk,o,tier=2){const k=type+'|'+sk+'|'+o+'|'+tier;let c=sprC.get(k);if(!c){c=makeBSprite(type,sk,o,tier);sprC.set(k,c)}return c}
+ if(B[type].wall){const mk=mask||0;wallModel(g,type,sk,PCOL[o],tier,mk);return mk?c:defineEdges(c,2,'#1c120a')}model(g,type,sk,PCOL[o],tier,o);if(tier>=3&&!B[type].wall&&!B[type].flat&&B[type].w>=2)royalTrim(g,type,PCOL[o]);if(tier===0&&!B[type].wall&&!B[type].flat&&B[type].w>=2&&type!=='dock')rusticBits(g,type);return defineEdges(c,2,'#1c120a')}
+function bSprite(type,sk,o,tier=2,mask){const k=type+'|'+sk+'|'+o+'|'+tier+(mask!=null?'|m'+mask:'');let c=sprC.get(k);if(!c){c=makeBSprite(type,sk,o,tier,mask);sprC.set(k,c)}return c}
 const treeV=[],resV={2:[],3:[],4:[]};
 function makeResSprites(){const mk=(w,h,f,ec)=>{const c=document.createElement('canvas');c.width=w*3;c.height=h*3;const g=c.getContext('2d');g.scale(3,3);f(g);c.w=w;c.h=h;return defineEdges(c,2,ec||'#16210f')};const r=mulberry(99);
  for(let v=0;v<6;v++)treeV.push(mk(44,56,g=>{g.fillStyle='rgba(10,20,0,.32)';g.beginPath();g.ellipse(24,51,14,5,0,0,7);g.fill();
@@ -974,6 +976,28 @@ function royalTrim(g,type,col){const d=B[type],w=d.w,h=d.h;const zm=ZMX[type]||1
 function rusticBits(g,type){const d=B[type],w=d.w,h=d.h;
  const p=PJ(w-.15,h*.55,0);g.fillStyle='#6b4a2c';for(let k=0;k<3;k++){g.beginPath();g.ellipse(p[0]+k*2.4,p[1]-k*2.6,4.6,2,0,0,7);g.fill();g.fillStyle=k%2?'#6b4a2c':'#7a5636'}g.fillStyle='#c8a868';for(let k=0;k<3;k++){g.beginPath();g.arc(p[0]-3+k*3.4,p[1]-2.6*k-1,1,0,7);g.fill()}
  const q=PJ(.2,h-.2,0);g.fillStyle='#c9ad62';g.strokeStyle='#7a6030';g.lineWidth=.8;g.beginPath();g.ellipse(q[0],q[1]-4,6,4.5,0,0,7);g.fill();g.stroke();g.beginPath();g.moveTo(q[0]-5,q[1]-4);g.lineTo(q[0]+5,q[1]-4);g.stroke()}
+
+/* ---------- walls that join up with their neighbours ---------- */
+function crenel(g,x,y,z,w,d,axis,col){const m=.13;FNS=true;const L=[];if(axis==='y'){for(let t=.03;t<d-.04;t+=.25){L.push([x,y+t]);L.push([x+w-m,y+t])}}else{for(let t=.03;t<w-.04;t+=.25){L.push([x+t,y]);L.push([x+t,y+d-m])}}
+ L.sort((a,b)=>a[0]+a[1]-b[0]-b[1]);for(const [a,b] of L)box3(g,a,b,z,m,m,5,col,null,shade(col,.15));FNS=false}
+function wallModel(g,type,sk,col,tier,m){const st=tierStyle(sk,tier);const N=m&1,E=m&2,S=m&4,Wm=m&8;
+ if(type==='palisade'||type==='pgate'){const pts=[[.5,.5]];if(N)pts.push([.5,.28],[.5,.07]);if(S)pts.push([.5,.72],[.5,.93]);if(Wm)pts.push([.28,.5],[.07,.5]);if(E)pts.push([.72,.5],[.93,.5]);
+  if(!m)pts.push([.3,.3],[.7,.3],[.3,.7],[.7,.7]);if(type==='pgate'){const ax=E||Wm||!(N||S)?'x':'y';const ps=ax==='x'?[[.08,.5],[.92,.5]]:[[.5,.08],[.5,.92]];FNS=true;
+   for(const [a,b] of ps){box3(g,a-.1,b-.1,0,.2,.2,34,'#6e4a2a',null,null);hip(g,a-.1,b-.1,34,.2,.2,7,0,'#8a6239',null)}
+   if(ax==='x'){box3(g,.18,.44,0,.64,.12,24,'#9a7046','plank','#b08458');box3(g,.12,.42,24,.76,.16,4,'#6e4a2a',null,'#7a5636')}else{box3(g,.44,.18,0,.12,.64,24,'#9a7046','plank','#b08458');box3(g,.42,.12,24,.16,.76,4,'#6e4a2a',null,'#7a5636')}
+   FNS=false;const p=PJ(.5,.5,38);g.fillStyle=col;g.fillRect(p[0]-5,p[1]-3,10,5);return}
+  shadow3(g,.3,.3,.4,.4,20);FNS=true;pts.sort((p,q)=>p[0]+p[1]-q[0]-q[1]);for(const [a,b] of pts){const hh=22+Math.round((a*31+b*17)%3)*2;box3(g,a-.1,b-.1,0,.2,.2,hh,'#8a6239',null,null);hip(g,a-.1,b-.1,hh,.2,.2,7,0,'#a07648',null)}FNS=false;return}
+ const sc=st.stone,tex=sk==='mid'?'sand':'stone',top=shade(sc,.1);const hw=26,t0=.27,tw=.46;
+ if(type==='gate'){const ax=E||Wm||!(N||S)?'x':'y';shadow3(g,0,0,1,1,34);
+  if(ax==='x'){box3(g,0,t0-.04,0,.22,tw+.08,34,sc,tex,top);box3(g,.22,t0,0,.56,tw,30,shade(sc,-.04),tex,top,null,{y:f=>door(g,f,.5,.78,.7,col)});box3(g,.78,t0-.04,0,.22,tw+.08,34,sc,tex,top);crenel(g,0,t0-.04,34,.22,tw+.08,'x',sc);crenel(g,.78,t0-.04,34,.22,tw+.08,'x',sc);crenel(g,.22,t0,30,.56,tw,'x',sc)}
+  else{box3(g,t0-.04,0,0,tw+.08,.22,34,sc,tex,top);box3(g,t0,.22,0,tw,.56,30,shade(sc,-.04),tex,top,null,{x:f=>door(g,f,.5,.78,.7,col)});box3(g,t0-.04,.78,0,tw+.08,.22,34,sc,tex,top);crenel(g,t0-.04,0,34,tw+.08,.22,'y',sc);crenel(g,t0-.04,.78,34,tw+.08,.22,'y',sc);crenel(g,t0,.22,30,tw,.56,'y',sc)}
+  banner(g,.5,.5,40,col,12);return}
+ const straightY=(N||S)&&!E&&!Wm,straightX=(E||Wm)&&!N&&!S;
+ if(straightY){const y0=N?0:t0,y1=S?1:t0+tw;shadow3(g,t0,y0,tw,y1-y0,hw);box3(g,t0,y0,0,tw,y1-y0,hw,sc,tex,top);crenel(g,t0,y0,hw,tw,y1-y0,'y',sc);return}
+ if(straightX){const x0=Wm?0:t0,x1=E?1:t0+tw;shadow3(g,x0,t0,x1-x0,tw,hw);box3(g,x0,t0,0,x1-x0,tw,hw,sc,tex,top);crenel(g,x0,t0,hw,x1-x0,tw,'x',sc);return}
+ shadow3(g,0,0,1,1,hw);const arm=(x,y,w,d,ax)=>{box3(g,x,y,0,w,d,hw,sc,tex,top);crenel(g,x,y,hw,w,d,ax,sc)};
+ if(N)arm(t0,0,tw,t0,'y');if(Wm)arm(0,t0,t0,tw,'x');const ph=m?hw+4:hw;box3(g,t0-.05,t0-.05,0,tw+.1,tw+.1,ph,shade(sc,.03),tex,top);merlons(g,t0-.05,t0-.05,ph,tw+.1,tw+.1,sc);if(E)arm(t0+tw,t0,1-t0-tw,tw,'x');if(S)arm(t0,t0+tw,tw,1-t0-tw,'y')}
+function wallMask(b){let m=0;const D=[[0,-1,1],[1,0,2],[0,1,4],[-1,0,8]];for(const [dx,dy,bit] of D){const x=b.x+dx,y=b.y+dy;if(x<0||y<0||x>=W||y>=H)continue;const n=ents.get(occ[y*W+x]);if(n&&n.k==='b'&&n.o===b.o&&B[n.type].wall&&((n.type==='palisade'||n.type==='pgate')===(b.type==='palisade'||b.type==='pgate')))m|=bit}return m}
 let sprNew=0;const SPR_MAX=5;
 /* ---------- unit drawing (people & horses) ---------- */
 const SKIN=['#e8bd96','#c18c62','#8a573a'],HAIR=['#5a3a22','#2a1c12','#8a5a2a','#1a1410'];
@@ -1182,7 +1206,7 @@ function farmSprite(w,h,q,built){const k=w+'x'+h+q+built;let c=farmC.get(k);if(c
  const R=9;for(let r=0;r<R;r++){const t=.2+(h-.4)*(r+.5)/R;const a=PJ(.18,t,0),b=PJ(w-.18,t,0);g.strokeStyle='#4a2f17';g.lineWidth=1.3;g.beginPath();g.moveTo(a[0],a[1]+1);g.lineTo(b[0],b[1]+1);g.stroke();g.strokeStyle='#86603a';g.lineWidth=.7;g.beginPath();g.moveTo(a[0],a[1]-.4);g.lineTo(b[0],b[1]-.4);g.stroke();
   if(built&&q>0){const cols=['#c8a050','#b9b046','#9fb544','#86ad3c','#7aa83a'];for(let s=.24;s<w-.22;s+=.13){const p=PJ(s,t,0);const hgt=2+q*1.1;g.strokeStyle=cols[Math.min(4,q-1)];g.lineWidth=1.3;g.beginPath();g.moveTo(p[0],p[1]);g.lineTo(p[0]-.6,p[1]-hgt);g.moveTo(p[0],p[1]);g.lineTo(p[0]+1.2,p[1]-hgt*.8);g.stroke();if(q<=2){g.fillStyle='#e0c060';g.fillRect(p[0]-.8,p[1]-hgt-1.2,1.6,1.6)}}}}
  farmC.set(k,c);return c}
-function drawBld(g,b){const c=bSprite(b.type,P[b.o].style,b.o,bTier(b.o));const p=PJ(b.x,b.y,0);const X=p[0]-c.ox,Y=p[1]-c.oy,w=c.width/c.sc,h=c.height/c.sc;
+function drawBld(g,b){const c=B[b.type].wall?bSprite(b.type,P[b.o].style,b.o,bTier(b.o),wallMask(b)):bSprite(b.type,P[b.o].style,b.o,bTier(b.o));const p=PJ(b.x,b.y,0);const X=p[0]-c.ox,Y=p[1]-c.oy,w=c.width/c.sc,h=c.height/c.sc;
  if(b.built<1){footprint(g,b.x,b.y,b.w,b.h);g.fillStyle='rgba(95,68,38,.55)';g.fill();g.setLineDash([4,3]);g.strokeStyle='#d6b47a';g.lineWidth=1.2;g.stroke();g.setLineDash([]);
   const bot=PJ(b.x+b.w,b.y+b.h,0)[1]+6,cy=bot-(bot-Y)*(.1+.9*b.built);
   if(b.built>0){g.save();g.beginPath();g.rect(X,cy,w,h);g.clip();g.globalAlpha=.55+.45*b.built;g.drawImage(c,X,Y,w,h);g.restore()}
