@@ -1372,7 +1372,7 @@ const toastEl=$('#toasts');const once=new Map();
 function toast(msg,kind,at){const d=document.createElement('div');d.className='toast'+(kind?' '+kind:'');d.textContent=msg;if(at){d.style.cursor='pointer';d.onclick=()=>centerOn(at.x,at.y)}toastEl.appendChild(d);while(toastEl.children.length>3)toastEl.firstChild.remove();setTimeout(()=>d.remove(),4200)}
 function toastOnce(key,msg,gap=30){const t=S?S.t:0;if(once.has(key)&&t-once.get(key)<gap)return;once.set(key,t);toast(msg,'bad')}
 let lastAlert=-99;
-function alertAttack(t){if(!S||S.t-lastAlert<15)return;lastAlert=S.t;const c=ec(t);pings.push({x:c.x,y:c.y,t:S.t});const name=t.k==='u'?ud(t).n:B[t.type].n;toast(`Your ${name.toLowerCase()} is under attack! Tap to look.`,'bad',c)}
+function alertAttack(t){if(!S||S.t-lastAlert<15)return;lastAlert=S.t;const c=ec(t);pings.push({x:c.x,y:c.y,t:S.t});noteAttack(c);const name=t.k==='u'?ud(t).n:B[t.type].n;toast(`Your ${name.toLowerCase()} is under attack! Tap to look.`,'bad',c)}
 
 /* ---------- picking ---------- */
 function unitAt(w){let best=null,bd=19;for(const u of units){if(u.gar)continue;if(u.o!==0&&!vis[(u.y|0)*W+(u.x|0)])continue;const p=PJ(u.x,u.y,0),tg=ud(u).tag;const off=tg==='cav'?20:tg==='sie'||tg==='shp'?18:15;
@@ -1511,6 +1511,32 @@ function updTop(){const p=P[0];for(const r of R4){const el=$('#r-'+r+' b');const
  const idle=units.filter(u=>u.o===0&&ud(u).tag==='vil'&&!u.task&&!u.gar).length;const bi=$('#bIdle .badge');bi.textContent=idle||'';
  const army=units.filter(u=>u.o===0&&isMil(u)).length;const ba=$('#bArmy .badge');ba.textContent=army||'';ba.style.background=army?'#3f6ea8':''}
 
+/* ---------- phone controls: groups, quick select, alerts, speed ---------- */
+function longPress(el,onTap,onLong){let t=0,fired=false;el.addEventListener('pointerdown',e=>{fired=false;clearTimeout(t);t=setTimeout(()=>{fired=true;onLong();if(navigator.vibrate)try{navigator.vibrate(15)}catch(_){}},480)});
+ const end=()=>clearTimeout(t);el.addEventListener('pointerup',end);el.addEventListener('pointerleave',end);el.addEventListener('pointercancel',end);
+ el.addEventListener('click',e=>{e.preventDefault();if(fired){fired=false;return}onTap()})}
+function groupIds(g){if(!S.groups)S.groups=[[],[],[]];const ids=S.groups[g].filter(id=>{const e=ents.get(id);return e&&!e.dead&&e.o===0&&!e.gar});S.groups[g]=ids;return ids}
+function saveGroup(g){if(!sel.length){toast('Select some units first, then hold a group button to save them');return}if(!S.groups)S.groups=[[],[],[]];S.groups[g]=sel.filter(id=>{const e=ents.get(id);return e&&e.k==='u'&&e.o===0});toast(`Group ${g+1} saved (${S.groups[g].length})`,'good');updGroups()}
+function tapGroup(g){const ids=groupIds(g);if(!ids.length){if(sel.length)saveGroup(g);else toast(`Group ${g+1} is empty. Select units, then hold this button to save them.`);return}
+ const same=ids.length===sel.length&&ids.every(id=>sel.includes(id));sel=ids.slice();panelDirty=true;lastSig='';
+ if(same){let x=0,y=0;for(const id of ids){const e=ents.get(id);x+=e.x;y+=e.y}centerOn(x/ids.length,y/ids.length)}}
+function updGroups(){if(!S)return;for(let g=0;g<3;g++){const b=document.querySelector(`#groups [data-g="${g}"] .badge`);if(b){const n=groupIds(g).length;b.textContent=n||'';}}}
+document.querySelectorAll('#groups [data-g]').forEach(b=>{const g=+b.dataset.g;longPress(b,()=>tapGroup(g),()=>saveGroup(g))});
+function selectAllIdle(){const idle=units.filter(u=>u.o===0&&ud(u).tag==='vil'&&!u.task&&!u.gar);if(!idle.length){toast('No idle villagers');return}sel=idle.map(u=>u.id);panelDirty=true;lastSig='';toast(`${idle.length} idle villager${idle.length>1?'s':''} selected`)}
+{const b=$('#bIdle');b.onclick=null;longPress(b,nextIdle,selectAllIdle)}
+{const b=$('#bArmy');const tapA=b.onclick;b.onclick=null;longPress(b,()=>tapA&&tapA.call(b),()=>{const a=units.filter(u=>u.o===0&&isMil(u)&&!u.gar&&!u.task);if(!a.length){toast('No idle soldiers');return}sel=a.map(u=>u.id);panelDirty=true;lastSig='';toast(`${a.length} idle soldier${a.length>1?'s':''} selected`)})}
+/* attack alert button */
+let lastAtk=null;
+function noteAttack(c){lastAtk={x:c.x,y:c.y,t:S.t}}
+$('#alertBtn').onclick=()=>{if(lastAtk)centerOn(lastAtk.x,lastAtk.y)};
+function updAlert(){const on=!!(lastAtk&&S&&S.t-lastAtk.t<20);const b=$('#alertBtn');if(b.hidden===on)b.hidden=!on}
+/* speed and pause */
+const SPEEDS=[1,1.5,2,3];
+function setSpeedLbl(){$('#spdBtn').textContent=(S?S.speed:1.5)+'×';$('#pauseBtn').classList.toggle('on',paused&&$('#pause').hidden);$('#pausedBar').hidden=!(paused&&$('#pause').hidden&&running)}
+$('#spdBtn').onclick=()=>{const i=SPEEDS.indexOf(S.speed);S.speed=SPEEDS[(i+1)%SPEEDS.length];setSpeedLbl();if(typeof setSpeedUI==='function')setSpeedUI();toast('Speed '+S.speed+'×')};
+$('#pauseBtn').onclick=()=>{paused=!paused;setSpeedLbl()};
+$('#pausedBar').onclick=()=>{paused=false;setSpeedLbl()};
+
 /* ---------- game setup ---------- */
 const STARTRES={low:{food:200,wood:200,stone:100,gold:100},std:{food:300,wood:300,stone:200,gold:200},high:{food:1000,wood:1000,stone:1000,gold:1000}};
 function newPlayer(i,civ,rl){const p={i,civ,civN:CIVS[civ].n,style:CIVS[civ].style,res:Object.assign({},STARTRES[rl]||STARTRES.std),phase:0,techs:[],m:null,pop:0,popCap:0,ai:null,bell:false,hero:0,alive:true,barter:{food:100,wood:100,stone:100},st:{trained:0,kills:0,lost:0,razed:0,gath:0,captured:0}};recomputeMods(p);return p}
@@ -1569,7 +1595,7 @@ function frame(now){const dt=Math.min(.25,(now-last)/1000);last=now;sprNew=0;
  if(running&&!paused){acc+=dt*S.speed;let n=0;const maxT=S.speed>1?8:4;while(acc>=DT&&n<maxT){tick();acc-=DT;n++;if(!running)break}if(n>=maxT)acc=Math.min(acc,DT)}
  else if(!running&&S){cam.x+=dt*16;cam.y+=dt*5;if(cam.x>W*HW*.55)cam.x=-H*HW*.55;if(cam.y>(W+H)*HH*.75)cam.y=(W+H)*HH*.2}
  keyPan(dt);adaptRes(dt);render();
- if(running){uiT+=dt;miniT+=dt;if(panelDirty||uiT>.25){uiT=0;panelDirty=false;renderPanel();updTop()}if(miniT>.35){miniT=0;drawMini()}}
+ if(running){uiT+=dt;miniT+=dt;if(panelDirty||uiT>.25){uiT=0;panelDirty=false;renderPanel();updTop()}if(miniT>.35){miniT=0;drawMini();updGroups();updAlert();setSpeedLbl()}}
  requestAnimationFrame(frame)}
 
 /* ---------- screens ---------- */
@@ -1591,13 +1617,13 @@ function showTitle(){running=false;paused=false;$('#hud').hidden=true;$('#pause'
  computeTerritory();explored.fill(1);buildTitle();cam.z=VW<700?.7:.9;const t0=blds[0];centerOn(t0.x+2,t0.y+2)}
 function startGame(){$('#title').hidden=true;$('#end').hidden=true;$('#loading').hidden=false;setTimeout(()=>{newGame(Object.assign({},SETUP),false);$('#loading').hidden=true;beginPlay();
  toast('Tap a villager, then tap a tree, bush or animal to start gathering.','good');setTimeout(()=>{if(running)toast('Build inside your territory, the dashed line around your town.')},4500)},30)}
-function beginPlay(){running=true;paused=false;$('#hud').hidden=false;lastSig='';panelDirty=true;updTop();drawMini();setSpeedUI()}
+function beginPlay(){running=true;paused=false;lastAtk=null;$('#hud').hidden=false;lastSig='';panelDirty=true;updTop();drawMini();setSpeedUI();setSpeedLbl();updGroups()}
 function setSpeedUI(){$('#speed').querySelectorAll('button').forEach(b=>b.classList.toggle('on',+b.dataset.s===S.speed))}
 $('#newBtn').onclick=startGame;
 $('#contBtn').onclick=()=>{$('#loading').hidden=false;setTimeout(()=>{const ok=load();$('#loading').hidden=true;if(ok){$('#title').hidden=true;beginPlay();toast('Welcome back.','good')}else{toast('That save could not be loaded','bad');$('#contBtn').hidden=true}},30)};
 $('#againBtn').onclick=startGame;$('#endTitleBtn').onclick=showTitle;
 $('#menuBtn').onclick=()=>{paused=true;save();setSpeedUI();$('#pause').hidden=false};
-$('#resumeBtn').onclick=()=>{paused=false;$('#pause').hidden=true};
+$('#resumeBtn').onclick=()=>{paused=false;$('#pause').hidden=true;setSpeedLbl()};
 $('#quitBtn').onclick=()=>{save();showTitle()};
 $('#speed').onclick=e=>{const b=e.target.closest('[data-s]');if(!b)return;S.speed=+b.dataset.s;setSpeedUI()};
 const helpOpen=()=>{$('#helpScr').hidden=false};$('#helpBtn').onclick=helpOpen;$('#help2Btn').onclick=helpOpen;$('#helpClose').onclick=()=>{$('#helpScr').hidden=true};

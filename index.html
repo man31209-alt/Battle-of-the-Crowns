@@ -57,6 +57,13 @@ button{font:inherit;color:inherit;cursor:pointer}
 #mini{position:fixed;z-index:4;right:calc(var(--sar) + 8px);top:calc(var(--sat) + 58px);width:156px;height:78px;
  border:2px solid var(--edge);border-radius:6px;background:#0c0905;touch-action:none;box-shadow:0 2px 8px #000a}
 
+.tb{flex:none;height:34px;min-width:38px;border-radius:8px;border:1.5px solid var(--edge);background:linear-gradient(#4a321f,#2e1f13);color:var(--ink);font-weight:800;font-size:13px;padding:0 6px}
+.tb.on{border-color:var(--gold);color:var(--gold)}
+#groups{position:fixed;z-index:4;right:calc(var(--sar) + 8px);top:calc(var(--sat) + 142px);display:flex;gap:6px}
+.gb{position:relative;width:44px;height:34px;border-radius:8px;border:1.5px solid var(--edge);background:linear-gradient(#4a321f,#2e1f13);color:var(--ink);font:900 15px Cinzel,serif;padding:0}
+#alertBtn{position:fixed;z-index:5;right:calc(var(--sar) + 8px);top:calc(var(--sat) + 184px);border-radius:8px;border:2px solid #ff8a6b;background:linear-gradient(#8a2a1c,#4a140c);color:#fff;font-weight:800;font-size:14px;padding:7px 10px;animation:pulse 1s ease-in-out infinite alternate}
+@keyframes pulse{from{box-shadow:0 0 0 0 #ff6a4a88}to{box-shadow:0 0 0 7px #ff6a4a00}}
+#pausedBar{position:fixed;z-index:6;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 60px);background:#000c;border:1.5px solid var(--gold);color:var(--gold);font-weight:800;padding:8px 16px;border-radius:20px}
 #toasts{position:fixed;z-index:6;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 146px);display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none;width:min(92vw,420px)}
 .toast{pointer-events:auto;background:#1b120bf0;border:1.5px solid var(--edge);border-radius:9px;padding:7px 12px;font-weight:700;font-size:15px;text-align:center;box-shadow:0 3px 10px #000a;animation:tin .25s ease}
 .toast.bad{border-color:var(--red);color:#ffd9cf}
@@ -149,13 +156,16 @@ button{font:inherit;color:inherit;cursor:pointer}
  .ab{width:calc((100% - 20px)/6);min-width:52px;height:62px}
  .ab img{width:30px;height:30px}
  .ab .nm{font-size:11.5px;max-width:100%}
- #toasts{top:calc(var(--sat) + 132px)}
+ #toasts{top:calc(var(--sat) + 236px)}
+ #pauseBtn,#spdBtn{position:fixed;z-index:4;left:calc(var(--sal) + 10px);width:44px;height:36px}
+ #pauseBtn{top:calc(var(--sat) + 290px)}#spdBtn{top:calc(var(--sat) + 332px)}
+ #alertBtn{top:calc(var(--sat) + 186px)}
  .res{font-size:14px;padding:2px 5px 2px 2px}
  .res img{width:18px;height:18px}
  #mini{width:128px;height:64px}
 }
 @media (max-width:400px){.res.pop{display:none}#age small{display:none}}
-@media (max-height:460px){#side{gap:5px}.rb{width:42px;height:42px}.rb img{width:28px;height:28px}#mini{width:120px;height:60px}#acts{max-height:118px}#info{flex-basis:200px}
+@media (max-height:460px){#groups{top:calc(var(--sat) + 122px)}.gb{height:30px;width:40px}#alertBtn{top:calc(var(--sat) + 158px)}#side{gap:5px}.rb{width:42px;height:42px}.rb img{width:28px;height:28px}#mini{width:120px;height:60px}#acts{max-height:118px}#info{flex-basis:200px}
  .ab{width:58px;min-width:0;height:54px}.ab img{width:24px;height:24px}.tabs button{height:26px}#toasts{top:calc(var(--sat) + 60px)}#panel{padding-top:6px}}
 @media (prefers-reduced-motion:reduce){.toast{animation:none}}
 </style>
@@ -171,6 +181,7 @@ button{font:inherit;color:inherit;cursor:pointer}
   <div class="res" id="r-stone"><img alt="Stone"><b>0</b></div>
   <div class="res pop" id="r-pop"><img alt="Population"><b>0/0</b></div>
   <div id="age"><b>Dark Age</b><small>0:00</small></div>
+  <button class="tb" id="pauseBtn" aria-label="Pause">❚❚</button><button class="tb" id="spdBtn" aria-label="Game speed">1.5×</button>
   <button class="iconbtn" id="menuBtn" aria-label="Menu"><span></span></button>
  </div>
  <div id="side">
@@ -180,6 +191,9 @@ button{font:inherit;color:inherit;cursor:pointer}
   <button class="rb" id="bHome" aria-label="Go to town center"><img alt=""></button>
  </div>
  <canvas id="mini" width="144" height="144"></canvas>
+ <div id="groups"><button class="gb" data-g="0" aria-label="Group 1">1<span class="badge"></span></button><button class="gb" data-g="1" aria-label="Group 2">2<span class="badge"></span></button><button class="gb" data-g="2" aria-label="Group 3">3<span class="badge"></span></button></div>
+ <button id="alertBtn" hidden>⚔ Under attack</button>
+ <div id="pausedBar" hidden>Paused — tap to resume</div>
  <div id="toasts"></div>
  <div id="panel" hidden><div id="info"></div><div id="acts"></div></div>
 </div>
