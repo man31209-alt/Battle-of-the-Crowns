@@ -234,7 +234,7 @@ const canFight=u=>ud(u).atk>0&&u.type!=='fishboat';
 const isEnemy=(a,b)=>a!==b&&a>=0&&b>=0&&!(P[a]&&P[b]&&P[a].team!=null&&P[a].team===P[b].team)&&!(S&&S.truceT&&S.truceT[a*4+b]>S.t);
 const myTeam=o=>o===0||(o>0&&P[o]&&P[0]&&P[o].team!=null&&P[o].team===P[0].team);
 const peace=()=>S&&S.t<S.peace;
-function rankMul(u){return u.rank===2?1.2:u.rank===1?1.1:1}
+function rankMul(u){return u.rank===3?1.3:u.rank===2?1.2:u.rank===1?1.1:1}
 function uMaxHp(u){const d=ud(u),m=P[u.o].m;let h=d.hp;if(d.uu&&m.eliteUU)h*=1.25;if(d.tag==='vil')h+=m.vhp;if(m.hp[d.tag])h*=1+m.hp[d.tag];return Math.round(h*rankMul(u))}
 const bMaxHp=b=>Math.round(B[b.type].hp*P[b.o].m.bhp);
 const cpMax=b=>Math.round(B[b.type].hp*.5);
@@ -269,12 +269,12 @@ function onBuilt(b,silent){b.built=1;if(B[b.type].road)roadDirty=true;if(B[b.typ
 function evict(b){if(B[b.type].flat)return;for(const u of units){if(u.gar||u.nav)continue;if(u.x>b.x-.1&&u.x<b.x+b.w+.1&&u.y>b.y-.1&&u.y<b.y+b.h+.1){const p=freeAround(b,u.x,u.y,false);u.x=p.x;u.y=p.y;u.path=null}}}
 function freeAround(b,px,py,nav){let best=null,bd=1e9;for(let r=0;r<7&&!best;r++){for(let y=b.y-1-r;y<=b.y+b.h+r;y++)for(let x=b.x-1-r;x<=b.x+b.w+r;x++){if(x>b.x-1-r&&x<b.x+b.w+r&&y>b.y-1-r&&y<b.y+b.h+r)continue;if(!passXY(x,y,b.o,nav))continue;const d=Math.hypot(x+.5-(px??b.x+b.w/2),y+.5-(py??b.y+b.h+1));if(d<bd){bd=d;best={x:x+.5,y:y+.5}}}}
  return best?{x:best.x+(Math.random()-.5)*.3,y:best.y+(Math.random()-.5)*.3}:{x:b.x+b.w/2,y:b.y+b.h+.5}}
-function gainXp(u,v){if(!u||u.k!=='u'||!isMil(u)||ud(u).hero)return;u.xp+=v;const r=u.xp>=160?2:u.xp>=60?1:0;if(r>u.rank){const f=u.hp/uMaxHp(u);u.rank=r;u.hp=f*uMaxHp(u);if(u.o===0)fx.push({k:'promo',x:u.x,y:u.y,t:0,life:1.2})}}
+function gainXp(u,v){if(!u||u.k!=='u'||!isMil(u)||ud(u).hero)return;u.xp+=v;const r=u.xp>=RANKXP[3]?3:u.xp>=RANKXP[2]?2:u.xp>=RANKXP[1]?1:0;if(r>(u.rank||0)){const f=u.hp/uMaxHp(u);u.rank=r;u.hp=f*uMaxHp(u);promote(u,r);if(u.o===0)fx.push({k:'promo',x:u.x,y:u.y,t:0,life:1.2})}}
 function hit(t,d,ao,aid){if(t.dead)return;if(ao>=0)noteHit(t);if(t.k==='a')return hitAnimal(t,d,aid);t.hp-=d;t.dmgT=S.t;const a=aid&&ents.get(aid);if(a)gainXp(a,d*.3);
  if(t.o===0&&ao!==0&&ao>=0)alertAttack(t);
  if(t.k==='u'&&t.hp>0&&a&&a.k==='u'&&canFight(t)&&ud(t).tag!=='sie'&&t.stance!=='pas'&&(!t.task||t.task.auto)&&!(a.nav&&!uRng(t)))t.task={k:'atk',id:aid,auto:1};
- if(t.hp<=0){if(a)gainXp(a,12);kill(t,ao)}}
-function kill(e,by,silent){if(e.dead)return;e.dead=true;ents.delete(e.id);
+ if(t.hp<=0){if(a){gainXp(a,12);noteKill(a)}kill(t,ao)}}
+function kill(e,by,silent){if(e.dead)return;e.dead=true;ents.delete(e.id);if(e.k==='u'&&e.vn)vetDeath(e);
  if(e.k==='u'){units.splice(units.indexOf(e),1);P[e.o].pop--;P[e.o].st.lost++;if(by!=null&&by>=0&&P[by])P[by].st.kills++;if(P[e.o].hero===e.id)P[e.o].hero=0;
   if(e.gar){const b=ents.get(e.gar);if(b)b.gar=b.gar.filter(i=>i!==e.id)}
   if(e.cargo)for(const id of e.cargo){const c=ents.get(id);if(c){c.gar=0;kill(c,by,true)}}fx.push({k:e.nav?'sink':'die',x:e.x,y:e.y,t:0,life:e.nav?2:1.2,c:PCOL[e.o]});if(!silent)sfx('die',e.x,e.y)}
@@ -839,7 +839,7 @@ function siteTap(s,mine){
  const fs=mine.filter(u=>isMil(u)&&canFight(u));if(fs.length){moveGroup(fs,{x:s.x+2,y:s.y+s.h+.8});toast('Keep soldiers next to the village to claim it.');return true}
  toast(s.o===0?'Your village: it sends you food, wood and gold.':s.o>=0?'This village pays '+P[s.o].civN+'. Hold it with soldiers to take it.':'A free village. Keep soldiers next to it to claim it; it then sends you food, wood and gold.');return true}
 function showMerc(s){const p=P[0];$('#mercList').innerHTML=s.offers.map((f,k)=>`<div class="ach ${f.stock?'got':''}"><b>${f.n} × ${U[f.t].n}</b><span>${f.g} gold · ${f.stock} left${f.stock<2?' · more arrive every 3 minutes':''}</span><div class="row"><button class="seg1 ${f.stock&&p.res.gold>=f.g?'on':''}" data-hire="${k}">Hire</button></div></div>`).join('');
- $('#mercList').querySelectorAll('[data-hire]').forEach(b=>b.onclick=()=>{const r=hireMerc(0,s,+b.dataset.hire);if(r)toast(r,'bad');else{sfx('train');showMerc(s)}});$('#mercScr').hidden=false;paused=true}
+ $('#mercList').querySelectorAll('[data-hire]').forEach(b=>b.onclick=()=>{const r=hireMerc(0,s,+b.dataset.hire);if(r)toast(r,'bad');else{sfx('ready');showMerc(s)}});$('#mercScr').hidden=false;paused=true}
 function hireMerc(o,s,k){const f=s.offers[k],p=P[o];if(!f||!f.stock)return 'None left. More arrive every 3 minutes.';if(p.res.gold<f.g)return 'Not enough gold.';if(p.pop+f.n>p.popCap)return 'Not enough houses for '+f.n+' more units.';
  p.res.gold-=f.g;f.stock--;for(let j=0;j<f.n;j++){const q=freeAround(s);if(!q)break;const u=mkUnit(f.t,o,q.x,q.y);u.merc=1}calcPop(p);p.st.mercs=(p.st.mercs||0)+f.n;return null}
 $('#mercClose').onclick=()=>{$('#mercScr').hidden=true;paused=false};
@@ -1599,7 +1599,8 @@ function OVERLAYS(selSet){for(const u of units){if(!(u.flee>S.t)||u.gar||(u.o!==
   if(b.gar.length){ctx.fillStyle='rgba(20,14,8,.85)';ctx.beginPath();ctx.arc(c[0]+18,top-2,8,0,7);ctx.fill();ctx.fillStyle='#f6ecd5';ctx.font='800 10px Alegreya Sans,sans-serif';ctx.textAlign='center';ctx.fillText(b.gar.length,c[0]+18,top+1.5)}
   if(b.type==='wonder'&&b.built>=1&&S.wonderWin){const left=Math.max(0,600-(now-b.wonderT));ctx.fillStyle='rgba(20,14,8,.85)';ctx.fillRect(c[0]-26,top-30,52,16);ctx.fillStyle=PCOL[b.o];ctx.font='800 11px Alegreya Sans,sans-serif';ctx.textAlign='center';ctx.fillText(Math.floor(left/60)+':'+String(Math.floor(left%60)).padStart(2,'0'),c[0],top-18)}}
  for(const u of units){if(u.gar)continue;if(u.o!==0&&!vis[(u.y|0)*W+(u.x|0)])continue;const p=PJ(u.x,u.y,0);
-  if(u.rank){ctx.fillStyle=u.rank===2?'#f2cf6a':'#d8d8d8';const y=p[1]-38;for(let k=0;k<u.rank;k++){ctx.beginPath();ctx.moveTo(p[0]-4,y+k*3);ctx.lineTo(p[0],y+k*3-2.5);ctx.lineTo(p[0]+4,y+k*3);ctx.lineTo(p[0]+4,y+k*3+1.3);ctx.lineTo(p[0],y+k*3-1.2);ctx.lineTo(p[0]-4,y+k*3+1.3);ctx.fill()}}
+  if(u.rank>=3){const y=p[1]-40;ctx.fillStyle='#f2cf6a';ctx.strokeStyle='#5a3a10';ctx.lineWidth=.8;ctx.beginPath();for(let k=0;k<10;k++){const a=-Math.PI/2+k*Math.PI/5,r=k%2?2.2:5;ctx.lineTo(p[0]+Math.cos(a)*r,y+Math.sin(a)*r)}ctx.closePath();ctx.fill();ctx.stroke()}
+  else if(u.rank){ctx.fillStyle=u.rank===2?'#f2cf6a':'#d8d8d8';const y=p[1]-38;for(let k=0;k<u.rank;k++){ctx.beginPath();ctx.moveTo(p[0]-4,y+k*3);ctx.lineTo(p[0],y+k*3-2.5);ctx.lineTo(p[0]+4,y+k*3);ctx.lineTo(p[0]+4,y+k*3+1.3);ctx.lineTo(p[0],y+k*3-1.2);ctx.lineTo(p[0]-4,y+k*3+1.3);ctx.fill()}}
   if(ud(u).hero){ctx.strokeStyle=PCOL[u.o];ctx.globalAlpha=.35+.15*Math.sin(performance.now()/300);ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(p[0],p[1],7*HW*.7,7*HH*.7,0,0,7);ctx.stroke();ctx.globalAlpha=1}}}
 
 /* ---------- ground detail, smoke and birds ---------- */
@@ -2051,7 +2052,7 @@ function btn(a,icon,name,cost,ok,cls='',sub){name=SHORT[name]||name;return`<butt
 function taskText(u){const t=u.task;if(!t)return isMil(u)?'Ready':'Idle';const m={move:'Moving',amove:'Attack-moving',patrol:'Patrolling',atk:'Attacking',build:'Building',gar:'Heading inside',heal:'Healing',trade:'Trading'};if(m[t.k])return m[t.k];
  const cap=P[0].m.carry;if(t.k==='field')return t.ph==='ret'?'Carrying food home':`Farming (${Math.floor(u.carry)}/${cap})`;if(t.k==='hunt')return t.ph==='ret'?'Carrying meat home':`Hunting (${Math.floor(u.carry)})`;
  if(t.k==='gather'){const v={wood:'Chopping wood',gold:'Mining gold',stone:'Mining stone',food:'Picking berries',fish:'Fishing'}[t.rt];return t.ph==='ret'?`Carrying ${t.rt} home`:`${v} (${Math.floor(u.carry)})`}return''}
-const RANKN=['','Advanced','Elite'];const STN={agg:'Aggressive',def:'Defensive',hold:'Hold ground',pas:'Passive'};
+const RANKN=['','Veteran','Elite','Champion'];const STN={agg:'Aggressive',def:'Defensive',hold:'Hold ground',pas:'Passive'};
 function renderPanel(){if(!S)return;const s=selection(),p=P[0];
  if(placing){panel.hidden=false;const d=B[placing.type];const wallStage=d.road?'Drag along the ground to lay the road. Lift your finger and your villagers pave it.':d.wall?'Drag along the ground from where the wall starts to where it ends. Lift your finger to build it.':d.water?'Tap the water next to the shore, then press the check.':d.any?'Tap the map, then press the check.':'Tap inside your territory (dashed line), then press the check.';
   info.innerHTML=`<div class="por"><img src="${ICON['b_'+placing.type]}" alt=""></div><div class="tx"><h4>${d.n}</h4><div class="st">${costStr(d.cost)}${d.wall?' per tile':''}</div><div class="st">${wallStage}</div></div>`;
@@ -2059,7 +2060,7 @@ function renderPanel(){if(!S)return;const s=selection(),p=P[0];
  if(s.k==='none'){panel.hidden=true;lastSig='';return}panel.hidden=false;
  if(s.es[0].k==='u'){const es=s.es;
   if(es.length===1){const u=es[0],d=ud(u),mx=uMaxHp(u);const f=u.hp/mx;
-   info.innerHTML=`<div class="por"><img src="${ICON['u_'+u.type]}" alt=""></div><div class="tx"><h4>${d.n}${u.o!==0?' ('+P[u.o].civN+')':''}</h4><div class="hp ${f<.35?'lo':''}"><i style="width:${f*100}%"></i></div><div class="st"><b>${Math.ceil(u.hp)}/${mx}</b> HP${d.atk?` · Atk <b>${Math.round(uAtk(u))}</b>`:''} · Arm <b>${uArm(u,'m')}/${uArm(u,'p')}</b>${uRng(u)?` · Rng <b>${uRng(u)}</b>`:''}${u.rank?` · <b>${RANKN[u.rank]}</b>`:''}</div>${u.o===0?`<div class="st">${taskText(u)}${isMil(u)&&canFight(u)?' · '+STN[u.stance]:''}${d.hero?' · '+d.d:''}</div>`:''}</div>`}
+   info.innerHTML=`<div class="por"><img src="${ICON['u_'+u.type]}" alt=""></div><div class="tx"><h4>${d.n}${u.o!==0?' ('+P[u.o].civN+')':''}</h4><div class="hp ${f<.35?'lo':''}"><i style="width:${f*100}%"></i></div><div class="st"><b>${Math.ceil(u.hp)}/${mx}</b> HP${d.atk?` · Atk <b>${Math.round(uAtk(u))}</b>`:''} · Arm <b>${uArm(u,'m')}/${uArm(u,'p')}</b>${uRng(u)?` · Rng <b>${uRng(u)}</b>`:''}${u.vn?` · <b>${vetName(u)}</b>`:''}${u.kills?` · ${u.kills} kill${u.kills===1?'':'s'}`:''}</div>${u.o===0?`<div class="st">${taskText(u)}${isMil(u)&&canFight(u)?' · '+STN[u.stance]:''}${d.hero?' · '+d.d:''}</div>`:''}</div>`}
   else{const g={};for(const u of es)g[u.type]=(g[u.type]||0)+1;info.innerHTML=`<div class="tx"><h4>${es.length} units selected</h4><div class="grp">${Object.keys(g).map(t=>`<button data-a="only:${t}"><img src="${ICON['u_'+t]}" alt=""><b>${g[t]}</b></button>`).join('')}</div></div>`}
   if(s.k==='enemy'){if(lastSig!=='en'){lastSig='en';acts.innerHTML=''}return}
   const workers=es.some(canBuild),mil=es.some(u=>isMil(u)&&canFight(u)),trd=es.some(u=>u.type==='trader');const da=delArm>performance.now();
@@ -2379,7 +2380,7 @@ function rivalsOf0(){return P.filter(p=>p.i&&p.alive!==false&&p.ai&&isEnemy(0,p.
 function joinTeam(i){if(P[0].team==null)P.forEach((p,k)=>{if(p.team==null)p.team=10+k});P[i].team=P[0].team;S.allies=(S.allies||0)+1;$('#allyBtn').hidden=false;
  for(const u of units)if(u.task&&u.task.k==='atk'){const e=ents.get(u.task.id);if(e&&!isEnemy(u.o,e.o))u.task=null}if(P[i].ai)P[i].ai.waves=new Set();terrDirty=true;if(typeof computeFog==='function')computeFog()}
 let dipQ=null;
-function dipAsk(p,msg,yes,no,yesTxt,noTxt){dipQ={yes,no};$('#dipTxt').innerHTML=(PROF.name?`<small>To ${PROF.name.replace(/</g,'')}</small><br>`:'')+`<i class="sw" style="background:${PCOL[p.i]}"></i><b>${p.civN}</b><br>${msg}`;$('#dipYes').textContent=yesTxt;$('#dipNo').textContent=noTxt;$('#dipScr').hidden=false;paused=true;sfx('alert')}
+function dipAsk(p,msg,yes,no,yesTxt,noTxt){dipQ={yes,no};$('#dipTxt').innerHTML=(PROF.name?`<small>To ${PROF.name.replace(/</g,'')}</small><br>`:'')+`<i class="sw" style="background:${PCOL[p.i]}"></i><b>${p.civN}</b><br>${msg}`;$('#dipYes').textContent=yesTxt;$('#dipNo').textContent=noTxt;$('#dipScr').hidden=false;paused=true;sfx('horn')}
 $('#dipYes').onclick=()=>{$('#dipScr').hidden=true;paused=false;const q=dipQ;dipQ=null;if(q&&q.yes)q.yes()};
 $('#dipNo').onclick=()=>{$('#dipScr').hidden=true;paused=false;const q=dipQ;dipQ=null;if(q&&q.no)q.no()};
 function dipTick(){if(!S||S.mission||S.tut||S.spectate||peace()||!P[0]||P[0].alive===false)return;if(!$('#dipScr').hidden||!$('#mercScr').hidden)return;
@@ -2444,7 +2445,7 @@ function careerHTML(){const c=CAREER;if(!c.games)return '<p class="sub">No finis
  const fav=Object.entries(c.civ).sort((a,b)=>b[1].g-a[1].g)[0],bestCiv=Object.entries(c.civ).filter(e=>e[1].w).sort((a,b)=>b[1].w/b[1].g-a[1].w/a[1].g)[0];
  const row=(a,b)=>`<tr><td>${a}</td><td>${b}</td></tr>`;
  return `<table class="stats">${row('Games',c.games)}${row('Wins / losses',c.wins+' / '+c.losses+' ('+Math.round(c.wins/c.games*100)+'%)')}${row('Best win streak',c.best+(c.streak?' (now '+c.streak+')':''))}${row('Fastest victory',c.fastest?fmtT(c.fastest):'—')}${row('Longest game',fmtT(c.longest))}${row('Time on the throne',fmtT(c.time))}
-  ${row('Units trained',c.trained.toLocaleString())}${row('Enemies slain',c.kills.toLocaleString())}${row('Units lost',c.lost.toLocaleString())}${row('Buildings razed',c.razed.toLocaleString())}${row('Resources gathered',c.gath.toLocaleString())}${row('Villages claimed',c.villages)}${row('Mercenaries hired',c.mercs)}${row('Missions won',c.missions||0)}
+  ${row('Units trained',c.trained.toLocaleString())}${row('Enemies slain',c.kills.toLocaleString())}${row('Units lost',c.lost.toLocaleString())}${row('Buildings razed',c.razed.toLocaleString())}${row('Resources gathered',c.gath.toLocaleString())}${row('Villages claimed',c.villages)}${row('Mercenaries hired',c.mercs)}${row('Missions won',c.missions||0)}${c.champ?row('Greatest champion',c.champ.n+' ('+c.champ.u+', '+c.champ.k+' kills)'):''}
   ${fav?row('Favorite civilization',CIVS[fav[0]]?CIVS[fav[0]].n+' ('+fav[1].g+(fav[1].g===1?' game)':' games)'):fav[0]):''}${bestCiv?row('Best civilization',(CIVS[bestCiv[0]]||{n:bestCiv[0]}).n+' ('+bestCiv[1].w+' of '+bestCiv[1].g+' won)'):''}</table>`}
 /* kingdom screen */
 function showKingdom(){const opt=(k,list)=>`<div class="seg wrap">${list.map(([v,n],i)=>`<button data-pf="${k}:${typeof PROF[k]==='number'?i:v}" class="${String(PROF[k])===String(typeof PROF[k]==='number'?i:v)?'on':''}">${n}</button>`).join('')}</div>`;
@@ -2576,6 +2577,22 @@ $('#encTabs').querySelectorAll('button').forEach(b=>b.onclick=()=>{encTab=b.data
 const openEnc=()=>{if(!ICON||!ICON.u_villager)try{makeIcons(SETUP&&CIVS[SETUP.civ]?CIVS[SETUP.civ].style:'west')}catch(e){}showEnc();$('#encScr').hidden=false};
 $('#encBtn').onclick=openEnc;$('#encBtn2').onclick=openEnc;$('#encClose').onclick=()=>{$('#encScr').hidden=true};
 
+/* ---------- veteran units: ranks, names, kill tallies ---------- */
+const VNAMES={english:['Aldric','Edmund','Godwin','Osric','Wystan','Leofric','Hugh','Ralf','Thomas','Walter'],french:['Gauthier','Renaud','Thibaut','Amaury','Bertrand','Guillaume','Hugues','Roland'],germans:['Konrad','Ulrich','Dietrich','Gottfried','Heinrich','Lothar','Rupert','Wolfram'],
+ castilians:['Rodrigo','Alvar','Diego','Sancho','Fernán','Gonzalo','Íñigo','Pelayo'],byzantines:['Basil','Nikephoros','Leo','Theodore','Bardas','Isaac','Andronikos','Michael'],saracens:['Yusuf','Tariq','Khalid','Usama','Saif','Rashid','Faris','Zaid'],
+ vikings:['Bjorn','Ragnar','Halvard','Sigurd','Eirik','Ulf','Torstein','Harald'],celts:['Brennus','Cathal','Fergus','Niall','Conall','Bran','Ewan','Donal'],japanese:['Takeshi','Masashige','Yoshitsune','Kagetora','Nobuyuki','Tadakatsu','Hideo','Kenshin'],
+ chinese:['Wei','Zhao','Yue','Liang','Guan','Han','Feng','Jun'],mongols:['Temur','Batu','Subutai','Jebe','Arslan','Bor','Khasar','Chagan'],scots:['Angus','Duncan','Malcolm','Hamish','Ruaridh','Callum','Fergus','Iain'],
+ poles:['Bolesław','Kazimierz','Mieszko','Zbigniew','Jarosław','Władysław','Przemysł','Sobiesław'],rus:['Yaroslav','Svyatoslav','Vsevolod','Mstislav','Dobrynya','Ilya','Oleg','Igor'],ottomans:['Osman','Orhan','Murad','Bayezid','Mehmed','Selim','Kemal','Turgut'],
+ persians:['Rostam','Kaveh','Arash','Bahram','Darius','Kourosh','Babak','Mehrdad'],koreans:['Gwanggaeto','Eulji','Yi Sun','Gang Gam','Kim Yu','Seo Hui','Choe Young','Gyebaek'],malians:['Sundiata','Mansa','Fakoli','Tiramakhan','Kankan','Sumanguru','Bala','Sakura'],
+ ethiopians:['Yekuno','Amda','Zara','Gebre','Tewodros','Lalibela','Dawit','Yohannes']};
+const VEPI=['the Bold','the Unbroken','Ironhand','the Fearless','Lionheart','the Grim','Stormblade','the Wall','Oathkeeper','the Red'];
+const RANKS=['','Veteran','Elite','Champion'],RANKXP=[0,60,160,320];
+function vetName(u){if(!u.vn)return '';return RANKS[u.rank||1]+' '+u.vn+(u.rank>=3&&u.ve?' '+u.ve:'')}
+function promote(u,r){if(!u.vn){const pool=VNAMES[P[u.o].civ]||VNAMES.english;u.vn=pool[(u.id*7+r)%pool.length]}if(r>=3&&!u.ve)u.ve=VEPI[(u.id*3)%VEPI.length];
+ if(u.o===0){toast(`${U[u.type].n} ${u.vn} is promoted to ${RANKS[r]}${r>=3?': '+vetName(u)+'!':'.'}`,'good',{x:u.x,y:u.y});sfx('fanfare')}}
+function vetDeath(u){if(!u.vn||u.o!==0)return;toast(`${vetName(u)} has fallen after ${u.kills||0} kill${u.kills===1?'':'s'}.`,'bad',{x:u.x,y:u.y});if(typeof chron==='function')chron(`${vetName(u)} fell in battle after ${u.kills||0} kills.`)}
+function noteKill(a){if(!a||a.k!=='u')return;a.kills=(a.kills||0)+1;if(a.o===0&&a.vn&&(!CAREER.champ||a.kills>CAREER.champ.k)){CAREER.champ={n:vetName(a),k:a.kills,u:U[a.type].n,civ:P[0].civN}}}
+
 /* ---------- game setup ---------- */
 const STARTRES={low:{food:200,wood:200,stone:100,gold:100},std:{food:300,wood:300,stone:200,gold:200},high:{food:1000,wood:1000,stone:1000,gold:1000}};
 function newPlayer(i,civ,rl){const p={i,civ,civN:CIVS[civ].n,style:CIVS[civ].style,res:Object.assign({},STARTRES[rl]||STARTRES.std),phase:0,techs:[],m:null,pop:0,popCap:0,ai:null,bell:false,hero:0,alive:true,barter:{food:100,wood:100,stone:100},st:{trained:0,kills:0,lost:0,razed:0,gath:0,captured:0}};recomputeMods(p);return p}
@@ -2591,7 +2608,7 @@ function setupHudIcons(){for(const r of R4)$('#r-'+r+' img').src=ICON[r];$('#r-p
 const enc=a=>{let s='';for(let i=0;i<a.length;i++)s+=a[i].toString(36);return s};
 function save(key='boc-save2'){if(!running||!S||S.editor)return false;try{const data={v:2,meta:{civ:P[0].civN,map:(MAPS[S.mapType]||{}).n||S.mapType||'',t:Math.floor(S.t),when:Date.now(),phase:PHASE[P[0].phase]},S:Object.assign({},S),W,H,
  P:P.map(p=>({i:p.i,civ:p.civ,res:p.res,phase:p.phase,techs:p.techs,bell:p.bell,autoRep:p.autoRep,king:p.king,team:p.team,upg:p.upg,st:p.st,barter:p.barter,hero:p.hero,alive:p.alive,ai:p.ai?Object.assign({},p.ai,{waves:[...p.ai.waves]}):null})),
- U:units.map(u=>({id:u.id,type:u.type,o:u.o,x:+u.x.toFixed(2),y:+u.y.toFixed(2),hp:u.hp,carry:u.carry,ct:u.ct,gar:u.gar,cargo:u.cargo,face:u.face,task:u.task,xp:u.xp,rank:u.rank,stance:u.stance,home:u.home})),
+ U:units.map(u=>({id:u.id,type:u.type,o:u.o,x:+u.x.toFixed(2),y:+u.y.toFixed(2),hp:u.hp,carry:u.carry,ct:u.ct,gar:u.gar,cargo:u.cargo,face:u.face,task:u.task,xp:u.xp,rank:u.rank,kills:u.kills,vn:u.vn,ve:u.ve,stance:u.stance,home:u.home})),
  B:blds.map(b=>({id:b.id,type:b.type,o:b.o,x:b.x,y:b.y,hp:b.hp,built:b.built,queue:b.queue,rally:b.rally,gar:b.gar,started:b.started,cp:b.cp,slots:b.slots,wonderT:b.wonderT,locked:b.locked})),
  A:animals.map(a=>({id:a.id,type:a.type,o:a.o,x:+a.x.toFixed(2),y:+a.y.toFixed(2),hp:a.hp,food:a.food,carc:a.carc,hx:a.hx,hy:a.hy})),
  ter:enc(ter),el:enc(elevL),cl:enc(cliffM),rt:enc(resT),tk:enc(treeK),ex:enc(explored),ra:Array.from(resA,v=>Math.round(v)),cam:{x:cam.x,y:cam.y,z:cam.z}};
