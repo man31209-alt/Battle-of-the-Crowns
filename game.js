@@ -273,11 +273,11 @@ function evict(b){if(B[b.type].flat)return;for(const u of units){if(u.gar||u.nav
 function freeAround(b,px,py,nav){let best=null,bd=1e9;for(let r=0;r<7&&!best;r++){for(let y=b.y-1-r;y<=b.y+b.h+r;y++)for(let x=b.x-1-r;x<=b.x+b.w+r;x++){if(x>b.x-1-r&&x<b.x+b.w+r&&y>b.y-1-r&&y<b.y+b.h+r)continue;if(!passXY(x,y,b.o,nav))continue;const d=Math.hypot(x+.5-(px??b.x+b.w/2),y+.5-(py??b.y+b.h+1));if(d<bd){bd=d;best={x:x+.5,y:y+.5}}}}
  return best?{x:best.x+(Math.random()-.5)*.3,y:best.y+(Math.random()-.5)*.3}:{x:b.x+b.w/2,y:b.y+b.h+.5}}
 function gainXp(u,v){if(!u||u.k!=='u'||!isMil(u)||ud(u).hero)return;u.xp+=v;const r=u.xp>=RANKXP[3]?3:u.xp>=RANKXP[2]?2:u.xp>=RANKXP[1]?1:0;if(r>(u.rank||0)){const f=u.hp/uMaxHp(u);u.rank=r;u.hp=f*uMaxHp(u);promote(u,r);if(u.o===0)fx.push({k:'promo',x:u.x,y:u.y,t:0,life:1.2})}}
-function hit(t,d,ao,aid){if(t.dead)return;if(ao>=0)noteHit(t);if(t.k==='a')return hitAnimal(t,d,aid);t.hp-=d;t.dmgT=S.t;const a=aid&&ents.get(aid);if(a)gainXp(a,d*.3);
+function hit(t,d,ao,aid){if(t.dead)return;if(ao>=0)noteHit(t);if(t.k==='a')return hitAnimal(t,d,aid);noteP0Hit(t,ao);t.hp-=d;t.dmgT=S.t;const a=aid&&ents.get(aid);if(a)gainXp(a,d*.3);
  if(t.o===0&&ao!==0&&ao>=0)alertAttack(t);
  if(t.k==='u'&&t.hp>0&&a&&a.k==='u'&&canFight(t)&&ud(t).tag!=='sie'&&t.stance!=='pas'&&(!t.task||t.task.auto)&&!(a.nav&&!uRng(t)))t.task={k:'atk',id:aid,auto:1};
  if(t.hp<=0){if(a){gainXp(a,12);noteKill(a)}kill(t,ao)}}
-function kill(e,by,silent){if(e.dead)return;e.dead=true;ents.delete(e.id);if(e.k==='u'){if(e.vn)vetDeath(e);noteDeath(e)}
+function kill(e,by,silent){if(e.dead)return;e.dead=true;ents.delete(e.id);if(!silent)noteAIKill(e,by);if(e.k==='u'){if(e.vn)vetDeath(e);noteDeath(e)}
  if(e.k==='u'){units.splice(units.indexOf(e),1);P[e.o].pop--;P[e.o].st.lost++;if(by!=null&&by>=0&&P[by])P[by].st.kills++;if(P[e.o].hero===e.id)P[e.o].hero=0;
   if(e.gar){const b=ents.get(e.gar);if(b)b.gar=b.gar.filter(i=>i!==e.id)}
   if(e.cargo)for(const id of e.cargo){const c=ents.get(id);if(c){c.gar=0;kill(c,by,true)}}fx.push({k:e.nav?'sink':'die',x:e.x,y:e.y,t:0,life:e.nav?2:1.2,c:PCOL[e.o]});if(!silent)sfx('die',e.x,e.y)}
@@ -725,8 +725,8 @@ function computeFog(){if(S&&S.spectate){vis.fill(1);explored.fill(1);return}vis.
 /* ---------- AI ---------- */
 const AIPERS={balanced:{n:'Balanced',w:1,g:1,s:1,v:1},rusher:{n:'Aggressive',w:.6,g:.8,s:.7,v:.85},boomer:{n:'Builder',w:1.35,g:1,s:1.3,v:1.25},turtle:{n:'Defender',w:1.45,g:1.15,s:1.2,v:1.05}};
 function aiInit(p,diff){const pk=Object.keys(AIPERS);const pers=pk[Math.floor(Math.random()*pk.length)],q=AIPERS[pers];
- p.ai={diff,pers,t:0,nextWave:S.peace+Math.round([900,620,430][diff]*q.w),gap:Math.round([360,250,180][diff]*q.g),wave:Math.round([5,8,11][diff]*q.s),vilT:Math.round([22,34,46][diff]*q.v),bonus:[.85,1.05,1.3][diff],waves:new Set(),saving:false,target:-1,
-  autoRep0:p.autoRep=true,nextRaid:diff?S.peace+[0,520,380][diff]*(pers==='rusher'?.7:pers==='turtle'?1.6:1)+Math.random()*90:1e9,raid:[],raidT:0,waveN:0,regroup:0}}
+ p.ai={diff,pers,t:0,nextWave:S.peace+Math.round([900,620,430,330][diff]*q.w),gap:Math.round([360,250,180,140][diff]*q.g),wave:Math.round([5,8,11,14][diff]*q.s),vilT:Math.round([22,34,46,55][diff]*q.v),bonus:[.85,1.05,1.3,1.6][diff],waves:new Set(),saving:false,target:-1,
+  autoRep0:p.autoRep=true,nextRaid:diff?S.peace+[0,520,380,300][diff]*(pers==='rusher'?.7:pers==='turtle'?1.6:1)+Math.random()*90:1e9,raid:[],raidT:0,waveN:0,regroup:0}}
 function aiSpot(o,type,cx,cy,r0,r1){const d=B[type];for(let r=r0;r<=r1;r++){const cand=[];const X=Math.round(cx),Y=Math.round(cy);for(let y=Y-r;y<=Y+r;y++)for(let x=X-r;x<=X+r;x++){if(Math.max(Math.abs(x-X),Math.abs(y-Y))!==r)continue;cand.push([x-(d.w>>1),y-(d.h>>1)])}
  for(let k=cand.length-1;k>0;k--){const j=Math.floor(Math.random()*(k+1));const t=cand[k];cand[k]=cand[j];cand[j]=t}
  for(const [x,y] of cand)if(canPlace(type,x,y,o,!d.flat&&!d.water))return[x,y]}return null}
@@ -781,15 +781,15 @@ function aiTick(p){const ai=p.ai,o=p.i;ai.t+=1;if(!ai.raid)ai.raid=[];if(ai.next
   if(p.phase>=1){for(const [t,g] of [['smith',20],['temple',24],['market',26],['workshop',28]]){if(gatherers>=g&&!has(t).length&&!pending(t)){aiBuild(p,t,home.x,home.y,6,16);break}}
    if(ai.diff>0&&!has('castle').length&&!pending('castle')&&R.stone>=700)aiBuild(p,'castle',home.x,home.y,7,15);
    if(ai.pers==='turtle'&&has('tower').length<2+ai.diff*2&&R.stone>=250)aiBuild(p,'tower',home.x+(Math.random()-.5)*18,home.y+(Math.random()-.5)*18,6,12);
-   if(ai.diff===2&&has('tower').length<3&&R.stone>=300)aiBuild(p,'tower',home.x+(Math.random()-.5)*16,home.y+(Math.random()-.5)*16,5,11);
+   if(ai.diff>=2&&has('tower').length<3&&R.stone>=300)aiBuild(p,'tower',home.x+(Math.random()-.5)*16,home.y+(Math.random()-.5)*16,5,11);
    if(has('barracks').length<2&&R.wood>700)aiBuild(p,'barracks',home.x,home.y,7,17)}
-  if(p.phase>=2&&ai.diff===2&&S.wonderWin&&!has('wonder').length&&R.wood>1300&&R.stone>1200&&R.gold>1200)aiBuild(p,'wonder',home.x,home.y,6,16)}
- if(!ai.saving){for(const tid of ['loom','gather','axe','collar','stonem','goldm','treadmill','wheel','forge','fletch','scale','saw','plow','goldm2','nets','masonry','iron','bodkin','chain','barding','herbal','conscript','architecture','shipwright','caravan','blast','plate','bracer','crop','twoman','deepmine','hoardings','royal','banking','spikes','boil','murder','t_pike','t_maa','t_earcher','t_lightcav','t_long','t_cavalier','t_eliteuu','t_halberd','t_paladin']){
+  if(p.phase>=2&&ai.diff>=2&&S.wonderWin&&!has('wonder').length&&R.wood>1300&&R.stone>1200&&R.gold>1200)aiBuild(p,'wonder',home.x,home.y,6,16)}
+ if(!ai.saving){for(const tid of ['loom','gather','axe','collar','stonem','goldm','treadmill','wheel','forge','fletch','scale','saw','plow','goldm2','nets','masonry','iron','bodkin','chain','barding','herbal','conscript','architecture','ladders','shipwright','caravan','blast','plate','bracer','crop','twoman','deepmine','hoardings','royal','banking','spikes','boil','murder','t_pike','t_maa','t_earcher','t_lightcav','t_long','t_cavalier','t_eliteuu','t_halberd','t_paladin']){
   const t=TECH[tid];if(!techOk(p,tid))continue;if((tid==='loom'||tid==='treadmill')&&gatherers<12)continue;const bt=Object.keys(B).find(k=>B[k].tech&&B[k].tech.indexOf(tid)>=0);
   const b=has(bt,1).find(x=>!x.queue.length);if(!b)continue;const c=costOf(p,t.cost,'t');if(R4.every(r=>(R[r]||0)>=(c[r]||0)*1.3)){pay(p,c);b.queue.push({t:tid,p:0});break}}}
  if(!ai.saving||army.length<6||R.food>1000){const prod=mb.filter(b=>b.built>=1&&B[b.type].train&&b.type!=='corral'&&b.type!=='dock'&&b.type!=='market'&&b.type!=='temple'&&b.queue.length<1);let rm=room;
   for(const b of prod){if(rm<=0)break;let opts=trainList(b).filter(t=>unitOk(p,t,b)&&t!=='villager');if(!opts.length)continue;
-   let pick=opts[Math.floor(Math.random()*opts.length)];if(b.type==='tc'){if(vils.length<ai.vilT*.6)continue;pick=Math.random()<.5?'spear':'archer'}
+   let pick=aiCounterPick(p,opts,b)||opts[Math.floor(Math.random()*opts.length)];if(b.type==='tc'){if(vils.length<ai.vilT*.6)continue;pick=Math.random()<.5?'spear':'archer'}
    if(b.type==='workshop'&&army.filter(u=>ud(u).tag==='sie').length>=3)continue;if(b.type==='castle'){const h=opts.find(t=>isHero(t));pick=h&&Math.random()<.4?h:opts.find(t=>U[t].uu)||pick}
    const n=ai.diff>0&&U[pick].tag!=='sie'&&!isHero(pick)&&rm>=5&&R.food>600?5:1;const c0=costOf(p,U[pick].cost,'u',pick);const c={};for(const r in c0)c[r]=c0[r]*n;if(afford(p,c)){pay(p,c);b.queue.push({u:pick,p:0,n});rm-=n}}}
  if(ai.t%12===0){const rich=R4.filter(r=>r!=='gold'&&R[r]>1400).sort((a,b)=>R[b]-R[a])[0],poor=R4.filter(r=>r!=='gold'&&R[r]<150)[0];const mk=has('market',1)[0];if(mk){if(rich)barter(p,rich,false);if(poor&&R.gold>500)barter(p,poor,true)}
@@ -805,7 +805,7 @@ function aiTick(p){const ai=p.ai,o=p.i;ai.t+=1;if(!ai.raid)ai.raid=[];if(ai.next
  for(const id of [...ai.waves])if(!ents.has(id))ai.waves.delete(id);
  aiRaid(p,army,home);aiRetreat(p,home);aiBreach(p);aiMode(p,army,home);if(p.i&&myTeam(p.i))aiAlly(p,army,home);
  if(!peace()&&ai.t>=ai.nextWave&&army.length>=ai.wave&&ai.t>=ai.regroup){ai.nextWave=ai.t+ai.gap;ai.wave+=3;ai.waveN=0;let k=0;for(const u of army){if(ud(u).cit&&k>=army.length*.7)continue;if(ai.raid.includes(u.id))continue;ai.waves.add(u.id);ai.waveN++;k++;if(u.task&&u.task.k==='gather')u.carry=0;u.task=null}}
- for(const id of ai.waves){const u=ents.get(id);if(!u||u.gar)continue;if(u.task&&(u.task.k==='atk'||u.task.k==='board'))continue;const t=aiNearestEnemyBld(p,{x:u.x,y:u.y});if(t)u.task={k:'atk',id:t.id,wave:1,dmg:ud(u).tag==='sie'?1:0};else{const e=nearestEnemy(u,999,false);if(e)u.task={k:'atk',id:e.id,wave:1}}}}
+ for(const id of ai.waves){const u=ents.get(id);if(!u||u.gar)continue;if(u.task&&(u.task.k==='atk'||u.task.k==='board'||u.task.k==='dock'))continue;const t=aiNearestEnemyBld(p,{x:u.x,y:u.y});if(t)u.task={k:'atk',id:t.id,wave:1,dmg:ud(u).tag==='sie'?1:0};else{const e=nearestEnemy(u,999,false);if(e)u.task={k:'atk',id:e.id,wave:1}}}}
 
 /* ---------- placement ---------- */
 function swapWall(type,x,y,o){if(!B[type].gate||x<0||y<0||x>=W||y>=H)return null;const w=ents.get(occ[y*W+x]);if(!w||w.k!=='b'||w.o!==o||w.built<1)return null;const wood=type==='pgate';if(wood?w.type!=='palisade':(w.type!=='wall'&&w.type!=='palisade'))return null;return w}
@@ -835,7 +835,7 @@ function confirmPlace(){if(!placing||placing.tx==null)return;const p=P[0],d=B[pl
 
 /* raids on villagers, retreats when a wave is beaten, and breaching walls */
 function aiRaid(p,army,home){const ai=p.ai;ai.raid=ai.raid.filter(id=>ents.has(id));
- if(!ai.raid.length&&!peace()&&ai.t>=ai.nextRaid){ai.nextRaid=ai.t+[0,300,200][ai.diff]*(ai.pers==='rusher'?.7:1)+Math.random()*80;
+ if(!ai.raid.length&&!peace()&&ai.t>=ai.nextRaid){ai.nextRaid=ai.t+[0,300,200,150][ai.diff]*(ai.pers==='rusher'?.7:1)+Math.random()*80;
   const fast=army.filter(u=>!ai.waves.has(u.id)&&!ud(u).cit&&ud(u).tag!=='sie'&&!u.gar&&(ud(u).tag==='cav'||uRng(u)>0)).sort((a,b)=>uSpd(b)-uSpd(a)).slice(0,3+ai.diff);
   if(fast.length>=3){let best=null,bs=-1;for(const v of units){if(!isEnemy(p.i,v.o)||ud(v).tag!=='vil'||v.gar)continue;let dt=1e9;for(const b of blds)if(b.o===v.o&&(b.type==='tc'||b.type==='castle'||b.type==='tower'))dt=Math.min(dt,Math.hypot(b.x-v.x,b.y-v.y));
     const sc=Math.min(dt,25)-Math.hypot(v.x-home.x,v.y-home.y)*.15;if(sc>bs){bs=sc;best=v}}
@@ -941,6 +941,38 @@ function ferryTick(){if(!S||S.editor)return;for(const p of P){if(!p.ai||p.alive=
   for(const u of waiting){if(free<=0)break;if(u.task&&u.task.k==='board')continue;u.task={k:'board',id:c.id};u.path=null;free--}
   if(!cargo)f.t0=S.t;const still=waiting.some(u=>!(u.task&&u.task.k==='board'));
   if(cargo>0&&(room<=0||(!boarding&&!still)||S.t-f.t0>40)){f.st='go';c.task={k:'land',x:ai.ferTgt.pt.x,y:ai.ferTgt.pt.y};c.path=null}}}}
+
+/* ---------- smarter AI: adapts to the player, uses siege towers, taunts ---------- */
+function aiScout(p){const ai=p.ai;if(ai.seenT&&S.t-ai.seenT<60)return ai.seen;ai.seenT=S.t;const foe=units.filter(u=>isEnemy(p.i,u.o)&&isMil(u)&&!u.gar);const n=foe.length||1;
+ const c={cav:0,arc:0,inf:0,sie:0};for(const u of foe){const t=ud(u).tag;if(c[t]!=null)c[t]++}
+ const forts=blds.filter(b=>isEnemy(p.i,b.o)&&(B[b.type].wall||b.type==='tower'||b.type==='sentry'||b.type==='castle')).length;
+ const rush=lastHitBy0(p)<480;ai.seen={cav:c.cav/n,arc:c.arc/n,inf:c.inf/n,n:foe.length,forts,walls:blds.filter(b=>isEnemy(p.i,b.o)&&B[b.type].wall&&!B[b.type].gate).length,rush};return ai.seen}
+function lastHitBy0(p){return p.ai.firstHit!=null?p.ai.firstHit:1e9}
+function aiCounterPick(p,opts,b){const s=aiScout(p);if(!s||!opts.length)return null;const w=opts.map(t=>{const d=U[t];let v=1;
+  if(s.cav>.35&&(/spear|pike|halberd|mameluke/.test(t)))v*=3.2;if(s.arc>.35&&d.tag==='cav')v*=2.6;if(s.arc>.35&&/woad|samurai|militia|manatarms|longsword/.test(t))v*=1.4;if(s.inf>.5&&d.tag==='arc')v*=2.2;
+  if(t==='stower')v*=s.walls>=6?2.5:0;if((t==='ram'||t==='treb'||t==='mangonel')&&s.forts>=5)v*=2.2;if(d.uu)v*=1.5;if(isHero(t))v*=.6;return v});
+ const tot=w.reduce((a,b)=>a+b,0);if(!tot)return null;let r=Math.random()*tot;for(let i=0;i<opts.length;i++){r-=w[i];if(r<=0)return opts[i]}return opts[0]}
+function aiSiegeTick(){for(const u of units){if(u.type!=='stower'||!P[u.o]||!P[u.o].ai||u.dockW)continue;if(u.task&&u.task.k==='dock')continue;if(u.task&&u.task.k==='move'&&Math.random()<.5)continue;
+  let best=null,bd=1e9;for(const w of blds){if(!isWallB(w)||!isEnemy(u.o,w.o))continue;const d=Math.hypot(w.x-u.x,w.y-u.y);if(d<bd){bd=d;best=w}}if(best){u.task={k:'dock',id:best.id};u.path=null}}
+ for(const p of P){if(!p.ai||p.alive===false)continue;aiScout(p);const s=p.ai.seen;if(!s)continue;
+  if(p.phase>=2&&s.walls>=6){if(!blds.some(b=>b.o===p.i&&b.type==='workshop')&&p.res.wood>=320&&!p.ai.wsT){p.ai.wsT=1;const home=blds.find(b=>b.o===p.i&&b.type==='tc');if(home)aiBuild(p,'workshop',home.x+2+(Math.random()-.5)*14,home.y+2+(Math.random()-.5)*14)}const has=k=>p.techs.has?p.techs.has(k):p.techs.includes(k);
+   if(!has('ladders')&&techOk(p,'ladders')){const br=blds.find(b=>b.o===p.i&&b.type==='barracks'&&b.built>=1&&!b.queue.length);const c=costOf(p,TECH.ladders.cost,'t');if(br&&afford(p,c)){pay(p,c);br.queue.push({t:'ladders',p:0})}}
+   if(units.filter(u=>u.o===p.i&&u.type==='stower').length<(p.ai.diff>=2?2:1)){const ws=blds.find(b=>b.o===p.i&&b.type==='workshop'&&b.built>=1&&!b.queue.length);const c=costOf(p,U.stower.cost,'u','stower');if(ws&&afford(p,c)&&p.pop<p.popCap){pay(p,c);ws.queue.push({u:'stower',p:0,n:1})}}}
+  if(s.rush&&!p.ai.rushDef&&S.t<900){p.ai.rushDef=1;const home=blds.find(b=>b.o===p.i&&b.type==='tc');if(home&&p.res.wood>=120)aiBuild(p,'sentry',home.x+2+(Math.random()-.5)*8,home.y+2+(Math.random()-.5)*8)}}}
+/* taunts */
+const TAUNT={wave:['Your walls will crumble before us!','Our army marches. Pray for mercy.','We are coming for your crown!','Hide your villagers, we are close!'],
+ win:['Ha! Another of your buildings burns.','Is that all your kingdom can muster?','Your realm grows smaller by the hour.'],
+ lose:['Enough! We will remember this.','You fight well... for now.','Our scouts warned us about you.'],
+ mercy:['Mercy! Name your price and spare our town!','We yield! Let us speak of peace.','Stay your blades, we beg you!'],
+ phase:['Our kingdom grows mighty. Tremble!','Behold our new age of glory!']};
+function taunt(p,kind){if(!p||!p.ai||S.spectate||!isEnemy(0,p.i)||SETS.adv===0)return;p.ai.tauntT=p.ai.tauntT||0;if(S.t-p.ai.tauntT<90&&kind!=='mercy')return;p.ai.tauntT=S.t;const l=TAUNT[kind];const m=l[(Math.random()*l.length)|0];
+ toast(`${p.civN}: “${m}”`,'chat');if(SETS.voice!==0&&window.speechSynthesis&&AU.set.sfx)try{const ut=new SpeechSynthesisUtterance(m);const lang=VLANG[p.civ]||'en-GB';const v=pickVoice('en-GB');ut.lang='en-GB';if(v)ut.voice=v;ut.pitch=.6+((p.i*.13)%.3);ut.rate=1;ut.volume=.8;speechSynthesis.cancel();speechSynthesis.speak(ut)}catch(e){}}
+function tauntTick(){if(!S||S.spectate)return;for(const p of P){if(!p.ai||p.alive===false||!isEnemy(0,p.i))continue;const ai=p.ai;const nw=ai.waves?ai.waves.size:0;if(nw>3&&!(ai._wv>3))taunt(p,'wave');ai._wv=nw;
+ if(ai._ph!=null&&p.phase>ai._ph)taunt(p,'phase');ai._ph=p.phase;
+ const tc=blds.find(b=>b.o===p.i&&b.type==='tc');const army=units.filter(u=>u.o===p.i&&isMil(u)).length,mine=units.filter(u=>u.o===0&&isMil(u)).length;
+ if(tc&&(tc.hp<bMaxHp(tc)*.4||army<3&&mine>15)&&S.t-(ai.mercyT||-999)>300){ai.mercyT=S.t;taunt(p,'mercy')}}}
+function noteAIKill(e,by){if(by==null||by===0||!P[by]||!P[by].ai)return;if(e.o===0&&e.k==='b'&&!B[e.type].wall)taunt(P[by],'win');}
+function noteP0Hit(t,ao){if(ao===0&&t.o>0&&P[t.o]&&P[t.o].ai&&P[t.o].ai.firstHit==null)P[t.o].ai.firstHit=S.t}
 /* ---------- sprites: isometric 3D kit ---------- */
 const sprC=new Map();
 const HW=32,HH=16,ZS=32;
@@ -2250,7 +2282,7 @@ let achD={};try{achD=JSON.parse(localStorage.getItem('boc-ach')||'{}')}catch(e){
 function unlock(k){if(achD[k])return;achD[k]=Date.now();try{localStorage.setItem('boc-ach',JSON.stringify(achD))}catch(e){}const a=ACH.find(x=>x[0]===k);if(a){toast('🏆 Achievement: '+a[1],'good');sfx('ready')}}
 function achTick(){if(!S||!running||S.demo||S.spectate)return;const p=P[0];if(p.phase>=3)unlock('kingdom');if(blds.some(b=>b.o===0&&b.type==='wonder'&&b.built>=1))unlock('wonder');
  if((S.relics||[]).filter(r=>{const b=r.t&&ents.get(r.t);return b&&b.o===0}).length>=3)unlock('relic3');if(units.filter(u=>u.o===0&&isMil(u)).length>=100)unlock('army100');if((p.st.walls||0)>=50)unlock('walls50');if(seasonsOn()&&S.t>=SEAS_LEN*4)unlock('seasons')}
-function achEnd(win){if(!win||S.demo||S.tut||S.spectate)return;unlock('win');if(S.diff===2)unlock('hard');if((S.rivals||P.length-1)>=3)unlock('three');if(!(P[0].st.blost))unlock('untouch');if(S.t<25*60)unlock('quick');const m=vmode();if(m==='hill'||m==='regicide'||m==='castle')unlock(m)}
+function achEnd(win){if(!win||S.demo||S.tut||S.spectate)return;unlock('win');if(S.diff>=2)unlock('hard');if((S.rivals||P.length-1)>=3)unlock('three');if(!(P[0].st.blost))unlock('untouch');if(S.t<25*60)unlock('quick');const m=vmode();if(m==='hill'||m==='regicide'||m==='castle')unlock(m)}
 function showAch(){const n=ACH.filter(a=>achD[a[0]]).length;$('#achList').innerHTML=`<p class="sub">${n} of ${ACH.length} earned</p>`+ACH.map(a=>`<div class="ach ${achD[a[0]]?'got':''}"><b>${achD[a[0]]?'🏆':'🔒'} ${a[1]}</b><span>${a[2]}</span></div>`).join('');$('#achScr').hidden=false}
 $('#achBtn').onclick=showAch;$('#achClose').onclick=()=>{$('#achScr').hidden=true};
 
@@ -2840,7 +2872,7 @@ function tick(){S.t+=DT;S.tick++;pathBudget=0;
  for(const a of animals.slice())if(!a.dead)updAnimal(a,DT);
  if(roadDirty)roadSync();cargoFollow();
  if(S.tick%2===0)separate();
- if(S.tick%20===3){hillTick();relicTick();moraleTick();weatherTick();wildTick();spectTick();iceTick();siegeTick();if(!S.court&&!S.editor&&!S.spectate)courtInit();battleTick();eventTick();eventEffects();courtTick();if(S.tick%100===7)adviseTick();if(S.tick%200===3)dipTick()}if(S.tick%40===9)seaTradeTick();if(S.tick%10===5)wolfTick();if(S.tick%20===13)ferryTick();if(S.tick%10===0)abilTick();if(S.tick%600===0)histTick();if(S.tick%40===0)achTick();
+ if(S.tick%20===3){hillTick();relicTick();moraleTick();weatherTick();wildTick();spectTick();iceTick();siegeTick();if(!S.court&&!S.editor&&!S.spectate)courtInit();battleTick();eventTick();eventEffects();courtTick();if(S.tick%100===7)adviseTick();if(S.tick%200===3)dipTick()}if(S.tick%40===9)seaTradeTick();if(S.tick%10===5)wolfTick();if(S.tick%20===13)ferryTick();if(S.tick%10===0)abilTick();if(S.tick%40===21){aiSiegeTick();tauntTick()}if(S.tick%600===0)histTick();if(S.tick%40===0)achTick();
  if(S.tick%20===7)for(const p of P)if(p.alive)autoRepair(p);
  for(const p of projs){p.t+=DT;if(p.t>=p.dur){const t=ents.get(p.tid);if(t&&!t.dead&&!(t.k==='u'&&t.gar)){hit(t,p.d,p.o,p.aid);if(p.kind==='rock')impact(p.tx,p.ty,t.k==='b'?3:1.5,t.k==='b'?5:0,t.k==='b'?debCol(t):DEBC_STONE,t.o===0&&t.k==='b'?18:0)}
    if(p.splash){for(const u of units){if(u.gar||!isEnemy(p.o,u.o)||u===t)continue;if(Math.hypot(u.x-p.tx,u.y-p.ty)<p.splash)hit(u,p.d*.6,p.o,p.aid)}fx.push({k:'dust',x:p.tx,y:p.ty,t:0,life:.8,s:.5})}p.done=1}
@@ -2877,7 +2909,7 @@ function updSetupInfo(){const c=CIVS[SETUP.civ];$('#civinfo').innerHTML=`<b>${c.
 function buildTitle(){const el=$('#civs');el.innerHTML=CKEYS.map(k=>{const c=CIVS[k];const sp=bSprite('house',c.style,0,2,undefined,k);const ic=iconCanvas(g=>{const w=sp.width/sp.sc,h=sp.height/sp.sc,s=Math.min(52/w,52/h);g.drawImage(sp,32-w*s/2,34-h*s/2,w*s,h*s)});return`<button data-c="${k}" class="${k===SETUP.civ?'on':''}"><img src="${ic}" alt="">${c.n}</button>`}).join('');
  el.onclick=e=>{const b=e.target.closest('[data-c]');if(!b)return;SETUP.civ=b.dataset.c;el.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));saveSetup();updSetupInfo()};
  regMaps();segUI('mapType',[...MKEYS.map(k=>[k,MAPS[k].n]),...Object.keys(MAPS).filter(k=>k.startsWith('custom:')).map(k=>[k,MAPS[k].n]),['random','Random']],'map');segUI('mapSize',[['s','Small'],['m','Medium'],['l','Large']],'size');segUI('rivals',[[1,'1'],[2,'2'],[3,'3']],'rivals');segUI('hotSeg',[[1,'Just me'],[2,'Two (pass-and-play)']],'hot');segUI('hotTurn',[[45,'45 s'],[60,'1 min'],[90,'1½ min'],[120,'2 min']],'hotT');segUI('allies',[[0,'None'],[1,'1 ally'],[2,'2 allies']],'allies');
- segUI('diff',[[0,'Easy'],[1,'Normal'],[2,'Hard']],'diff');segUI('peace',[[0,'None'],[5,'5 min'],[10,'10 min'],[15,'15 min'],[20,'20 min'],[30,'30 min'],[45,'45 min'],[60,'1 hour'],[90,'90 min']],'peace');segUI('victory',Object.entries(VMODES),'vmode');
+ segUI('diff',[[0,'Easy'],[1,'Normal'],[2,'Hard'],[3,'Brutal']],'diff');segUI('peace',[[0,'None'],[5,'5 min'],[10,'10 min'],[15,'15 min'],[20,'20 min'],[30,'30 min'],[45,'45 min'],[60,'1 hour'],[90,'90 min']],'peace');segUI('victory',Object.entries(VMODES),'vmode');
  segUI('startRes',[['low','Low'],['std','Standard'],['high','High']],'res');segUI('popLim',[[100,'100'],[200,'200'],[300,'300']],'pop');segUI('pcolor',Object.keys(COLORS).map(k=>[k,`<i class="sw" style="background:${COLORS[k]}"></i>${k[0].toUpperCase()+k.slice(1)}`]),'color');segUI('proof',[['auto','By style'],['red','Red tile'],['blue','Blue slate'],['green','Copper green'],['slate','Grey slate'],['gold','Gold tile'],['black','Black slate']],'roof');segUI('seasons',[[1,'On'],[0,'Off']],'seasons');updSetupInfo();$('#contBtn').hidden=!hasSave()}
 function showTitle(){running=false;paused=false;$('#hud').hidden=true;$('#setupScr').hidden=true;$('#pause').hidden=true;$('#end').hidden=true;$('#title').hidden=false;
  newGame({civ:CKEYS[Math.floor(Math.random()*CKEYS.length)],map:['mainland','lakes','coast'][Math.floor(Math.random()*3)],size:'s',rivals:1,diff:1,peace:0,wonder:0,res:'high',pop:200},true);
