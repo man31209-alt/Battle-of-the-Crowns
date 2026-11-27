@@ -1752,6 +1752,62 @@ function achEnd(win){if(!win||S.demo||S.tut)return;unlock('win');if(S.diff===2)u
 function showAch(){const n=ACH.filter(a=>achD[a[0]]).length;$('#achList').innerHTML=`<p class="sub">${n} of ${ACH.length} earned</p>`+ACH.map(a=>`<div class="ach ${achD[a[0]]?'got':''}"><b>${achD[a[0]]?'🏆':'🔒'} ${a[1]}</b><span>${a[2]}</span></div>`).join('');$('#achScr').hidden=false}
 $('#achBtn').onclick=showAch;$('#achClose').onclick=()=>{$('#achScr').hidden=true};
 
+/* ---------- optional tutorial and scenario missions ---------- */
+let missDone={};try{missDone=JSON.parse(localStorage.getItem('boc-missions')||'{}')}catch(e){}
+function objBar(txt,sub){const b=$('#tutBar');if(!txt){b.hidden=true;return}b.hidden=false;$('#tutTxt').innerHTML=txt;$('#tutSub').textContent=sub||''}
+const fmt=s=>{s=Math.max(0,Math.floor(s));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
+function launch(o,after){$('#title').hidden=true;$('#end').hidden=true;$('#missScr').hidden=true;$('#loading').hidden=false;setTimeout(()=>{newGame(o,false);after();$('#loading').hidden=true;beginPlay();storyTick(true)},30)}
+/* tutorial */
+const TUT=[
+ ['Welcome! Drag with one finger to look around, and pinch to zoom.','Move the view a little to continue.',s=>Math.hypot(cam.x-s.cx,cam.y-s.cy)>60||cam.z!==s.cz],
+ ['Tap one of your <b>villagers</b> (the people in plain clothes) to select them.','',()=>sel.some(id=>{const e=ents.get(id);return e&&e.k==='u'&&ud(e).tag==='vil'})],
+ ['Now tap the <b>red berry bushes</b> near your town center. Villagers gather food and carry it home.','',()=>units.some(u=>u.o===0&&u.task&&u.task.k==='gather'&&u.task.rt==='food')],
+ ['Select another villager and tap a <b>tree</b> to chop wood.','',()=>units.some(u=>u.o===0&&u.task&&u.task.k==='gather'&&u.task.rt==='wood')],
+ ['Tap your <b>Town Center</b> (the big building) and press <b>Villager</b> to train a new one.','More villagers means a faster economy.',()=>blds.some(b=>b.o===0&&b.type==='tc'&&b.queue.some(q=>q.u==='villager'))||P[0].st.trained>0],
+ ['Select a villager, open <b>Economy</b> and build a <b>House</b>. Tap the ground, then press Place.','Houses raise your population limit.',()=>blds.some(b=>b.o===0&&b.type==='house')],
+ ['Build a <b>Farmstead</b>, then a <b>Field</b> next to it.','Fields never run out, and a nearby farmstead makes them 15% better.',()=>blds.some(b=>b.o===0&&b.type==='field')],
+ ['Open <b>Military</b> and build a <b>Barracks</b>.','',()=>blds.some(b=>b.o===0&&b.type==='barracks')],
+ ['Tap the <b>sword button</b> on the left to select your army, then tap <b>Patrol</b> or <b>Attack-move</b> and tap the map.','Hold the sword button to pick only idle soldiers.',()=>units.some(u=>u.o===0&&u.task&&(u.task.k==='patrol'||u.task.k==='amove'))],
+ ['With soldiers selected, <b>hold the 1 button</b> under the minimap to save them as group 1. Tap 1 later to select them again.','',()=>S.groups&&S.groups[0]&&S.groups[0].length>0],
+ ['Pick a <b>wall</b> or <b>palisade</b> in the Defense tab and <b>drag</b> along the ground to lay it.','Lift your finger and your villagers build it.',()=>blds.some(b=>b.o===0&&B[b.type].wall)],
+ ['That\'s the basics! Grow to 5 buildings and research the <b>Town Phase</b> at your town center to unlock more.','Tap the Under attack button whenever it shows. The tutorial is done — keep playing or quit from the menu.',()=>false]];
+function startTutorial(){launch({civ:SETUP.civ,map:'mainland',size:'s',rivals:1,diff:0,peace:30,vmode:'conquest',res:'std',pop:200,color:SETUP.color,roof:SETUP.roof,seasons:0,tut:1},()=>{S.tut={i:0,cx:cam.x,cy:cam.y,cz:cam.z};S.tut.t0=0})}
+/* missions */
+const MISS=[
+ {id:'hold',n:'Hold the Castle',d:'Your castle stands alone on the frontier. Waves of raiders, then rams and trebuchets, will come for 15 minutes. Train troops, man the walls and keep the castle standing.',start(){launch({civ:SETUP.civ,map:'highlands',size:'s',rivals:1,diff:1,peace:0,vmode:'conquest',res:'high',pop:200,color:SETUP.color,roof:SETUP.roof,seasons:1},()=>{
+   const foe=P[1];foe.ai=null;for(const u of units.slice())if(u.o===1)kill(u,null,true);for(const b of blds.slice())if(b.o===1)kill(b,null,true);foe.alive=true;
+   const p=P[0];p.phase=1;recomputeMods(p);const tc=blds.find(b=>b.o===0&&b.type==='tc');fortressWalls(tc);S.vmode='castle';setupMode([[tc.x,tc.y]]);S.vmode='conquest';
+   const cs=blds.find(b=>b.o===0&&b.type==='castle');for(let k=0;k<12;k++){const q=freeAround(cs||tc);mkUnit(k<6?'archer':'spear',0,q.x,q.y)}
+   S.mission={id:'hold',end:15*60,wave:0,next:70,castle:cs?cs.id:0}})},
+  tick(){const m=S.mission;const cs=ents.get(m.castle);if(!cs){endGame(false,'The castle has fallen.');return true}if(S.t>=m.end){missionWin('The raiders are broken. The frontier is safe.');return true}
+   if(S.t>=m.next){m.wave++;m.next=S.t+Math.max(40,75-m.wave*3);spawnWave(m.wave,cs)}objBar(`<b>Hold the Castle</b> · ${fmt(m.end-S.t)} left`,`Wave ${m.wave} · next in ${fmt(m.next-S.t)}`);return true}},
+ {id:'rebuild',n:'Rebuild the Village',d:'Raiders burned your village. With little left, grow back to 25 villagers and 8 houses and reach the Town Phase within 25 minutes.',start(){launch({civ:SETUP.civ,map:'mainland',size:'s',rivals:1,diff:0,peace:8,vmode:'conquest',res:'low',pop:200,color:SETUP.color,roof:SETUP.roof,seasons:1},()=>{
+   const p=P[0];const tc=blds.find(b=>b.o===0&&b.type==='tc');tc.hp=bMaxHp(tc)*.45;p.res.food=120;p.res.wood=80;let n=0;for(const u of units.slice())if(u.o===0&&ud(u).tag==='vil'&&++n>3)kill(u,null,true);
+   for(let k=0;k<6;k++){const a=k/6*6.28;rubble.push({x:Math.round(tc.x+2+Math.cos(a)*7),y:Math.round(tc.y+2+Math.sin(a)*7),w:2,h:2,t:0})}S.mission={id:'rebuild',end:25*60}})},
+  tick(){const m=S.mission,p=P[0];if(!blds.some(b=>b.o===0&&b.type==='tc')){endGame(false,'The town center fell.');return true}
+   const v=units.filter(u=>u.o===0&&ud(u).tag==='vil').length,h=blds.filter(b=>b.o===0&&b.type==='house'&&b.built>=1).length;if(v>=25&&h>=8&&p.phase>=1){missionWin('The village lives again.');return true}
+   if(S.t>=m.end){endGame(false,'Time ran out before the village recovered.');return true}const ck=(ok,t)=>(ok?'✅ ':'▫️ ')+t;
+   objBar(`<b>Rebuild</b> · ${fmt(m.end-S.t)} left`,`${ck(v>=25,'Villagers '+v+'/25')}  ${ck(h>=8,'Houses '+h+'/8')}  ${ck(p.phase>=1,'Town Phase')}`);return false}},
+ {id:'canyon',n:'Siege of the Red Canyon',d:'A Defender lord has walled himself in at the far end of the canyon. You start in the Town Phase with siege rams. Tear his walls down.',start(){launch({civ:SETUP.civ,map:'canyon',size:'s',rivals:1,diff:2,peace:0,vmode:'conquest',res:'high',pop:200,color:SETUP.color,roof:SETUP.roof,seasons:1},()=>{
+   const foe=P[1];foe.ai.pers='turtle';foe.phase=1;recomputeMods(foe);const ftc=blds.find(b=>b.o===1&&b.type==='tc');fortressWalls(ftc);
+   const p=P[0];p.phase=1;recomputeMods(p);const tc=blds.find(b=>b.o===0&&b.type==='tc');for(let k=0;k<3;k++){const q=freeAround(tc);mkUnit('ram',0,q.x,q.y)}for(let k=0;k<6;k++){const q=freeAround(tc);mkUnit('militia',0,q.x,q.y)}
+   S.mission={id:'canyon'}})},
+  tick(){objBar('<b>Siege of the Red Canyon</b>','Destroy the walled town at the far end of the canyon. Rams break walls and gates.');return false}}];
+function missionWin(msg){const m=S.mission;missDone[m.id]=1;try{localStorage.setItem('boc-missions',JSON.stringify(missDone))}catch(e){}endGame(true,msg)}
+function spawnWave(n,cs){const c=ec(cs);let sx=0,sy=0,bd=-1;for(let k=0;k<12;k++){const a=Math.random()*6.283;const x=clamp(Math.round(c.x+Math.cos(a)*W*.45),2,W-3),y=clamp(Math.round(c.y+Math.sin(a)*W*.45),2,H-3);const d=Math.hypot(x-c.x,y-c.y);if(passXY(x,y,1,0)&&d>bd){bd=d;sx=x;sy=y}}
+ const count=4+Math.round(n*2.5),pool=n<3?['militia','spear','archer']:n<6?['militia','spear','archer','scout','xbow']:['champ','knight','xbow','archer','spear'];
+ for(let k=0;k<count;k++){const sp=spotsNear({x:sx+.5,y:sy+.5},count,0)[k]||{x:sx+.5,y:sy+.5};const u=mkUnit(pool[k%pool.length],1,sp.x,sp.y);u.hp=uMaxHp(u);u.task={k:'amove',x:c.x,y:c.y}}
+ if(n>=4){const nr=n>=9?3:n>=6?2:1;const sps=spotsNear({x:sx+.5,y:sy+.5},nr,0);for(const sp of sps){const r=mkUnit(n>=9?'treb':'ram',1,sp.x,sp.y);r.hp=uMaxHp(r);r.task={k:'atk',id:cs.id}}}
+ toast(`Wave ${n}: ${count} raiders are coming!`,'bad',{x:sx,y:sy});sfx('horn')}
+/* called each second; returns true when the mission handles win and loss itself */
+function storyTick(force){if(!S||(!running&&!force))return false;if(S.mission){const M=MISS.find(m=>m.id===S.mission.id);return M?M.tick():false}
+ if(S.tut){const st=TUT[S.tut.i];if(!st){objBar(null);return false}if(st[2](S.tut)){S.tut.i++;sfx('ready');if(S.tut.i===TUT.length-1)unlock('tut');S.tut.cx=cam.x;S.tut.cy=cam.y;S.tut.cz=cam.z}const cur=TUT[S.tut.i];if(cur)objBar(`<b>Tutorial ${S.tut.i+1}/${TUT.length}</b> · ${cur[0]}`,cur[1]);return false}
+ objBar(null);return false}
+$('#tutSkip').onclick=()=>{if(S&&S.tut){S.tut=null;objBar(null);toast('Tutorial closed. Have fun!')}else if(S&&S.mission){$('#tutBar').classList.toggle('mini')}};
+function showMissions(){$('#missList').innerHTML=MISS.map((m,i)=>`<div class="ach ${missDone[m.id]?'got':''}"><b>${missDone[m.id]?'✅':'⚔'} ${m.n}</b><span>${m.d}</span><button class="big" data-mi="${i}" style="margin-top:6px">Play</button></div>`).join('');$('#missScr').hidden=false;
+ $('#missList').querySelectorAll('[data-mi]').forEach(b=>b.onclick=()=>MISS[+b.dataset.mi].start())}
+$('#missBtn').onclick=showMissions;$('#missClose').onclick=()=>{$('#missScr').hidden=true};$('#tutBtn').onclick=startTutorial;
+
 /* ---------- game setup ---------- */
 const STARTRES={low:{food:200,wood:200,stone:100,gold:100},std:{food:300,wood:300,stone:200,gold:200},high:{food:1000,wood:1000,stone:1000,gold:1000}};
 function newPlayer(i,civ,rl){const p={i,civ,civN:CIVS[civ].n,style:CIVS[civ].style,res:Object.assign({},STARTRES[rl]||STARTRES.std),phase:0,techs:[],m:null,pop:0,popCap:0,ai:null,bell:false,hero:0,alive:true,barter:{food:100,wood:100,stone:100},st:{trained:0,kills:0,lost:0,razed:0,gath:0,captured:0}};recomputeMods(p);return p}
@@ -1797,7 +1853,7 @@ function tick(){S.t+=DT;S.tick++;pathBudget=0;
   else{const t=ents.get(p.tid);if(t&&!t.gar){const c=ec(t);p.tx=c.x;p.ty=c.y}}}
  projs=projs.filter(p=>!p.done);for(const f of fx)f.t+=DT;fx=fx.filter(f=>f.t<f.life);for(const r of rubble)r.t+=DT;rubble=rubble.filter(r=>r.t<40);
  if(S.tick%5===0)computeFog();
- if(S.tick%20===0){updAuras();for(const p of P){calcPop(p);if(p.ai&&p.alive)aiTick(p)}checkEnd();if(S.peace&&Math.abs(S.t-S.peace)<.6)toast('The ceasefire is over. War begins!','bad')}
+ if(S.tick%20===0){updAuras();for(const p of P){calcPop(p);if(p.ai&&p.alive)aiTick(p)}if(!storyTick())checkEnd();if(S.peace&&Math.abs(S.t-S.peace)<.6)toast('The ceasefire is over. War begins!','bad')}
  if(terrDirty&&S.tick%10===0)computeTerritory();
  if(S.tick%600===0)save()}
 function defeat(p){p.alive=false;for(const u of units.slice())if(u.o===p.i)kill(u,null,true);for(const b of blds.slice())if(b.o===p.i)kill(b,null,true);if(p.i!==0)toast(p.civN+' has been defeated!','good')}
@@ -1833,7 +1889,7 @@ function showTitle(){running=false;paused=false;$('#hud').hidden=true;$('#pause'
  for(const tc of blds.filter(b=>b.type==='tc')){for(const [t,dx,dy] of [['house',-3,0],['house',5,1],['barracks',0,6],['farmstead',6,-3],['sentry',-2,-2],['house',-3,3],['field',5,5],['storehouse',-5,-4]]){if(canPlace(t,tc.x+dx,tc.y+dy,tc.o,false))mkBld(t,tc.o,tc.x+dx,tc.y+dy,true)}}
  computeTerritory();explored.fill(1);buildTitle();cam.z=VW<700?.7:.9;const t0=blds[0];centerOn(t0.x+2,t0.y+2)}
 function startGame(){$('#title').hidden=true;$('#end').hidden=true;$('#loading').hidden=false;setTimeout(()=>{newGame(Object.assign({},SETUP),false);$('#loading').hidden=true;beginPlay();
- toast('Tap a villager, then tap a tree, bush or animal to start gathering.','good');setTimeout(()=>{if(running)toast('Build inside your territory, the dashed line around your town.')},4500)},30)}
+ toast('Tap a villager, then tap a tree, bush or animal to start gathering.','good')},30)}
 function beginPlay(){running=true;paused=false;lastAtk=null;$('#hud').hidden=false;lastSig='';panelDirty=true;updTop();drawMini();setSpeedUI();setSpeedLbl();updGroups()}
 function setSpeedUI(){$('#speed').querySelectorAll('button').forEach(b=>b.classList.toggle('on',+b.dataset.s===S.speed))}
 $('#newBtn').onclick=startGame;
