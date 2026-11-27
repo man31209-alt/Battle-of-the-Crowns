@@ -240,10 +240,10 @@ function rankMul(u){return u.rank===3?1.3:u.rank===2?1.2:u.rank===1?1.1:1}
 function uMaxHp(u){const d=ud(u),m=P[u.o].m;let h=d.hp;if(d.uu&&m.eliteUU)h*=1.25;if(d.tag==='vil')h+=m.vhp;if(m.hp[d.tag])h*=1+m.hp[d.tag];return Math.round(h*rankMul(u))}
 const bMaxHp=b=>Math.round(B[b.type].hp*P[b.o].m.bhp);
 const cpMax=b=>Math.round(B[b.type].hp*.5);
-function uAtk(u){const d=ud(u),m=P[u.o].m;let a=d.atk+(d.tag==='vil'||d.tag==='sie'?0:m.atk[d.at]);if(d.uu&&m.eliteUU)a*=1.25;a*=rankMul(u);if(u.aura==='atk')a*=1.2;return a}
-function uArm(u,k){const d=ud(u),m=P[u.o].m,i=k==='m'?0:1;let a=d.arm[i];if(d.tag==='vil')a+=m.varm[i];else if(d.tag!=='sie'&&d.tag!=='shp'&&d.tag!=='trd')a+=m.arm[i];if(d.tag==='shp')a+=m.armT.shp;a+=u.rank||0;if(u.aura==='arm')a+=2;return a}
-function uRng(u){const d=ud(u),m=P[u.o].m;if(!d.rng)return 0;return d.rng+(d.at==='p'&&d.tag!=='sie'?m.rng:0)+(d.tag==='arc'?m.arcRng:0)}
-function uSpd(u){const d=ud(u),m=P[u.o].m;let s=d.spd;if(S&&S.wx&&S.wx.k!=='clear'){if(d.tag==='shp'){if(S.wx.k==='storm')s*=.7}else s*=.9}if(u.flee>S.t)s*=1.1;if(d.tag==='vil')s*=1+m.vspd;if(m.spd[d.tag])s*=1+m.spd[d.tag];if(u.aura==='spd')s*=1.15;return s}
+function uAtk(u){const d=ud(u),m=P[u.o].m;let a=d.atk+(d.tag==='vil'||d.tag==='sie'?0:m.atk[d.at]);if(d.uu&&m.eliteUU)a*=1.25;a*=rankMul(u);if(u.aura==='atk')a*=1.2;if(u.insp>S.t)a*=1.2;if(u.ab&&u.ab.until>S.t){if(u.ab.k==='charge')a*=1.5;else if(u.ab.k==='volley')a*=1.4}return a}
+function uArm(u,k){const d=ud(u),m=P[u.o].m,i=k==='m'?0:1;let a=d.arm[i];if(d.tag==='vil')a+=m.varm[i];else if(d.tag!=='sie'&&d.tag!=='shp'&&d.tag!=='trd')a+=m.arm[i];if(d.tag==='shp')a+=m.armT.shp;a+=u.rank||0;if(u.aura==='arm')a+=2;if(u.ab&&u.ab.k==='wall'&&u.ab.until>S.t)a+=k==='m'?4:6;return a}
+function uRng(u){const d=ud(u),m=P[u.o].m;if(!d.rng)return 0;return d.rng+(d.at==='p'&&d.tag!=='sie'?m.rng:0)+(d.tag==='arc'?m.arcRng:0)+(u.ab&&u.ab.k==='brace'&&u.ab.until>S.t?3:0)}
+function uSpd(u){const d=ud(u),m=P[u.o].m;let s=d.spd;if(S&&S.wx&&S.wx.k!=='clear'){if(d.tag==='shp'){if(S.wx.k==='storm')s*=.7}else s*=.9}if(u.flee>S.t)s*=1.1;if(d.tag==='vil')s*=1+m.vspd;if(m.spd[d.tag])s*=1+m.spd[d.tag];if(u.aura==='spd')s*=1.15;if(u.ab&&u.ab.until>S.t){if(u.ab.k==='charge')s*=1.6;else if(u.ab.k==='wall')s*=.5;else if(u.ab.k==='brace')s=0}return s}
 function uRate(u){const d=ud(u);return d.rate*(d.tag==='inf'?P[u.o].m.infRate:1)}
 function gRate(u,k){const p=P[u.o],m=p.m;let r=RATE[k]*(1+(m.rate[k]||0))*seasonRate(k)*festMul(u.o);const d=ud(u);
  if(d.tag==='vil'){}else if(d.cit){r*=(k==='berry'||k==='farm'?.5:.75)*(1+m.citGather)}else if(d.hunter&&k==='hunt')r*=1.6;else if(d.tag==='shp')r*=1;else r*=.5;
@@ -414,7 +414,7 @@ function doAttack(u,t,dt){const e=ents.get(t.id);
   if(u.cd<=0){u.cd=uRate(u);u.swing=.3;
    if(e.k==='b'&&capturer(u)&&capturable(e)&&!t.dmg){const cap=Math.max(.6,2.6*rankMul(u)*(u.aura==='atk'?1.2:1)-e.gar.length*.35)*uRate(u);e.cp-=cap;e.capT=S.t;e.capBy=u.o;if(e.o===0)alertAttack(e);gainXp(u,1.5);if(e.cp<=0)convert(e,u.o);return}
    let dm=dmgTo(uAtk(u),D.at,D.bon,e)*(hg>0?1.25:hg<0?.85:1);if(rng>0&&wxWet())dm*=.85;if(!(rng>0)&&e.k==='u'){if(D.tag==='cav'&&(u.chg||0)>3){dm*=1.8;fx.push({k:'dust',x:e.x,y:e.y,t:0,life:.6,s:.6});if(u.o===0)sfx('thud',e.x,e.y)}else if(e.task&&e.task.k==='atk'&&e.task.id!==u.id)dm*=1.2;else if(e.flee>S.t||(e.task&&e.task.k==='move'))dm*=1.25}u.chg=0;
-   if(rng>0){const k=D.multi||1;for(let i=0;i<k;i++)shoot(u.x,u.y-.35,e,dm,u.o,u.id,u.type==='treb'||u.type==='mangonel'?'rock':u.type==='jinete'?'jav':'arrow',D.splash)}else{hit(e,dm,u.o,u.id);sfx(e.k==='b'?'thud':'clang',u.x,u.y);if(ud(u).demo){demoBlast(u,e);return}}}return}
+   if(rng>0){const k=D.multi||1;for(let i=0;i<k;i++)shoot(u.x,u.y-.35,e,dm,u.o,u.id,u.type==='treb'||u.type==='mangonel'?'rock':u.type==='jinete'?'jav':'arrow',abOn(u,'volley')?Math.max(D.splash||0,.9):D.splash)}else{hit(e,dm,u.o,u.id);sfx(e.k==='b'?'thud':'clang',u.x,u.y);if(ud(u).demo){demoBlast(u,e);return}}}return}
  if(u.stance==='hold'){if(t.auto){u.task=null}return}
  const leash=u.stance==='def'&&u.home?Math.hypot(u.x-u.home.x,u.y-u.home.y)>7:false;
  if((t.auto&&d>D.los+6)||leash)return done();
@@ -1583,7 +1583,7 @@ function render(){const z=cam.z;ctx.setTransform(DPR,0,0,DPR,0,0);ctx.fillStyle=
   else if(it[1]===6)drawFolk(ctx,it[2]);
   else if(it[1]===3){const a=it[2],p=it[3];if(!a.carc){ctx.fillStyle='rgba(0,0,0,.28)';ctx.beginPath();ctx.ellipse(p[0],p[1],9,3.4,0,0,7);ctx.fill()}const sp=animalSprite(a);ctx.drawImage(sp,p[0]-sp.ox,p[1]-sp.oy,sp.w,sp.h)}
   else{const u=it[2],p=it[3];const st=u.mv?'walk':u.work?'work':u.swing>0?'atk':'idle';const tg=U[u.type].tag;if(tg!=='shp'){ctx.fillStyle='rgba(0,0,0,.3)';ctx.beginPath();ctx.ellipse(p[0],p[1],(tg==='sie'?15:tg==='cav'?10:6.5)*US,(tg==='sie'?4.5:tg==='cav'?3.4:2.8)*US,0,0,7);ctx.fill()}
-   climbFx(ctx,u,p);const sp=unitSprite(u,st);ctx.drawImage(sp,p[0]-sp.ox,p[1]-sp.oy,sp.w,sp.h);if(u.flagB||u.drumB)drawBanner(ctx,u,p);if(u.dockW)bridgeFx(ctx,u,p)}}
+   climbFx(ctx,u,p);if(u.ab)abilFx(ctx,u,p);const sp=unitSprite(u,st);ctx.drawImage(sp,p[0]-sp.ox,p[1]-sp.oy,sp.w,sp.h);if(u.flagB||u.drumB)drawBanner(ctx,u,p);if(u.dockW)bridgeFx(ctx,u,p)}}
  SMOKEFX(cull);FIREFX(cull);ARMSFX();
  for(const pr of projs){const f=Math.min(1,pr.t/pr.dur);const x=pr.x0+(pr.tx-pr.x0)*f,y=pr.y0+(pr.ty-pr.y0)*f;const arc=pr.kind==='rock'?70:26;const zz=16+Math.sin(f*Math.PI)*arc;const p=PJ(x,y,zz);
   if(pr.kind==='rock'){ctx.fillStyle='#4a4038';ctx.beginPath();ctx.arc(p[0],p[1],4.5,0,7);ctx.fill();ctx.strokeStyle='#1a140e';ctx.lineWidth=1;ctx.stroke()}
@@ -2098,10 +2098,11 @@ function renderPanel(){if(!S)return;const s=selection(),p=P[0];
    info.innerHTML=`<div class="por"><img src="${ICON['u_'+u.type]}" alt=""></div><div class="tx"><h4>${d.n}${u.o!==0?' ('+P[u.o].civN+')':''}</h4><div class="hp ${f<.35?'lo':''}"><i style="width:${f*100}%"></i></div><div class="st"><b>${Math.ceil(u.hp)}/${mx}</b> HP${d.atk?` · Atk <b>${Math.round(uAtk(u))}</b>`:''} · Arm <b>${uArm(u,'m')}/${uArm(u,'p')}</b>${uRng(u)?` · Rng <b>${uRng(u)}</b>`:''}${u.vn?` · <b>${vetName(u)}</b>`:''}${u.kills?` · ${u.kills} kill${u.kills===1?'':'s'}`:''}</div>${u.o===0?`<div class="st">${taskText(u)}${isMil(u)&&canFight(u)?' · '+STN[u.stance]:''}${d.hero?' · '+d.d:''}</div>`:''}</div>`}
   else{const g={};for(const u of es)g[u.type]=(g[u.type]||0)+1;info.innerHTML=`<div class="tx"><h4>${es.length} units selected</h4><div class="grp">${Object.keys(g).map(t=>`<button data-a="only:${t}"><img src="${ICON['u_'+t]}" alt=""><b>${g[t]}</b></button>`).join('')}</div></div>`}
   if(s.k==='enemy'){if(lastSig!=='en'){lastSig='en';acts.innerHTML=''}return}
-  const workers=es.some(canBuild),mil=es.some(u=>isMil(u)&&canFight(u)),trd=es.some(u=>u.type==='trader');const da=delArm>performance.now();
+  const workers=es.some(canBuild)&&!es.some(u=>isMil(u)&&!canBuild(u)&&canFight(u)),mil=es.some(u=>isMil(u)&&canFight(u)),trd=es.some(u=>u.type==='trader');const da=delArm>performance.now();
   let html='',sig='u'+(S.form||'')+workers+mil+tab+p.phase+(da?'d':'')+(cmdMode||'')+es.map(u=>u.stance).join('');
   if(workers){html+=`<div class="tabs"><button data-a="tab:eco" class="${tab==='eco'?'on':''}">Economy</button><button data-a="tab:mil" class="${tab==='mil'?'on':''}">Military</button><button data-a="tab:def" class="${tab==='def'?'on':''}">Defense</button></div>`;
    for(const t of BUILD_TABS[tab]){const d=B[t];if(d.ph>p.phase){html+=`<button class="ab no" data-a="lock:${t}"><img src="${ICON['b_'+t]}" alt=""><span class="nm">${SHORT[d.n]||d.n}</span><span class="cs">${PHASE[d.ph]}</span></button>`;continue}const ok=afford(p,d.cost);sig+=ok?1:0;html+=btn('build:'+t,'b_'+t,d.n,d.cost,ok)}}
+  html+=abilButtons(es);
   if(mil){const st=es.find(u=>isMil(u)).stance;for(const k of ['agg','def','hold','pas'])html+=btn('stance:'+k,'st_'+k,STN[k],null,true,st===k?'ok':'');html+=btn('amove','amove','Attack-move',null,true,cmdMode==='amove'?'ok':'');html+=btn('patrol','patrol','Patrol',null,true,cmdMode==='patrol'?'ok':'');html+=btn('form','form_'+(S.form||'loose'),'Form: '+FORMS[S.form||'loose'],null,true,'');}
   {const trs=es.filter(u=>u.k==='u'&&isTransport(u));const n=trs.reduce((a,s)=>a+(s.cargo||[]).length,0);if(trs.length){html+=btn('unloadship','unload','Unload ('+n+')',null,n>0);sig+='T'+n}}
   if(es.some(u=>!u.nav))html+=btn('gar','gar','Garrison',null,true,cmdMode==='gar'?'ok':'');
@@ -2138,7 +2139,7 @@ function act(a){if(S&&S.spectate){toast('Spectating: the computer plays every ki
  if(k==='stop'){for(const u of s.es)if(u.k==='u'){u.task=null;u.path=null;u.home={x:u.x,y:u.y}}cmdMode=null;return}
  if(k==='stance'){for(const u of s.es)if(u.k==='u'&&isMil(u)){u.stance=v;u.home={x:u.x,y:u.y};if(v==='pas'&&u.task&&u.task.k==='atk')u.task=null}lastSig='';return}
  if(k==='unloadship'){for(const id of sel){const s=ents.get(id);if(isTransport(s)&&(s.cargo||[]).length)unloadShip(s)}lastSig='';return}
- if(k==='form'){S.form=FORM_K[(FORM_K.indexOf(S.form||'loose')+1)%FORM_K.length];lastSig='';panelDirty=true;toast('Formation: '+FORMS[S.form]+(S.form==='loose'?'':'. Melee in front, archers behind, siege at the back.'));return}
+ if(k==='abil'){abilAct(v);return}if(k==='form'){S.form=FORM_K[(FORM_K.indexOf(S.form||'loose')+1)%FORM_K.length];lastSig='';panelDirty=true;toast('Formation: '+FORMS[S.form]+(S.form==='loose'?'':'. Melee in front, archers behind, siege at the back.'));return}
  if(k==='amove'||k==='patrol'||k==='gar'||k==='trade'){cmdMode=cmdMode===k?null:k;lastSig='';return}
  if(k==='del'){delArm=performance.now()+2500;lastSig='';return}
  if(k==='del2'){delArm=0;for(const e of s.es){if(e.o!==0)continue;if(e.k==='b'&&e.built<1)refund(p,B[e.type].cost,1-e.built);kill(e,0,true)}lastSig='';return}
@@ -2774,6 +2775,32 @@ function hotHandoff(){const h=S.hot;const nx=h.cur===1?2:1;const slot=P.findInde
   {const hc=$('#hudArms');if(hc)hc.style.display='none'}$('#hotScr').hidden=true;paused=false;toast(`Player ${nx}: your turn! ${h.len} seconds.`,'good')}}
 function hotEnd(){if(!S.hot)return false;const alive=P.filter(p=>p.hid&&p.alive!==false);if(alive.length===1){const w=alive[0];if(w.i!==0){swapSlots(0,w.i)}endGame(true,`Player ${w.hid} (${w.civN}) wins the pass-and-play match!`);return true}return false}
 
+/* ---------- special abilities ---------- */
+const ABIL={charge:{n:'Charge',cd:40,dur:6,ic:'st_agg',d:'Speed +60% and harder first hit',c:'#e8a030'},wall:{n:'Shield wall',cd:45,dur:10,ic:'st_hold',d:'+4/+6 armor, half speed',c:'#6ab0e8'},
+ volley:{n:'Volley',cd:40,dur:8,ic:'amove',d:'Arrows hit an area for +40%',c:'#e85a3a'},heal:{n:'Healing aura',cd:50,dur:10,ic:'u_monk',d:'Heals nearby troops',c:'#7ae87a'},
+ inspire:{n:'Inspire',cd:60,dur:15,ic:'st_agg',d:'Troops nearby +20% attack and healed',c:'#f2cf6a'},cry:{n:'Battle cry',cd:60,dur:5,ic:'st_agg',d:'Nearby enemies flee in terror',c:'#c060e0'},
+ brace:{n:'Brace',cd:45,dur:12,ic:'st_hold',d:'Siege engine +3 range while braced, cannot move',c:'#b0b0b0'}};
+function abilOf(u){const d=ud(u);if(u.o<0)return null;if(d.hero)return (U[u.type]&&Object.keys(U).indexOf(u.type)%2)?'cry':'inspire';if(u.type==='mangonel'||u.type==='treb')return 'brace';return {cav:'charge',inf:'wall',arc:'volley',mon:'heal'}[d.tag]||null}
+const abOn=(u,k)=>u.ab&&u.ab.k===k&&u.ab.until>S.t;
+function useAbil(u,k){if(abilOf(u)!==k||(u.abCd||0)>S.t)return false;const A=ABIL[k];u.ab={k,until:S.t+A.dur};u.abCd=S.t+A.cd;fx.push({k:'ring',x:u.x,y:u.y,t:0,life:.8,c:A.c});
+ if(k==='cry'){for(const e of units)if(isEnemy(u.o,e.o)&&!e.gar&&!ud(e).hero&&Math.hypot(e.x-u.x,e.y-u.y)<6){e.flee=S.t+A.dur;const dx=e.x-u.x,dy=e.y-u.y,L=Math.hypot(dx,dy)||1;e.task={k:'move',x:clamp(e.x+dx/L*6,1,W-2),y:clamp(e.y+dy/L*6,1,H-2)};e.path=null}}
+ if(k==='inspire')for(const f of units)if(f.o===u.o&&!f.gar&&Math.hypot(f.x-u.x,f.y-u.y)<8){f.insp=S.t+A.dur;f.hp=Math.min(uMaxHp(f),f.hp+uMaxHp(f)*.15)}
+ if(k==='brace'){u.task=null;u.path=null}return true}
+function abilAct(k){const us=sel.map(id=>ents.get(id)).filter(u=>u&&u.k==='u'&&u.o===0);let n=0,wait=1e9;for(const u of us){if(abilOf(u)!==k)continue;if((u.abCd||0)>S.t){wait=Math.min(wait,u.abCd-S.t);continue}if(useAbil(u,k))n++}
+ if(n){sfx(k==='charge'||k==='cry'?'horn':k==='heal'||k==='inspire'?'built':'clang');if(us[0])voice('atk',us[0]);panelDirty=true}else toast(wait<1e9?`${ABIL[k].n} is ready in ${Math.ceil(wait)} s.`:'None of these units can do that.','bad')}
+function abilButtons(es){const ks={};for(const u of es){if(u.k!=='u'||u.o!==0)continue;const k=abilOf(u);if(!k)continue;const r=Math.max(0,(u.abCd||0)-S.t);if(!(k in ks)||r<ks[k])ks[k]=r}
+ return Object.entries(ks).map(([k,r])=>btn('abil:'+k,ABIL[k].ic,ABIL[k].n,null,r<=0,r<=0?'ok':'',r>0?Math.ceil(r)+'s':'Ready')).join('')}
+function abilTick(){if(!S)return;if(S.tick%20===0&&sel.some(id=>{const u=ents.get(id);return u&&u.k==='u'&&u.abCd>S.t-1}))panelDirty=true;for(const u of units){if(!u.ab)continue;if(u.ab.until<=S.t){u.ab=null;continue}
+  if(u.ab.k==='heal')for(const f of units){if(f.gar||isEnemy(u.o,f.o)||ud(f).tag==='sie'||ud(f).tag==='shp')continue;if(Math.abs(f.x-u.x)>4||Math.abs(f.y-u.y)>4)continue;const mx=uMaxHp(f);if(f.hp<mx){f.hp=Math.min(mx,f.hp+1.5);if(Math.random()<.15)fx.push({k:'ring',x:f.x,y:f.y,t:0,life:.5,c:'#7ae87a'})}}}
+ /* computer players use abilities too */
+ if(S.tick%40!==0)return;for(const u of units){if(u.o===0&&!S.spectate&&!(S.hot))continue;const p=P[u.o];if(!p||(!p.ai&&!S.spectate))continue;const k=abilOf(u);if(!k||(u.abCd||0)>S.t)continue;
+  const t=u.task&&u.task.k==='atk'&&ents.get(u.task.id);const near=(r)=>units.filter(e=>isEnemy(u.o,e.o)&&!e.gar&&Math.abs(e.x-u.x)<r&&Math.abs(e.y-u.y)<r).length;
+  if(k==='charge'&&t&&Math.hypot(t.x-u.x,t.y-u.y)>2.5)useAbil(u,k);else if(k==='wall'&&near(5)>=3&&u.hp<uMaxHp(u)*.8)useAbil(u,k);else if(k==='volley'&&t&&near(7)>=4)useAbil(u,k);
+  else if(k==='heal'&&units.some(f=>f.o===u.o&&f.hp<uMaxHp(f)*.6&&Math.hypot(f.x-u.x,f.y-u.y)<4))useAbil(u,k);else if((k==='inspire'||k==='cry')&&near(6)>=5)useAbil(u,k);else if(k==='brace'&&t&&t.k==='b')useAbil(u,k)}}
+function abilFx(g,u,p){if(!u.ab||u.ab.until<=S.t)return;const A=ABIL[u.ab.k];const t=performance.now()/1000;g.strokeStyle=A.c;g.globalAlpha=.55+.25*Math.sin(t*6);g.lineWidth=1.6;g.beginPath();g.ellipse(p[0],p[1],9,4,0,0,7);g.stroke();
+ if(u.ab.k==='wall'){g.fillStyle='#6ab0e8';g.globalAlpha=.75;g.beginPath();g.moveTo(p[0]-4,p[1]-46);g.lineTo(p[0]+4,p[1]-46);g.lineTo(p[0]+4,p[1]-41);g.lineTo(p[0],p[1]-38);g.lineTo(p[0]-4,p[1]-41);g.fill()}
+ if(u.ab.k==='charge'&&u.mv){g.fillStyle='rgba(140,120,90,.35)';for(let k=0;k<3;k++){g.beginPath();g.arc(p[0]-u.face*(8+k*6),p[1]-2,4+k*2,0,7);g.fill()}}g.globalAlpha=1}
+
 /* ---------- game setup ---------- */
 const STARTRES={low:{food:200,wood:200,stone:100,gold:100},std:{food:300,wood:300,stone:200,gold:200},high:{food:1000,wood:1000,stone:1000,gold:1000}};
 function newPlayer(i,civ,rl){const p={i,civ,civN:CIVS[civ].n,style:CIVS[civ].style,res:Object.assign({},STARTRES[rl]||STARTRES.std),phase:0,techs:[],m:null,pop:0,popCap:0,ai:null,bell:false,hero:0,alive:true,barter:{food:100,wood:100,stone:100},st:{trained:0,kills:0,lost:0,razed:0,gath:0,captured:0}};recomputeMods(p);return p}
@@ -2789,7 +2816,7 @@ function setupHudIcons(){for(const r of R4)$('#r-'+r+' img').src=ICON[r];$('#r-p
 const enc=a=>{let s='';for(let i=0;i<a.length;i++)s+=a[i].toString(36);return s};
 function save(key='boc-save2'){if(!running||!S||S.editor)return false;try{const data={v:2,meta:{civ:P[0].civN,map:(MAPS[S.mapType]||{}).n||S.mapType||'',t:Math.floor(S.t),when:Date.now(),phase:PHASE[P[0].phase]},S:Object.assign({},S),W,H,
  P:P.map(p=>({i:p.i,civ:p.civ,res:p.res,phase:p.phase,techs:p.techs,bell:p.bell,autoRep:p.autoRep,king:p.king,team:p.team,upg:p.upg,st:p.st,barter:p.barter,hero:p.hero,alive:p.alive,ai:p.ai?Object.assign({},p.ai,{waves:[...p.ai.waves]}):null})),
- U:units.map(u=>({id:u.id,type:u.type,o:u.o,x:+u.x.toFixed(2),y:+u.y.toFixed(2),hp:u.hp,carry:u.carry,ct:u.ct,gar:u.gar,cargo:u.cargo,face:u.face,task:u.task,xp:u.xp,rank:u.rank,kills:u.kills,vn:u.vn,ve:u.ve,stance:u.stance,home:u.home})),
+ U:units.map(u=>({id:u.id,type:u.type,o:u.o,x:+u.x.toFixed(2),y:+u.y.toFixed(2),hp:u.hp,carry:u.carry,ct:u.ct,gar:u.gar,cargo:u.cargo,face:u.face,task:u.task,xp:u.xp,rank:u.rank,ab:u.ab,abCd:u.abCd,insp:u.insp,kills:u.kills,vn:u.vn,ve:u.ve,stance:u.stance,home:u.home})),
  B:blds.map(b=>({id:b.id,type:b.type,o:b.o,x:b.x,y:b.y,hp:b.hp,built:b.built,queue:b.queue,rally:b.rally,gar:b.gar,started:b.started,cp:b.cp,slots:b.slots,wonderT:b.wonderT,locked:b.locked})),
  A:animals.map(a=>({id:a.id,type:a.type,o:a.o,x:+a.x.toFixed(2),y:+a.y.toFixed(2),hp:a.hp,food:a.food,carc:a.carc,hx:a.hx,hy:a.hy})),
  ter:enc(ter),el:enc(elevL),cl:enc(cliffM),rt:enc(resT),tk:enc(treeK),ex:enc(explored),ra:Array.from(resA,v=>Math.round(v)),cam:{x:cam.x,y:cam.y,z:cam.z}};
@@ -2813,7 +2840,7 @@ function tick(){S.t+=DT;S.tick++;pathBudget=0;
  for(const a of animals.slice())if(!a.dead)updAnimal(a,DT);
  if(roadDirty)roadSync();cargoFollow();
  if(S.tick%2===0)separate();
- if(S.tick%20===3){hillTick();relicTick();moraleTick();weatherTick();wildTick();spectTick();iceTick();siegeTick();if(!S.court&&!S.editor&&!S.spectate)courtInit();battleTick();eventTick();eventEffects();courtTick();if(S.tick%100===7)adviseTick();if(S.tick%200===3)dipTick()}if(S.tick%40===9)seaTradeTick();if(S.tick%10===5)wolfTick();if(S.tick%20===13)ferryTick();if(S.tick%600===0)histTick();if(S.tick%40===0)achTick();
+ if(S.tick%20===3){hillTick();relicTick();moraleTick();weatherTick();wildTick();spectTick();iceTick();siegeTick();if(!S.court&&!S.editor&&!S.spectate)courtInit();battleTick();eventTick();eventEffects();courtTick();if(S.tick%100===7)adviseTick();if(S.tick%200===3)dipTick()}if(S.tick%40===9)seaTradeTick();if(S.tick%10===5)wolfTick();if(S.tick%20===13)ferryTick();if(S.tick%10===0)abilTick();if(S.tick%600===0)histTick();if(S.tick%40===0)achTick();
  if(S.tick%20===7)for(const p of P)if(p.alive)autoRepair(p);
  for(const p of projs){p.t+=DT;if(p.t>=p.dur){const t=ents.get(p.tid);if(t&&!t.dead&&!(t.k==='u'&&t.gar)){hit(t,p.d,p.o,p.aid);if(p.kind==='rock')impact(p.tx,p.ty,t.k==='b'?3:1.5,t.k==='b'?5:0,t.k==='b'?debCol(t):DEBC_STONE,t.o===0&&t.k==='b'?18:0)}
    if(p.splash){for(const u of units){if(u.gar||!isEnemy(p.o,u.o)||u===t)continue;if(Math.hypot(u.x-p.tx,u.y-p.ty)<p.splash)hit(u,p.d*.6,p.o,p.aid)}fx.push({k:'dust',x:p.tx,y:p.ty,t:0,life:.8,s:.5})}p.done=1}
