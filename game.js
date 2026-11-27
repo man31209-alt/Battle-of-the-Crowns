@@ -92,7 +92,7 @@ const B={
  farmstead:{n:'Farmstead',w:2,h:2,hp:700,cost:{wood:100},tm:20,ph:0,drop:['food'],los:6,tech:['gather','collar','plow','crop'],d:'Drop off food. Farming upgrades.'},
  storehouse:{n:'Storehouse',w:2,h:2,hp:700,cost:{wood:100},tm:20,ph:0,drop:['wood','stone','gold'],los:6,tech:['axe','saw','stonem','goldm','goldm2','twoman','deepmine'],d:'Drop off wood, stone and gold. Gathering upgrades.'},
  field:{n:'Field',w:3,h:3,hp:300,cost:{wood:100},tm:14,ph:0,los:2,flat:1,slots:5,d:'Never runs out. Up to 5 farmers.'},
- corral:{n:'Corral',w:2,h:2,hp:500,cost:{wood:100},tm:16,ph:0,los:4,train:['sheep'],d:'Raises sheep to hunt for food.'},
+ corral:{n:'Corral',w:2,h:2,hp:500,cost:{wood:100},tm:16,ph:0,los:4,train:['sheep'],d:'Raises sheep. Send up to 3 villagers here to herd and butcher for steady food, or train sheep to hunt.'},
  dock:{n:'Dock',w:2,h:2,hp:1000,cost:{wood:150},tm:24,ph:0,drop:['food','wood'],los:7,train:['fishboat','galley'],tech:['nets','shipwright'],water:1,any:1,d:'Build on the shore. Fishing boats and warships.'},
  barracks:{n:'Barracks',w:3,h:3,hp:1500,cost:{wood:200},tm:30,ph:0,los:6,train:['spear','militia','champ'],gar:10,d:'Trains infantry.'},
  range:{n:'Archery Range',w:3,h:3,hp:1500,cost:{wood:200},tm:30,ph:0,los:6,train:['archer','xbow'],d:'Trains archers.'},
@@ -398,9 +398,9 @@ function doField(u,t,dt){if(t.ph==='ret')return doReturn(u,t,dt);const f=ents.ge
  if(!f||f.dead||f.o!==u.o){u.task=null;return}
  if(f.built<1){u.task={k:'build',id:f.id,q:[],thenField:1};return}
  f.slots=f.slots.filter(id=>{const w=ents.get(id);return w&&w.task&&w.task.k==='field'&&w.task.id===f.id});
- if(f.slots.indexOf(u.id)<0){if(f.slots.length>=5){const g=freeField(u.o,u.x,u.y,20);if(g&&g!==f){t.id=g.id;t.px=0;return}u.task=null;return}f.slots.push(u.id)}
- if(!t.px){const k=f.slots.indexOf(u.id);const sp=[[.6,.6],[2.4,.6],[1.5,1.5],[.6,2.4],[2.4,2.4]][k%5];t.px=f.x+sp[0];t.py=f.y+sp[1]}
- if(Math.hypot(u.x-t.px,u.y-t.py)<.3){u.path=null;if(u.ct!=='food'){u.carry=0;u.ct='food'}u.carry+=gRate(u,'farm')*(nearMill(f)?1.15:1)*dt;u.work=1;u.an+=dt*6;
+ const isC=f.type==='corral';if(f.slots.indexOf(u.id)<0){if(f.slots.length>=(isC?3:5)){if(isC){u.task=null;return}const g=freeField(u.o,u.x,u.y,20);if(g&&g!==f){t.id=g.id;t.px=0;return}u.task=null;return}f.slots.push(u.id)}
+ if(!t.px){const k=f.slots.indexOf(u.id);const sp=isC?[[-.45,.7],[2.45,1.2],[1,2.45]][k%3]:[[.6,.6],[2.4,.6],[1.5,1.5],[.6,2.4],[2.4,2.4]][k%5];t.px=f.x+sp[0];t.py=f.y+sp[1]}
+ if(Math.hypot(u.x-t.px,u.y-t.py)<.3){u.path=null;if(u.ct!=='food'){u.carry=0;u.ct='food'}u.carry+=gRate(u,'farm')*(isC?1.1:nearMill(f)?1.15:1)*dt;u.work=1;u.an+=dt*6;
   if(u.carry>=P[u.o].m.carry){t.ph='ret';u.path=null}return}
  if(!u.path||!u.path.length){if(u.rp>0||pathBusy(u))return;u.rp=.4;goPoint(u,t.px,t.py)}step(u,dt)}
 function doBuild(u,t,dt){const b=ents.get(t.id);
@@ -413,9 +413,11 @@ function doBuild(u,t,dt){const b=ents.get(t.id);
  step(u,dt)}
 function nextBuild(u,t,b){u.path=null;let nb=null;
  if(t.q&&t.q.length){t.q=t.q.filter(id=>{const e=ents.get(id);return e&&e.built<1&&e.o===u.o});let bd=1e9;for(const id of t.q){const e=ents.get(id);const d=rectDist(u.x,u.y,e.x,e.y,e.w,e.h);if(d<bd){bd=d;nb=e}}}
+ if(!nb){let bd=14;for(const e of blds){if(e.o!==u.o||e.built>=1||e.dead||(b&&e.id===b.id))continue;const d=rectDist(u.x,u.y,e.x,e.y,e.w,e.h);if(d<bd){bd=d;nb=e}}}
  if(nb){t.id=nb.id;t.bad=0;return}
  if(b&&!b.dead&&b.o===u.o&&canGather(u,'farm')){const ty=b.type;
   if(ty==='field'&&(ud(u).tag==='vil'||t.thenField)){u.task={k:'field',id:b.id};return}
+  if(ty==='corral'&&ud(u).tag==='vil'&&b.slots.filter(id=>{const e=ents.get(id);return e&&e.task&&e.task.id===b.id}).length<3){u.task={k:'field',id:b.id};return}
   if(ty==='storehouse'&&autoGather(u,['wood','gold','stone'],b))return;
   if(ty==='farmstead'){if(autoGather(u,['food'],b))return;const f=freeField(u.o,b.x,b.y,8);if(f){u.task={k:'field',id:f.id};return}}}
  if(t.prev){u.task=t.prev;return}
@@ -701,7 +703,7 @@ function wallLine(ax,ay,bx,by){const out=[[ax,ay]];let x=ax,y=ay;const dx=Math.a
  while((x!==bx||y!==by)&&n++<300){const e2=2*err;let mx=false,my=false;if(e2>=dy){err+=dy;mx=true}if(e2<=dx){err+=dx;my=true}if(mx&&my)out.push([x+sx,y]);if(mx)x+=sx;if(my)y+=sy;out.push([x,y])}
  return out}
 function selWorkers(){return sel.map(id=>ents.get(id)).filter(u=>u&&u.k==='u'&&u.o===0&&canBuild(u))}
-function assignBuild(ws,ids){if(!ids.length)return;for(const v of ws){const prev=v.task&&(v.task.k==='gather'||v.task.k==='field'||v.task.k==='hunt')?v.task:null;if(prev&&prev.ph!=='ret')prev.ph=null;
+function assignBuild(ws,ids){if(!ids.length)return;for(const v of ws){if(v.task&&v.task.k==='build'&&ents.has(v.task.id)){const q=v.task.q||(v.task.q=[]);for(const id of ids)if(id!==v.task.id&&!q.includes(id))q.push(id);continue}const prev=v.task&&(v.task.k==='gather'||v.task.k==='field'||v.task.k==='hunt')?v.task:null;if(prev&&prev.ph!=='ret')prev.ph=null;
  let best=ids[0],bd=1e9;for(const id of ids){const e=ents.get(id);const d=rectDist(v.x,v.y,e.x,e.y,e.w,e.h);if(d<bd){bd=d;best=id}}
  v.task={k:'build',id:best,q:ids.filter(i=>i!==best),prev};v.path=null}}
 function placeWhy(type,x,y){const d=B[type];for(let yy=y;yy<y+d.h;yy++)for(let xx=x;xx<x+d.w;xx++){if(xx<0||yy<0||xx>=W||yy>=H)return'off the map';const i=yy*W+xx;if(!explored[i])return'unexplored ground';if(d.water&&ter[i]!==1)return'docks go on water next to the shore';if(!d.water&&ter[i]===1)return'water';if(ter[i]===4)return'rocky mountain';if(block[i]||occ[i])return'something is in the way';}return'something is in the way'}
@@ -1259,6 +1261,7 @@ function drawBld(g,b){const c=B[b.type].wall?bSprite(b.type,P[b.o].style,b.o,bTi
   g.strokeStyle='#8a6640';g.lineWidth=1.8;g.beginPath();for(const [a,bb] of [[b.x+.1,b.y+b.h-.1],[b.x+b.w-.1,b.y+b.h-.1],[b.x+b.w-.1,b.y+.1]]){const q=PJ(a,bb,0);g.moveTo(q[0],q[1]);g.lineTo(q[0],Math.max(cy-4,q[1]-70))}g.stroke();return}
  g.drawImage(c,X,Y,w,h);
  if(B[b.type].gate)drawGateLive(g,b);
+ if(b.type==='corral'&&b.built>=1){if(!b._sh)b._sh=[[.55,.8,0],[1.35,.6,1],[1.1,1.35,0]].map(([x,y,f])=>({type:'sheep',face:f,mv:0,an:0,x,y}));const n=Math.min(3,1+(b.slots?b.slots.length:0));const t=performance.now()/1000;for(let k=0;k<n;k++){const sh=b._sh[k];if((t*.25+k*.37+b.id*.1)%1<.02)sh.face^=1;const sp=animalSprite(sh),q=PJ(b.x+sh.x,b.y+sh.y,0);g.drawImage(sp,q[0]-sp.ox,q[1]-sp.oy,sp.w,sp.h)}}
  if(B[b.type].wall&&b.gar.length&&(b.o===0||vis[b.y*W+b.x])){const gu=ents.get(b.gar[0]);if(gu){const sp=unitSprite(gu,'idle'),q=PJ(b.x+.5,b.y+.5,(ZMX[b.type]||56)*.82);g.drawImage(sp,q[0]-sp.ox*.8,q[1]-sp.oy*.8,sp.w*.8,sp.h*.8)}}
  const f=b.hp/bMaxHp(b);if(f<.6&&!B[b.type].wall){const n=f<.3?3:1,cc=PJ(b.x+b.w/2,b.y+b.h/2,(ZMX[b.type]||100)*.35);for(let k=0;k<n;k++){const t=(performance.now()/1000+k*.7+b.id)%2;g.fillStyle=`rgba(60,55,50,${.5*(1-t/2)})`;g.beginPath();g.arc(cc[0]+(k-1)*12,cc[1]-t*20,5+t*7,0,7);g.fill()}
   g.fillStyle='rgba(255,140,40,.85)';g.beginPath();g.arc(cc[0],cc[1]+6+Math.sin(performance.now()/90),3.5,0,7);g.fill()}}
@@ -1612,8 +1615,9 @@ function command(mine,w,hu,hb,ha,mode){{const rl=!hu&&!hb&&relicAt(w);const mk=m
  else if(ha){const hunters=mine.filter(u=>canGather(u,'hunt'));for(const u of hunters){u.task={k:'hunt',id:ha.id};u.path=null}const rest=mine.filter(u=>!canGather(u,'hunt'));if(rest.length)moveGroup(rest,w)}
  else if(hb&&hb.o===0){const ws=landU.filter(canBuild),traders=landU.filter(u=>u.type==='trader');
   if(traders.length&&hb.type==='market'){setTrade(traders,hb);return}
-  if(ws.length&&(hb.built<1||hb.hp<bMaxHp(hb))){for(const v of ws){v.task={k:'build',id:hb.id,q:[]};v.path=null}}
+  if(ws.length&&(hb.built<1||hb.hp<bMaxHp(hb))){for(const v of ws){if(v.task&&v.task.k==='build'&&ents.has(v.task.id)&&v.task.id!==hb.id){const q=v.task.q||(v.task.q=[]);if(!q.includes(hb.id))q.push(hb.id);continue}v.task={k:'build',id:hb.id,q:[]};v.path=null}}
   else if(ws.length&&hb.type==='field'){for(const v of ws){const f=hb.slots.length<5?hb:freeField(0,v.x,v.y,20);if(f){f.slots.push(v.id);v.task={k:'field',id:f.id}}else v.task=null;v.path=null}}
+  else if(ws.length&&hb.type==='corral'&&hb.built>=1){let n=0;for(const v of ws){hb.slots=hb.slots.filter(id=>{const e=ents.get(id);return e&&e.task&&e.task.k==='field'&&e.task.id===hb.id});if(hb.slots.length>=3)break;if(!hb.slots.includes(v.id))hb.slots.push(v.id);v.task={k:'field',id:hb.id};v.path=null;n++}if(n<ws.length)toast(n?`The corral takes 3 herders; ${ws.length-n} stayed put.`:'This corral already has 3 herders.','bad')}
   else if(mode==='smart'&&hb.built>=1){sel=[hb.id];panelDirty=true;return}
   else if(ws.length&&B[hb.type].drop&&ws.some(v=>v.carry>0)){for(const v of ws){if(v.carry>0){v.task={k:'gather',rt:v.ct,tx:0,ty:0,ph:'ret',drop:hb.id,end:1};v.path=null}}}
   else if(B[hb.type].gar&&hb.built>=1&&(landU.every(isMil)||(hb.type==='tc'&&P[0].bell))&&landU.length){for(const u of landU){u.task={k:'gar',id:hb.id};u.path=null}mark='#7fc0ff'}
