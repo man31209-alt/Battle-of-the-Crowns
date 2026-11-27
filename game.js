@@ -1848,7 +1848,7 @@ function tap(sx,sy,mode,shift){const w=toWorld(sx,sy);
  const selB=sel.length===1&&ents.get(sel[0]);
  if(mode!=='cmd'){
   if(hu&&hu.o===0&&!(isTransport(hu)&&mine.some(u=>!u.nav)&&!mine.includes(hu))){const now=performance.now();if(now-lastTapT<380&&lastTapId&&ents.get(lastTapId)?.type===hu.type){const v=visibleUnits().filter(u=>u.o===0&&u.type===hu.type);sel=v.map(u=>u.id).slice(0,80)}else if(shift){if(sel.indexOf(hu.id)<0)sel.push(hu.id)}else sel=[hu.id];lastTapT=now;lastTapId=hu.id;panelDirty=true;return}
-  if(mode==='sel'||(!mine.length&&!(selB&&selB.k==='b'&&selB.o===0))){if(hu){sel=[hu.id];if(hu.o===0)sfx(isMil(hu)?'ackS':'ackV')}else if(hb){sel=[hb.id];sfx('click')}else sel=[];panelDirty=true;return}}
+  if(mode==='sel'||(!mine.length&&!(selB&&selB.k==='b'&&selB.o===0))){if(hu){sel=[hu.id];if(hu.o===0){sfx(isMil(hu)?'ackS':'ackV');voice('sel',hu)}}else if(hb){sel=[hb.id];sfx('click')}else sel=[];panelDirty=true;return}}
  if(selB&&selB.k==='b'&&selB.o===0&&!mine.length){if(hb===selB)return;if(hb&&hb.o===0&&hb!==selB&&!(hb.type==='field'||hb.built<1)){sel=[hb.id];panelDirty=true;return}
   if(hu&&mode==='smart'){sel=[hu.id];panelDirty=true;return}
   if(B[selB.type].train){const tx=Math.floor(w.x),ty=Math.floor(w.y),i=ty*W+tx;selB.rally={x:w.x,y:w.y};if(resT[i]&&resT[i]<5&&explored[i])selB.rally.rt=RTN[resT[i]],selB.rally.tx=tx,selB.rally.ty=ty;if(hb&&hb.o===0)selB.rally.bid=hb.id;
@@ -1859,12 +1859,12 @@ function command(mine,w,hu,hb,ha,mode){
  if(hu&&hu.o===0&&isTransport(hu)){const lu=mine.filter(u=>!u.nav);if(lu.length){const room=U[hu.type].cap-(hu.cargo||[]).length;if(room<=0){toast('That transport is full.','bad');return}let cx=0,cy=0;for(const u of lu){cx+=u.x;cy+=u.y}cx/=lu.length;cy/=lu.length;
   lu.slice(0,room).forEach(u=>{u.task={k:'board',id:hu.id};u.path=null});if(lu.length>room)toast('Only '+room+' fit; the rest stay.','bad');if(!hu.task&&Math.hypot(hu.x-cx,hu.y-cy)>2.5){const sp=shoreNear(cx,cy);if(sp){hu.task={k:'move',x:sp.x,y:sp.y};hu.path=null}}sfx('ackS');return}}
  {const tr=mine.filter(u=>isTransport(u)&&(u.cargo||[]).length);const wi=Math.floor(w.y)*W+Math.floor(w.x);if(tr.length&&!hu&&ter[wi]!==1){for(const s of tr){s.task={k:'land',x:w.x,y:w.y};s.path=null}fx.push({k:'ring',x:w.x,y:w.y,t:0,life:.5,c:'#9fd0ff'});sfx('ackS');const rest=mine.filter(u=>!tr.includes(u));if(!rest.length)return;mine=rest}}{const rl=!hu&&!hb&&relicAt(w);const mk=mine.find(u=>u.type==='monk');if(rl&&mk){mk.task={k:'relic',rid:rl.id};mk.path=null;fx.push({k:'ring',x:rl.x,y:rl.y,t:0,life:.5,c:'#ffe58a'});sfx('ackV');return}}sfx(mine.some(isMil)?'ackS':'ackV');const tx=Math.floor(w.x),ty=Math.floor(w.y),i=ty*W+tx;let mark='#7fe06a';const ships=mine.filter(u=>u.nav),landU=mine.filter(u=>!u.nav);
- const attack=e=>{if(peace()){toast('Ceasefire! No fighting until it ends.','bad');return false}for(const u of mine){if(!canFight(u))continue;u.task={k:'atk',id:e.id};u.path=null}return true};
+ const attack=e=>{if(peace()){toast('Ceasefire! No fighting until it ends.','bad');return false}for(const u of mine){if(!canFight(u))continue;u.task={k:'atk',id:e.id};u.path=null}voice('atk',mine.find(canFight)||mine[0]);return true};
  if(hu&&isEnemy(0,hu.o)){if(attack(hu))mark='#ff5a4a'}
  else if(hb&&isEnemy(0,hb.o)){if(attack(hb))mark='#ff5a4a'}
  else if(ha&&ha.type==='wolf'){for(const u of mine.filter(canFight)){u.task={k:'atk',id:ha.id};u.path=null}}
  else if(ha){const hunters=mine.filter(u=>canGather(u,'hunt'));for(const u of hunters){u.task={k:'hunt',id:ha.id};u.path=null}const rest=mine.filter(u=>!canGather(u,'hunt'));if(rest.length)moveGroup(rest,w)}
- else if(hb&&hb.o===0){const ws=landU.filter(canBuild),traders=landU.filter(u=>u.type==='trader');
+ else if(hb&&hb.o===0){const ws=landU.filter(canBuild),traders=landU.filter(u=>u.type==='trader');if(ws.length&&(hb.built<1||B[hb.type].drop||hb.type==='field'||hb.type==='corral'))voice('work',ws[0]);
   if(traders.length&&hb.type==='market'){setTrade(traders,hb);return}
   if(ws.length&&(hb.built<1||hb.hp<bMaxHp(hb))){for(const v of ws){if(v.task&&v.task.k==='build'&&ents.has(v.task.id)&&v.task.id!==hb.id){const q=v.task.q||(v.task.q=[]);if(!q.includes(hb.id))q.push(hb.id);continue}v.task={k:'build',id:hb.id,q:[]};v.path=null}}
   else if(ws.length&&hb.type==='field'){for(const v of ws){const f=hb.slots.length<5?hb:freeField(0,v.x,v.y,20);if(f){f.slots.push(v.id);v.task={k:'field',id:f.id}}else v.task=null;v.path=null}}
@@ -1891,7 +1891,7 @@ function formationTask(grp,w,k){const form=S.form;let cx=0,cy=0;for(const u of g
  let i=0;while(i<sorted.length){const row=slots[order[i]][1];const ids=[];while(i<sorted.length&&slots[order[i]][1]===row){ids.push(i);i++}
   const us=ids.map(j=>sorted[j]).sort((a,b)=>(a.x*rx+a.y*ry)-(b.x*rx+b.y*ry));ids.forEach((j,n)=>{const s=slots[order[j]];let tx=w.x+rx*s[0]*sp-dx*s[1]*sp,ty=w.y+ry*s[0]*sp-dy*s[1]*sp;
    if(!passXY(Math.floor(tx),Math.floor(ty),0,0)){const alt=spotsNear({x:tx,y:ty},1,0)[0];if(alt){tx=alt.x;ty=alt.y}}const u=us[n];u.task={k,x:tx,y:ty,gs:L>4?gs:0};u.path=null;u.home={x:tx,y:ty}})}}
-function groupTask(us,w,k){for(const nav of [0,1]){const grp=us.filter(u=>u.nav===nav);if(!grp.length)continue;if(!nav&&grp.length>1&&S.form&&S.form!=='loose'&&(k==='move'||k==='amove'||k==='patrol')&&grp.some(isMil)){formationTask(grp,w,k);continue}if(grp.length===1){grp[0].task={k,x:w.x,y:w.y};grp[0].path=null;grp[0].home={x:w.x,y:w.y};continue}
+function groupTask(us,w,k){if(us.length&&us[0].o===0)voice(k==='move'?'move':'atk',us[0]);for(const nav of [0,1]){const grp=us.filter(u=>u.nav===nav);if(!grp.length)continue;if(!nav&&grp.length>1&&S.form&&S.form!=='loose'&&(k==='move'||k==='amove'||k==='patrol')&&grp.some(isMil)){formationTask(grp,w,k);continue}if(grp.length===1){grp[0].task={k,x:w.x,y:w.y};grp[0].path=null;grp[0].home={x:w.x,y:w.y};continue}
  const spots=spotsNear(w,grp.length,nav);const rem=grp.slice().sort((a,b)=>Math.hypot(a.x-w.x,a.y-w.y)-Math.hypot(b.x-w.x,b.y-w.y));
  for(const sp of spots){if(!rem.length)break;let bi=0,bd=1e9;rem.forEach((u,k2)=>{const d=Math.hypot(u.x-sp.x,u.y-sp.y);if(d<bd){bd=d;bi=k2}});const u=rem.splice(bi,1)[0];u.task={k,x:sp.x,y:sp.y};u.path=null;u.home={x:sp.x,y:sp.y}}
  for(const u of rem){u.task={k,x:w.x,y:w.y};u.path=null}}}
@@ -2179,11 +2179,11 @@ function showSlots(mode){const list=mode==='save'?SLOTS.slice(1):SLOTS;$('#slotT
  $('#slotScr').hidden=false}
 $('#saveSlotBtn').onclick=()=>showSlots('save');$('#loadBtn').onclick=()=>showSlots('load');$('#slotClose').onclick=()=>{$('#slotScr').hidden=true};
 /* ---------- settings ---------- */
-const SETS={ui:'normal',hand:'right',gfx:2,vib:1};try{Object.assign(SETS,JSON.parse(localStorage.getItem('boc-settings')||'{}'))}catch(e){}
+const SETS={ui:'normal',hand:'right',gfx:2,vib:1,voice:1};try{Object.assign(SETS,JSON.parse(localStorage.getItem('boc-settings')||'{}'))}catch(e){}
 function applySets(){document.body.classList.toggle('bigui',SETS.ui==='big');document.body.classList.toggle('lefty',SETS.hand==='left');try{localStorage.setItem('boc-settings',JSON.stringify(SETS))}catch(e){}if(typeof resize==='function')resize()}
 function showSets(){const row=(k,opts)=>`<div class="seg wrap">${opts.map(([v,n])=>`<button data-set="${k}:${v}" class="${String(SETS[k])===String(v)?'on':''}">${n}</button>`).join('')}</div>`;
- $('#setList').innerHTML=`<h3>Button size</h3>${row('ui',[['normal','Normal'],['big','Large']])}<h3>Layout</h3>${row('hand',[['right','Right-handed'],['left','Left-handed']])}<h3>Graphics</h3>${row('gfx',[[2,'High'],[1,'Balanced'],[0,'Battery saver']])}<p class="sub">Battery saver lowers resolution and turns off ground detail, smoke, birds and rain.</p><h3>Vibration</h3>${row('vib',[[1,'On'],[0,'Off']])}`;
- $('#setList').querySelectorAll('[data-set]').forEach(b=>b.onclick=()=>{const [k,v]=b.dataset.set.split(':');SETS[k]=k==='gfx'||k==='vib'?+v:v;applySets();showSets()});$('#setScr').hidden=false}
+ $('#setList').innerHTML=`<h3>Button size</h3>${row('ui',[['normal','Normal'],['big','Large']])}<h3>Layout</h3>${row('hand',[['right','Right-handed'],['left','Left-handed']])}<h3>Graphics</h3>${row('gfx',[[2,'High'],[1,'Balanced'],[0,'Battery saver']])}<p class="sub">Battery saver lowers resolution and turns off ground detail, smoke, birds and rain.</p><h3>Vibration</h3>${row('vib',[[1,'On'],[0,'Off']])}<h3>Unit voices</h3>${row('voice',[[1,'On'],[0,'Off']])}<p class="sub">Units answer in their civilization's language, using your phone's built-in voices.</p>`;
+ $('#setList').querySelectorAll('[data-set]').forEach(b=>b.onclick=()=>{const [k,v]=b.dataset.set.split(':');SETS[k]=k==='gfx'||k==='vib'||k==='voice'?+v:v;applySets();showSets()});$('#setScr').hidden=false}
 $('#setBtn').onclick=showSets;$('#setBtn2').onclick=showSets;$('#setClose').onclick=()=>{$('#setScr').hidden=true};applySets();
 /* ---------- map editor ---------- */
 let edTool='grass',edBrush=1,edDirty=0,edStroke=null;
@@ -2384,6 +2384,63 @@ function endHook(win){$('#nextBtn').hidden=true;if(S.spectate){$('#endTitle').te
  if(win&&S.mission){missDone[S.mission.id]=1;try{localStorage.setItem('boc-missions',JSON.stringify(missDone))}catch(e){}const i=CAMP.findIndex(c=>c.id===S.mission.id);if(i>=0&&i<CAMP.length-1){$('#nextBtn').hidden=false;$('#nextBtn').onclick=()=>{$('#end').hidden=true;startChapter(CAMP[i+1])}}
   if(i===CAMP.length-1)$('#endSub').textContent=CAMP[i].outro+' The campaign is complete!'}
  if(S.daily){const r=DAILY[S.daily]||(DAILY[S.daily]={won:0,t:0,tries:1});if(win){r.won=1;r.t=r.t?Math.min(r.t,Math.floor(S.t)):Math.floor(S.t)}saveDaily();if(win)$('#endSub').textContent=`Daily challenge beaten in ${fmt(S.t)}! Streak: ${dailyStreak()} day${dailyStreak()===1?'':'s'}.`}}
+
+/* ---------- civilization voices ---------- */
+const VLANG={english:'en-GB',french:'fr-FR',germans:'de-DE',castilians:'es-ES',byzantines:'el-GR',saracens:'ar-SA',vikings:'nb-NO',celts:'en-IE',japanese:'ja-JP',chinese:'zh-CN',mongols:'mn-MN',scots:'en-GB',poles:'pl-PL',rus:'ru-RU',ottomans:'tr-TR',persians:'fa-IR',koreans:'ko-KR',malians:'fr-FR',ethiopians:'am-ET'};
+const VTXT={en:{sel:['Yes?','My lord?','Ready.'],selM:['Ready!','At your command.','Sir!'],move:['On my way.','Moving.','Right away.'],atk:['To arms!','Attack!','For the crown!'],work:['I will see to it.','Right away.','Aye.']},
+ fr:{sel:['Oui ?','Mon seigneur ?'],selM:['Prêt !','À vos ordres !'],move:['J\'y vais.','En route.'],atk:['Aux armes !','À l\'attaque !'],work:['Tout de suite.','D\'accord.']},
+ de:{sel:['Ja?','Mein Herr?'],selM:['Bereit!','Zu Befehl!'],move:['Ich gehe.','Unterwegs.'],atk:['Zu den Waffen!','Angriff!'],work:['Sofort.','Jawohl.']},
+ es:{sel:['¿Sí?','¿Mi señor?'],selM:['¡Listo!','¡A sus órdenes!'],move:['En camino.','Voy.'],atk:['¡A las armas!','¡Al ataque!'],work:['Enseguida.','De acuerdo.']},
+ el:{sel:['Ναι;','Κύριε;'],selM:['Έτοιμος!','Διατάξτε!'],move:['Πηγαίνω.','Αμέσως.'],atk:['Στα όπλα!','Επίθεση!'],work:['Αμέσως.','Μάλιστα.']},
+ ar:{sel:['نعم؟','سيدي؟'],selM:['جاهز!','أمرك!'],move:['في الطريق.','حاضر.'],atk:['إلى السلاح!','هجوم!'],work:['حالا.','حاضر.']},
+ nb:{sel:['Ja?','Herre?'],selM:['Klar!','Som du befaler!'],move:['Jeg går.','På vei.'],atk:['Til våpen!','Angrip!'],work:['Straks.','Ja vel.']},
+ ja:{sel:['はい？','殿？'],selM:['準備完了！','御意！'],move:['参ります。','移動します。'],atk:['かかれ！','突撃！'],work:['承知しました。','すぐに。']},
+ zh:{sel:['是？','大人？'],selM:['准备好了！','遵命！'],move:['这就去。','出发。'],atk:['进攻！','杀！'],work:['马上。','好的。']},
+ mn:{sel:['Тийм үү?','Ноёнтон?'],selM:['Бэлэн!','Тушаал!'],move:['Явлаа.','Одоо.'],atk:['Дайр!','Урагшаа!'],work:['Одоо.','За.']},
+ pl:{sel:['Tak?','Panie?'],selM:['Gotowy!','Rozkaz!'],move:['Już idę.','W drogę.'],atk:['Do broni!','Do ataku!'],work:['Zaraz.','Dobrze.']},
+ ru:{sel:['Да?','Государь?'],selM:['Готов!','Слушаюсь!'],move:['Иду.','Выдвигаюсь.'],atk:['К оружию!','В атаку!'],work:['Сейчас.','Хорошо.']},
+ tr:{sel:['Evet?','Efendim?'],selM:['Hazırım!','Emredersiniz!'],move:['Gidiyorum.','Yoldayım.'],atk:['Silah başına!','Saldırın!'],work:['Hemen.','Tamam.']},
+ fa:{sel:['بله؟','سرورم؟'],selM:['آماده‌ام!','به فرمان!'],move:['می‌روم.','در راهم.'],atk:['به سلاح!','حمله!'],work:['فوراً.','چشم.']},
+ ko:{sel:['네?','주군?'],selM:['준비됐습니다!','명령만 내리십시오!'],move:['가겠습니다.','이동합니다.'],atk:['공격하라!','돌격!'],work:['바로 하겠습니다.','알겠습니다.']},
+ am:{sel:['አዎ?','ጌታዬ?'],selM:['ዝግጁ ነኝ!','እሺ ጌታዬ!'],move:['እሄዳለሁ።','በመንገድ ላይ።'],atk:['ወደ ጦር!','ውጉ!'],work:['አሁኑኑ።','እሺ።']}};
+let vLast=0,vVoices=null;
+function pickVoice(lang){try{if(!vVoices||!vVoices.length)vVoices=speechSynthesis.getVoices();const base=lang.split('-')[0];return vVoices.find(v=>v.lang.replace('_','-')===lang)||vVoices.find(v=>v.lang.toLowerCase().startsWith(base))||null}catch(e){return null}}
+function voice(kind,u){if(!u||SETS.voice===0||!AU.set.sfx||!window.speechSynthesis||(S&&S.spectate))return;const now=performance.now();if(now-vLast<1100)return;vLast=now;
+ const p=P[u.o];if(!p)return;let lang=VLANG[p.civ]||'en-GB';let vc=pickVoice(lang);let tbl=VTXT[lang.split('-')[0]];if(!vc||!tbl){lang='en-GB';vc=pickVoice('en-GB')||pickVoice('en-US');tbl=VTXT.en}
+ const mil=isMil(u);const k=kind==='sel'&&mil?'selM':kind;const arr=tbl[k]||tbl.sel;const txt=arr[Math.floor(Math.random()*arr.length)];
+ try{speechSynthesis.cancel();const ut=new SpeechSynthesisUtterance(txt);ut.lang=vc?vc.lang:lang;if(vc)ut.voice=vc;ut.rate=1.12;ut.pitch=ud(u).tag==='vil'?(u.id%2?1.25:1.0):ud(u).tag==='cav'?.8:.9;ut.volume=.85;speechSynthesis.speak(ut)}catch(e){}}
+try{if(window.speechSynthesis)speechSynthesis.onvoiceschanged=()=>{vVoices=speechSynthesis.getVoices()}}catch(e){}
+/* ---------- photo mode ---------- */
+const PFILT=[['none','Natural',''],['warm','Warm','sepia(.25) saturate(1.25) brightness(1.05)'],['sepia','Old print','sepia(.85) contrast(1.05)'],['dusk','Dusk','hue-rotate(-12deg) saturate(1.3) brightness(.85) contrast(1.1)'],['noir','Noir','grayscale(1) contrast(1.25)'],['vivid','Vivid','saturate(1.6) contrast(1.08)']];
+let photo=null;
+function startPhoto(){if(!running)return;photo={f:0,wasPaused:paused,hud:$('#hud').hidden};paused=true;$('#pause').hidden=true;$('#hud').hidden=true;$('#photoBar').hidden=false;photoUI()}
+function photoUI(){$('#photoF').innerHTML=PFILT.map((f,i)=>`<button data-pfi="${i}" class="${photo.f===i?'on':''}">${f[1]}</button>`).join('');$('#photoF').querySelectorAll('[data-pfi]').forEach(b=>b.onclick=()=>{photo.f=+b.dataset.pfi;$('#game').style.filter=PFILT[photo.f][2];photoUI()});$('#game').style.filter=PFILT[photo.f][2]}
+function endPhoto(){if(!photo)return;$('#game').style.filter='';$('#photoBar').hidden=true;$('#hud').hidden=false;paused=photo.wasPaused;photo=null}
+function snapPhoto(){const src=$('#game');const c=document.createElement('canvas');c.width=src.width;c.height=src.height;const g=c.getContext('2d');g.filter=PFILT[photo.f][2]||'none';g.drawImage(src,0,0);g.filter='none';
+ const vg=g.createRadialGradient(c.width/2,c.height/2,Math.min(c.width,c.height)*.35,c.width/2,c.height/2,Math.max(c.width,c.height)*.75);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.45)');g.fillStyle=vg;g.fillRect(0,0,c.width,c.height);
+ const s=c.height/420;const a=armsCanvas(18,22);g.drawImage(a,14*s,c.height-44*s,24*s,30*s);g.font=`700 ${15*s}px Cinzel,serif`;g.fillStyle='rgba(255,240,210,.92)';g.shadowColor='rgba(0,0,0,.8)';g.shadowBlur=4*s;g.fillText((PROF.name||'Battle of the Crowns')+' · '+PHASE[P[0].phase]+' · '+fmt(S.t),44*s,c.height-22*s);g.shadowBlur=0;
+ const name='crowns-'+new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')+'.png';flashPhoto();
+ c.toBlob(async bl=>{if(!bl){toast('Could not save the photo.','bad');return}const file=new File([bl],name,{type:'image/png'});
+  try{if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:'Battle of the Crowns'});return}}catch(e){if(e&&e.name==='AbortError')return}
+  const url=URL.createObjectURL(bl);const l=document.createElement('a');l.href=url;l.download=name;document.body.appendChild(l);l.click();l.remove();setTimeout(()=>URL.revokeObjectURL(url),4000);toast('Photo saved to your downloads.','good')},'image/png')}
+function flashPhoto(){const f=$('#photoFlash');f.hidden=false;f.style.opacity=1;setTimeout(()=>{f.style.opacity=0},60);setTimeout(()=>{f.hidden=true},400);sfx('click')}
+$('#photoBtn').onclick=startPhoto;$('#photoSnap').onclick=snapPhoto;$('#photoExit').onclick=endPhoto;
+$('#photoHide').onclick=()=>{$('#photoBar').classList.toggle('mini')};
+/* ---------- encyclopedia ---------- */
+let encTab='units';
+function encIcon(k,t){const key=(k==='u'?'u_':'b_')+t;return ICON&&ICON[key]?`<img src="${ICON[key]}" alt="">`:''}
+const costTxt=c=>Object.entries(c||{}).filter(e=>e[1]).map(([r,v])=>v+' '+r).join(', ')||'free';
+function showEnc(){const q=($('#encQ').value||'').toLowerCase();const M=s=>!q||s.toLowerCase().includes(q);let h='';
+ if(encTab==='units'){const hide=new Set(['sheep','king']);h=Object.entries(U).filter(([k,d])=>!hide.has(k)&&!k.startsWith('h_')&&M(d.n+' '+(d.d||''))).sort((a,b)=>a[1].ph-b[1].ph||a[1].n.localeCompare(b[1].n)).map(([k,d])=>{const uu=Object.values(CIVS).find(c=>c.uu===k);
+  return `<div class="ent">${encIcon('u',k)}<div><b>${d.n}</b>${uu?` <small>(${uu.n} only)</small>`:''}<span>${d.d||''}</span><small>${PHASE[d.ph]} · ${costTxt(d.cost)} · HP ${d.hp} · attack ${d.atk}${d.rng?' · range '+d.rng:''} · armor ${d.arm[0]}/${d.arm[1]} · speed ${d.spd}</small></div></div>`}).join('')}
+ else if(encTab==='heroes'){h=Object.entries(U).filter(([k,d])=>k.startsWith('h_')&&M(d.n+' '+(d.d||''))).map(([k,d])=>{const cv=Object.values(CIVS).find(c=>c.hero===k);return `<div class="ent">${encIcon('u',k)}<div><b>${d.n}</b>${cv?` <small>(${cv.n})</small>`:''}<span>${d.d||''}</span><small>${PHASE[d.ph]} · ${costTxt(d.cost)} · HP ${d.hp} · attack ${d.atk}</small></div></div>`}).join('')}
+ else if(encTab==='buildings'){h=Object.entries(B).filter(([k,d])=>M(d.n+' '+(d.d||''))).sort((a,b)=>(a[1].ph||0)-(b[1].ph||0)).map(([k,d])=>`<div class="ent">${encIcon('b',k)}<div><b>${d.n}</b><span>${d.d||''}</span><small>${PHASE[d.ph||0]} · ${costTxt(d.cost)} · HP ${d.hp} · ${d.w}×${d.h}${d.train?' · trains '+d.train.filter(t=>U[t]).map(t=>U[t].n).join(', '):''}</small></div></div>`).join('')}
+ else if(encTab==='techs'){h=Object.entries(TECH).filter(([k,d])=>M(d.n+' '+(d.d||''))).sort((a,b)=>(a[1].ph||0)-(b[1].ph||0)).map(([k,d])=>`<div class="ent"><div><b>${d.n}</b><span>${d.d||''}</span><small>${PHASE[d.ph||0]} · ${costTxt(d.cost)}${d.tm?' · '+d.tm+' s':''}</small></div></div>`).join('')}
+ else{h=Object.entries(CIVS).filter(([k,c])=>M(c.n+' '+(c.bonus||''))).map(([k,c])=>`<div class="ent"><div><b>${c.n}</b><span>${c.bonus||''}</span><small>Unique unit: ${U[c.uu]?U[c.uu].n:'—'} · Hero: ${U[c.hero]?U[c.hero].n:'—'} · Building style: ${({west:'Western',east:'Eastern',mid:'Middle Eastern',norse:'Northern'})[c.style]||c.style}</small></div></div>`).join('')}
+ $('#encList').innerHTML=h||'<p class="sub">Nothing matches.</p>';$('#encTabs').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.et===encTab))}
+$('#encTabs').querySelectorAll('button').forEach(b=>b.onclick=()=>{encTab=b.dataset.et;showEnc();$('#encList').scrollTop=0});$('#encQ').oninput=showEnc;
+const openEnc=()=>{if(!ICON||!ICON.u_villager)try{makeIcons(SETUP&&CIVS[SETUP.civ]?CIVS[SETUP.civ].style:'west')}catch(e){}showEnc();$('#encScr').hidden=false};
+$('#encBtn').onclick=openEnc;$('#encBtn2').onclick=openEnc;$('#encClose').onclick=()=>{$('#encScr').hidden=true};
 
 /* ---------- game setup ---------- */
 const STARTRES={low:{food:200,wood:200,stone:100,gold:100},std:{food:300,wood:300,stone:200,gold:200},high:{food:1000,wood:1000,stone:1000,gold:1000}};
