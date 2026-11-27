@@ -118,7 +118,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 .ab .nm{font-size:12px;font-weight:700;line-height:1.05;max-width:60px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ab .cs{font-size:11px;line-height:1.1;color:var(--dim);white-space:nowrap;font-variant-numeric:tabular-nums}
 .cs i{display:inline-block;width:7px;height:7px;border-radius:2px;margin:0 1px 0 3px;vertical-align:0}
-.cf{background:#e0533e}.cw{background:#a0703f}.cg{background:#f0c43c}.cs2{background:#a9a9a9}
+.cf{background:#e0533e}.cw{background:#a0703f}.cg{background:#f0c43c}.cs2{background:#a9a9a9}.ci{background:#6a6460;box-shadow:inset 0 0 0 1px #c0602a}.ch{background:#8a5a30}
 .ab.no{opacity:.42}
 .ab.wide{width:auto;min-width:84px;padding:0 10px;flex-direction:row;gap:6px}
 .ab.ok{border-color:#6fbf54;background:linear-gradient(#3e5a26,#24361a)}
@@ -202,6 +202,7 @@ body.bigui .ab{width:76px;height:80px}body.bigui .rb{width:58px;height:58px}body
 .hfoot{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:2px 12px}.hfoot .link{margin:0;min-height:30px;font-size:clamp(12px,2.6vh,15px)}.hfoot .seg1{min-height:30px;padding:2px 10px}
 #setupScr .card{max-height:calc(100dvh - 16px);overflow:auto;box-sizing:border-box}#setupScr .setupgo{position:sticky;bottom:-22px;background:linear-gradient(#1c130c00,#1c130cf7 30%);padding:10px 0 6px;margin-top:12px}
 @media (max-height:420px){#title .tag{display:none}}
+.res.strat{min-width:0;padding-left:4px;padding-right:6px}.res.strat b{font-size:.9em}@media (max-width:760px){.res.strat b{font-size:.8em}}
 </style>
 </head>
 <body>
@@ -212,7 +213,7 @@ body.bigui .ab{width:76px;height:80px}body.bigui .rb{width:58px;height:58px}body
   <div class="res" id="r-food"><img alt="Food"><b>0</b></div>
   <div class="res" id="r-wood"><img alt="Wood"><b>0</b></div>
   <div class="res" id="r-gold"><img alt="Gold"><b>0</b></div>
-  <div class="res" id="r-stone"><img alt="Stone"><b>0</b></div>
+  <div class="res" id="r-stone"><img alt="Stone"><b>0</b></div><div class="res strat" id="r-iron"><img alt="Iron"><b>0</b></div><div class="res strat" id="r-horse"><img alt="Horses"><b>0</b></div>
   <div class="res pop" id="r-pop"><img alt="Population"><b>0/0</b></div>
   <span id="hotClock" hidden></span><canvas id="hudArms" width="36" height="44" aria-label="Your coat of arms"></canvas><div id="age"><b>Dark Age</b><small>0:00</small></div>
   <button class="tb" id="pauseBtn" aria-label="Pause">❚❚</button><button class="tb" id="spdBtn" aria-label="Game speed">1.5×</button>
@@ -355,6 +356,7 @@ body.bigui .ab{width:76px;height:80px}body.bigui .rb{width:58px;height:58px}body
    <dt>Home screen</dt><dd>The home menu fits any screen. Tap New game to pick your civilization, map and options, then Start game.</dd>
    <dt>Special abilities</dt><dd>Selected troops show ability buttons with a cooldown: Charge (cavalry: faster, harder first hit), Shield wall (infantry: much more armor, slower), Volley (archers: arrows hit an area and harder), Healing aura (monks), Brace (mangonels and trebuchets: more range but rooted). Heroes have Inspire (nearby troops hit harder and are healed) or Battle cry (nearby enemies flee). The computer uses them too. Mixed armies now show their battle commands instead of the build menu.</dd>
    <dt>Smarter rivals</dt><dd>Computer kingdoms now study your army and train counters (spears against cavalry, cavalry against archers), build siege towers and research ladders against walls, raise towers if you rush them early, ferry armies by ship whenever there is no land route, and use their units' special abilities. A new Brutal difficulty gives them a faster economy and bigger, earlier attacks. Rivals also taunt you, boast, and beg for mercy (turn this off with Advisors in Settings).</dd>
+   <dt>Iron and horses</dt><dd>New deposits on every map: iron ore (dark rocks with rust-red veins) and wild horse herds. Villagers gather them like stone and gold: iron goes to a storehouse or town center, horses to a farmstead or town center. Cavalry needs horses; armored soldiers, rams, trebuchets and armor upgrades need iron. Short on them? You pay extra gold instead (4 gold per iron, 5 per horse). Each kingdom has a deposit of each nearby, and more lie in the middle of the map.</dd>
    <dt>Saving</dt><dd>The game autosaves every 30 seconds. Open the menu and tap Save game to keep up to 3 more saves; load any of them from Load game on the title screen.</dd>
    <dt>Settings</dt><dd>Larger buttons, a left-handed layout (minimap and buttons swap sides), graphics quality (Battery saver runs cooler and longer) and vibration.</dd>
    <dt>Map editor</dt><dd>Paint land, water, shallows, sand, rock, forests, gold, stone, berries, fish and hills, then place 2 to 4 start spots. Save it and it shows up in the Map list; Play starts a game on it right away. Share copies a map code a friend can paste into Import.</dd>
