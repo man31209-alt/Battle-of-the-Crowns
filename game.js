@@ -30,7 +30,15 @@ const CIVS={
  celts:{n:'Celts',style:'norse',bonus:'Woodcutting +15%, infantry move 10% faster.',mods:m=>{m.rate.wood+=.15;m.spd.inf+=.1},uu:'woad',hero:'h_celts'},
  japanese:{n:'Japanese',style:'east',bonus:'Infantry attack 20% faster; fishing +25%.',mods:m=>{m.infRate=.8;m.rate.fish+=.25},uu:'samurai',hero:'h_japanese'},
  chinese:{n:'Chinese',style:'east',bonus:'Start with 3 more villagers; upgrades cost 15% less.',mods:m=>{m.techCost=.85;m.extraVil=3},uu:'chukonu',hero:'h_chinese'},
- mongols:{n:'Mongols',style:'east',bonus:'Cavalry 15% faster; hunting +40%.',mods:m=>{m.spd.cav+=.15;m.rate.hunt+=.4},uu:'mangudai',hero:'h_mongols'}
+ mongols:{n:'Mongols',style:'east',bonus:'Cavalry 15% faster; hunting +40%.',mods:m=>{m.spd.cav+=.15;m.rate.hunt+=.4},uu:'mangudai',hero:'h_mongols'},
+ scots:{n:'Scots',style:'norse',bonus:'Infantry +15% health; builders work 15% faster.',mods:m=>{m.hp.inf=(m.hp.inf||0)+.15;m.build+=.15},uu:'highlander',hero:'h_scots'},
+ poles:{n:'Poles',style:'west',bonus:'Knights cost 15% less; gold mining +15%.',mods:m=>{m.cost.knight=.85;m.rate.gold+=.15},uu:'hussar',hero:'h_poles'},
+ rus:{n:'Rus',style:'norse',bonus:'Hunting +30%; woodcutting +10%; buildings +10% health.',mods:m=>{m.rate.hunt+=.3;m.rate.wood+=.1;m.bhp+=.1},uu:'druzhina',hero:'h_rus'},
+ ottomans:{n:'Ottomans',style:'mid',bonus:'Siege +25% health; units train 10% faster.',mods:m=>{m.hp.sie=(m.hp.sie||0)+.25;m.train+=.1},uu:'janissary',hero:'h_ottomans'},
+ persians:{n:'Persians',style:'mid',bonus:'Fields +15%; cavalry +10% health.',mods:m=>{m.rate.farm+=.15;m.hp.cav+=.1},uu:'savaran',hero:'h_persians'},
+ koreans:{n:'Koreans',style:'east',bonus:'Towers reach 2 tiles farther; stone mining +20%.',mods:m=>{m.towerRng=(m.towerRng||0)+2;m.rate.stone+=.2},uu:'hwarang',hero:'h_koreans'},
+ malians:{n:'Malians',style:'mid',bonus:'Gold mining +25%; trade carts earn 15% more.',mods:m=>{m.rate.gold+=.25;m.trade+=.15},uu:'gbeto',hero:'h_malians'},
+ ethiopians:{n:'Ethiopians',style:'mid',bonus:'Ranged units +1 attack; fields +10%.',mods:m=>{m.atk.p+=1;m.rate.farm+=.1},uu:'shotel',hero:'h_ethiopians'}
 };
 const CKEYS=Object.keys(CIVS);
 
@@ -68,6 +76,22 @@ const U={
  chukonu:{n:'Chu Ko Nu',hp:45,atk:4,at:'p',rng:5,arm:[0,1],spd:1.3,los:7,cost:{wood:50,gold:40},tm:14,ph:1,tag:'arc',rate:2,multi:3,look:'chukonu',uu:1,d:'Chinese repeating crossbow, fires three bolts.'},
  mangudai:{n:'Horse Archer',hp:75,atk:5,at:'p',rng:5,arm:[0,1],spd:2.2,los:8,cost:{food:80,wood:50},tm:16,ph:1,tag:'cav',rate:1.9,bon:{sie:4},look:'mangudai',uu:1,d:'Mongol mounted archer.'},
  // heroes
+ highlander:{n:'Highlander',hp:90,atk:13,at:'m',rng:0,arm:[1,1],spd:1.45,los:6,cost:{food:70,gold:40},tm:15,ph:1,tag:'inf',rate:1.8,bon:{inf:2},look:'highlander',uu:1,d:'Scottish claymore warrior.'},
+ hussar:{n:'Winged Hussar',hp:120,atk:11,at:'m',rng:0,arm:[2,2],spd:2.1,los:7,cost:{food:90,gold:60},tm:18,ph:1,tag:'cav',rate:1.7,bon:{arc:4,sie:4},look:'hussar',uu:1,d:'Polish lancer with feathered wings.'},
+ druzhina:{n:'Druzhina',hp:100,atk:12,at:'m',rng:0,arm:[2,2],spd:1.3,los:6,cost:{food:70,gold:45},tm:15,ph:1,tag:'inf',rate:1.6,bon:{cav:3},look:'druzhina',uu:1,d:'Rus axe-and-shield retainer.'},
+ janissary:{n:'Janissary',hp:50,atk:10,at:'p',rng:6,arm:[1,0],spd:1.25,los:8,cost:{food:50,gold:60},tm:16,ph:1,tag:'arc',rate:3,bon:{inf:3,cav:3},look:'janissary',uu:1,d:'Ottoman handgunner. Slow to reload, hits very hard.'},
+ savaran:{n:'Savaran',hp:140,atk:12,at:'m',rng:0,arm:[3,2],spd:1.85,los:7,cost:{food:100,gold:70},tm:20,ph:1,tag:'cav',rate:1.8,look:'savaran',uu:1,d:'Persian armored cavalry.'},
+ hwarang:{n:'Hwarang',hp:50,atk:6,at:'p',rng:7,arm:[1,1],spd:1.35,los:9,cost:{wood:50,gold:45},tm:14,ph:1,tag:'arc',rate:1.8,bon:{inf:2},look:'hwarang',uu:1,d:'Korean elite archer.'},
+ gbeto:{n:'Gbeto',hp:55,atk:11,at:'m',rng:0,arm:[0,0],spd:1.7,los:6,cost:{food:50,gold:40},tm:12,ph:1,tag:'inf',rate:1.3,look:'gbeto',uu:1,d:'Fast West African warrior.'},
+ shotel:{n:'Shotel Warrior',hp:70,atk:15,at:'m',rng:0,arm:[0,0],spd:1.6,los:6,cost:{food:50,gold:45},tm:10,ph:1,tag:'inf',rate:1.4,look:'shotel',uu:1,d:'Ethiopian swordsman with a curved blade. Trains fast.'},
+ h_scots:{n:'Robert the Bruce',hp:400,atk:17,at:'m',rng:0,arm:[4,4],spd:1.5,los:8,cost:{food:200,gold:300},tm:30,ph:2,tag:'inf',rate:1.5,look:'heroinf',hero:'arm',d:'Hero. Nearby soldiers gain +2 armor.'},
+ h_poles:{n:'Jadwiga',hp:340,atk:12,at:'m',rng:0,arm:[5,5],spd:1.9,los:8,cost:{food:200,gold:300},tm:30,ph:2,tag:'cav',rate:1.6,look:'herocav',hero:'heal',d:'Hero. Nearby soldiers slowly heal.'},
+ h_rus:{n:'Alexander Nevsky',hp:400,atk:16,at:'m',rng:0,arm:[5,4],spd:1.8,los:8,cost:{food:200,gold:300},tm:30,ph:2,tag:'cav',rate:1.6,look:'herocav',hero:'atk',d:'Hero. Nearby soldiers deal 20% more damage.'},
+ h_ottomans:{n:'Mehmed the Conqueror',hp:380,atk:15,at:'m',rng:0,arm:[5,4],spd:1.8,los:8,cost:{food:200,gold:300},tm:30,ph:2,tag:'cav',rate:1.6,look:'herocav',hero:'spd',d:'Hero. Nearby soldiers move 15% faster.'},
+ h_persians:{n:'Shah Ismail',hp:360,atk:14,at:'m',rng:0,arm:[5,5],spd:1.9,los:8,cost:{food:200,gold:300},tm:30,ph:2,tag:'cav',rate:1.6,look:'herocav',hero:'atk',d:'Hero. Nearby soldiers deal 20% more damage.'},
+ h_koreans:{n:'Yi Sun-sin',hp:380,atk:15,at:'m',rng:0,arm:[5,5],spd:1.45,los:8,cost:{food:200,gold:300},tm:30,ph:2,tag:'inf',rate:1.5,look:'heroinf',hero:'arm',d:'Hero. Nearby soldiers gain +2 armor.'},
+ h_malians:{n:'Sundiata Keita',hp:380,atk:15,at:'m',rng:0,arm:[4,4],spd:1.9,los:8,cost:{food:200,gold:300},tm:30,ph:2,tag:'cav',rate:1.6,look:'herocav',hero:'spd',d:'Hero. Nearby soldiers move 15% faster.'},
+ h_ethiopians:{n:'Lalibela',hp:360,atk:14,at:'m',rng:0,arm:[4,4],spd:1.5,los:8,cost:{food:200,gold:300},tm:30,ph:2,tag:'inf',rate:1.5,look:'heroinf',hero:'heal',d:'Hero. Nearby soldiers slowly heal.'},
  h_english:{n:'Richard the Lionheart',hp:400,atk:16,at:'m',rng:0,arm:[5,5],spd:1.8,los:8,cost:{food:200,gold:300},tm:30,ph:2,tag:'cav',rate:1.6,look:'herocav',hero:'atk',d:'Hero. Nearby soldiers deal 20% more damage.'},
  h_french:{n:'Joan of Arc',hp:350,atk:12,at:'m',rng:0,arm:[5,5],spd:1.8,los:8,cost:{food:200,gold:300},tm:30,ph:2,tag:'cav',rate:1.6,look:'herocav',hero:'arm',d:'Hero. Nearby soldiers gain +2 armor.'},
  h_germans:{n:'Frederick Barbarossa',hp:380,atk:15,at:'m',rng:0,arm:[5,4],spd:1.8,los:8,cost:{food:200,gold:300},tm:30,ph:2,tag:'cav',rate:1.6,look:'herocav',hero:'spd',d:'Hero. Nearby soldiers move 15% faster.'},
@@ -820,6 +844,7 @@ function sroof(g,st,x,y,z,w,d,rh,ov,axis,wcol){const k=st.kind;
  if(k==='gable')return gable(g,x,y,z,w,d,rh,ov,st.roof,st.roofTex,wcol,axis);
  if(k==='steep'){const r=gable(g,x,y,z,w,d,rh*1.45,ov+.04,st.roof,st.roofTex,wcol,axis);const a=PJ(...r.M(r.X+r.Wd,r.ym,r.zr));g.strokeStyle='#3a2716';g.lineWidth=2;g.lineCap='round';g.beginPath();g.moveTo(a[0]-6,a[1]+7);g.lineTo(a[0]+4,a[1]-6);g.moveTo(a[0]+6,a[1]+7);g.lineTo(a[0]-4,a[1]-6);g.stroke();g.lineCap='butt';return r}
  if(k==='pagoda')return hip(g,x,y,z,w,d,rh*.85,ov+.12,st.roof,st.roofTex,true);
+ if(k==='yurt')return hip(g,x,y,z,w,d,rh*.75,.03,st.roof,st.roofTex,false);
  merlons(g,x,y,z,w,d,shade(wcol,-.06))}
 function hut(g,st,x,y,w,d,h,rh,axis,o={}){const flat=st.kind==='flat';const wc=o.wall||st.wall;box3(g,x,y,0,w,d,h,wc,o.tex||st.wallTex,flat?st.roof:null,null,o.feat);sroof(g,st,x,y,h,w,d,rh,o.ov??.12,axis,wc)}
 const ZMX={pgate:56,tc:150,castle:150,tower:140,palisade:46,wall:56,gate:78,field:10,farmstead:100,storehouse:70,dock:70,market:100,temple:170,sentry:100,outpost:80,corral:44,wonder:240,barracks:110,range:110,stable:100,smith:110,workshop:110,house:90};
@@ -917,10 +942,10 @@ case 'storehouse':{shadow3(g,.25,.25,1.5,1.1,40);for(const [a,b] of [[.3,.3],[1.
    hut(g,st,1.7,.3,1.6,4.4,34,36,'y',{wall:st.big,tex:'plank'});box3(g,2.2,2.2,60,.6,.6,40,st.big,'plank',null);hip(g,2.2,2.2,100,.6,.6,40,.1,st.roof,'thatch');banner(g,2.5,2.5,150,col,22)}
   break}
  }}
-function makeBSprite(type,sk,o,tier,mask){const d=B[type],w=d.w,h=d.h,zm=ZMX[type]||100,pad=22,sc=2.5;const c=document.createElement('canvas');
+function makeBSprite(type,sk,o,tier,mask,civ){CUR_CIV=civ||(typeof P!=='undefined'&&P&&P[o]?P[o].civ:null);const d=B[type],w=d.w,h=d.h,zm=ZMX[type]||100,pad=22,sc=2.5;const c=document.createElement('canvas');
  c.width=Math.ceil(((w+h)*HW+pad*2+40)*sc);c.height=Math.ceil(((w+h)*HH+zm+pad*2)*sc);const g=c.getContext('2d');g.scale(sc,sc);c.ox=h*HW+pad;c.oy=zm+pad;c.sc=sc;g.translate(c.ox,c.oy);
- if(B[type].wall){const mk=mask||0;wallModel(g,type,sk,PCOL[o],tier,mk);return mk?c:defineEdges(c,2,'#1c120a')}model(g,type,sk,PCOL[o],tier,o);if(tier>=3&&!B[type].wall&&!B[type].flat&&B[type].w>=2)royalTrim(g,type,PCOL[o]);if(tier===0&&!B[type].wall&&!B[type].flat&&B[type].w>=2&&type!=='dock')rusticBits(g,type);return defineEdges(c,2,'#1c120a')}
-function bSprite(type,sk,o,tier=2,mask){const k=type+'|'+sk+'|'+o+'|'+tier+(mask!=null?'|m'+mask:'');let c=sprC.get(k);if(!c){c=makeBSprite(type,sk,o,tier,mask);sprC.set(k,c)}return c}
+ if(B[type].wall){const mk=mask||0;wallModel(g,type,sk,PCOL[o],tier,mk);return mk?c:defineEdges(c,2,'#1c120a')}model(g,type,sk,PCOL[o],tier,o);civDeco(g,type,tierStyle(sk,tier),PCOL[o]);if(tier>=3&&!B[type].wall&&!B[type].flat&&B[type].w>=2)royalTrim(g,type,PCOL[o]);if(tier===0&&!B[type].wall&&!B[type].flat&&B[type].w>=2&&type!=='dock')rusticBits(g,type);return defineEdges(c,2,'#1c120a')}
+function bSprite(type,sk,o,tier=2,mask,civ){const cv=civ||(typeof P!=='undefined'&&P&&P[o]?P[o].civ:'');const k=type+'|'+sk+'|'+o+'|'+tier+'|'+cv+(mask!=null?'|m'+mask:'');let c=sprC.get(k);if(!c){c=makeBSprite(type,sk,o,tier,mask,cv);sprC.set(k,c)}return c}
 const treeV=[],resV={2:[],3:[],4:[]};
 function makeResSprites(){const mk=(w,h,f,ec)=>{const c=document.createElement('canvas');c.width=w*3;c.height=h*3;const g=c.getContext('2d');g.scale(3,3);f(g);c.w=w;c.h=h;return defineEdges(c,2,ec||'#16210f')};const r=mulberry(99);
  for(let v=0;v<6;v++)treeV.push(mk(44,56,g=>{g.fillStyle='rgba(10,20,0,.32)';g.beginPath();g.ellipse(24,51,14,5,0,0,7);g.fill();
@@ -973,7 +998,7 @@ const TIERS={
         {wall:'#8b6443',wallTex:'log',big:'#806048',bigTex:'plank',stone:'#948f84',roof:'#9a8650',roofTex:'thatch',kind:'steep',wood:'#5e4129'},
         {wall:'#94704c',wallTex:'plank',big:'#a29c90',bigTex:'stone',stone:'#a29c90',roof:'#6a4c32',roofTex:'slate',kind:'steep',wood:'#4e3420'},
         {wall:'#9a7250',wallTex:'plank',big:'#bcb6a8',bigTex:'stone',stone:'#b4ae9f',roof:'#4a4a52',roofTex:'slate',kind:'steep',wood:'#3e2a1a'}]};
-function tierStyle(sk,tier){const t=TIERS[sk]&&TIERS[sk][tier];return t||SP[sk]}
+let CUR_CIV=null;function tierStyle(sk,tier){const t=(TIERS[sk]&&TIERS[sk][tier])||SP[sk];const a=CUR_CIV&&CIVARCH[CUR_CIV];if(!a||tier<1)return a&&a.t0?Object.assign({},t,a.t0):t;if(tier===1)return Object.assign({},t,a.t2,{big:t.big,bigTex:t.bigTex,roof:shade(a.t2.roof||t.roof,-.12),roofTex:(a.t2.roofTex==='tile'?'slate':a.t2.roofTex)||t.roofTex,deco:null});return tier===2?Object.assign({},SP[sk],a.t2):Object.assign({},SP[sk],a.t2,a.t3||{})}
 function bTier(o){const p=P&&P[o];return p?Math.min(3,p.phase||0):2}
 function evictSprites(o){for(const k of [...sprC.keys()]){const a=k.split('|');if(a[2]==String(o))sprC.delete(k)}}
 function royalTrim(g,type,col){const d=B[type],w=d.w,h=d.h;const zm=ZMX[type]||100;
@@ -1047,6 +1072,38 @@ function roadSprite(m){const key=(S&&S.biome||'temp')+m;if(roadC[key])return roa
  if(n>0&&n<3){const NE=n===2&&(m&1)&&(m&2),SE=n===2&&(m&2)&&(m&4),SW=n===2&&(m&4)&&(m&8),NW=n===2&&(m&8)&&(m&1);
   if(m&1){if(!NW)ln([e,0],[e,e]);if(!NE)ln([1-e,0],[1-e,e])}if(m&4){if(!SW)ln([e,1-e],[e,1]);if(!SE)ln([1-e,1-e],[1-e,1])}if(m&8){if(!NW)ln([0,e],[e,e]);if(!SW)ln([0,1-e],[e,1-e])}if(m&2){if(!NE)ln([1-e,e],[1,e]);if(!SE)ln([1-e,1-e],[1,1-e])}}
  c.ox=pad+HW;c.oy=pad;c.w=c.width/sc;c.h=c.height/sc;roadC[key]=c;return c}
+
+/* ---------- each civilization's own architecture ---------- */
+const CIVARCH={
+ english:{t2:{wall:'#efe4c8',wallTex:'timber',roof:'#8a3a28',roofTex:'tile'},t3:{roof:'#7a2e22',roofTex:'tile',big:'#e0dacb'}},
+ french:{t2:{wall:'#f0e6cc',wallTex:'stone',big:'#e4dcc6',roof:'#4a5870',roofTex:'slate',kind:'steep',deco:'spire'},t3:{roof:'#36425a',big:'#f2ecdc'}},
+ germans:{t2:{wall:'#d8c49c',wallTex:'timber',roof:'#6a2a20',roofTex:'tile',kind:'steep',deco:'spire'},t3:{roof:'#2e5a46',roofTex:'slate',big:'#d8d0c0'}},
+ castilians:{t2:{wall:'#f4efe4',wallTex:'sand',big:'#e8dcc0',roof:'#c0632e',roofTex:'tile'},t3:{roof:'#a84e24',big:'#f2e6cc'}},
+ byzantines:{t2:{wall:'#c89a78',wallTex:'stone',big:'#c49478',stone:'#b88c70',dome:'#c8a040'},t3:{dome:'#e8c050',big:'#dcc0a8'}},
+ saracens:{t2:{dome:'#3f8f93'},t3:{dome:'#2a8aa8',big:'#efe2c2'}},
+ vikings:{t2:{wall:'#6e4e34',wallTex:'log',roof:'#5e7a3a',roofTex:'thatch',kind:'steep'},t3:{roof:'#3e5a32',roofTex:'slate',big:'#a8a49a',bigTex:'stone'}},
+ celts:{t2:{wall:'#9a948a',wallTex:'stone',roof:'#a8925a',roofTex:'thatch',kind:'steep'},t3:{roof:'#9a8248',roofTex:'thatch',big:'#b0aaa0',bigTex:'stone'}},
+ japanese:{t2:{wall:'#efe9da',wallTex:'east',roof:'#3e4a52'},t3:{roof:'#2a343c',wood:'#2a1a14'}},
+ chinese:{t2:{wall:'#e8dcc4',wallTex:'east',roof:'#c89a30',roofTex:'tile',wood:'#8a2a1e'},t3:{roof:'#2e7a50',roofTex:'tile'}},
+ mongols:{t0:{kind:'yurt'},t2:{wall:'#efe8dc',wallTex:'plank',roof:'#8a6a48',roofTex:'thatch',kind:'yurt'},t3:{roof:'#b8903a',roofTex:'tile'}},
+ scots:{t2:{wall:'#8e8a80',wallTex:'stone',big:'#9a968c',bigTex:'stone',roof:'#4a4e56',roofTex:'slate',kind:'steep'},t3:{big:'#b4b0a6',roof:'#3a3e46'}},
+ poles:{t2:{wall:'#a8865a',wallTex:'plank',roof:'#4a7a5a',roofTex:'slate',kind:'steep'},t3:{roof:'#8a3a2a',roofTex:'tile',big:'#e6dccb',wall:'#e8dcc4',wallTex:'timber'}},
+ rus:{t2:{wall:'#8a6040',wallTex:'log',roof:'#6a5038',roofTex:'slate',kind:'steep',dome:'#3a7ac8',deco:'onion'},t3:{dome:'#e0b040',big:'#f0ece2',bigTex:'stone',roof:'#3a6a58'}},
+ ottomans:{t2:{wall:'#ece6da',wallTex:'sand',big:'#e8e2d4',dome:'#7a8088',deco:'minaret'},t3:{dome:'#8a929c',big:'#f6f2ea'}},
+ persians:{t2:{wall:'#d8b88a',dome:'#2aa0b0',deco:'minaret'},t3:{dome:'#1fb8c8',big:'#e8d4b0'}},
+ koreans:{t2:{wall:'#f4f0e6',wallTex:'east',roof:'#6a7480',wood:'#2e6a4a'},t3:{roof:'#56606c',wood:'#8a2a22'}},
+ malians:{t0:{wall:'#a87a4e'},t2:{wall:'#b8875a',wallTex:'sand',big:'#b0805a',stone:'#a87a52',roof:'#b8875a',dome:'#a07048',deco:'torons'},t3:{wall:'#c8946a',big:'#c49068'}},
+ ethiopians:{t2:{wall:'#a89078',wallTex:'stone',big:'#9a8670',stone:'#a08a72',roof:'#a8925a',roofTex:'thatch',kind:'steep',dome:'#a8925a',deco:'stele'},t3:{roof:'#6a5a48',roofTex:'slate',big:'#b8a48a'}}};
+const BIGB={tc:1,castle:1,temple:1,wonder:1,market:1};
+function onion(g,cx,cy,z,r,col){const p=PJ(cx,cy,z);const R=r*HW*1.4;g.fillStyle=shade(col,-.1);g.strokeStyle='#1c1410';g.lineWidth=1;g.beginPath();g.moveTo(p[0]-R*.55,p[1]);g.bezierCurveTo(p[0]-R*1.15,p[1]-R*.7,p[0]-R*.6,p[1]-R*1.5,p[0],p[1]-R*2.1);g.bezierCurveTo(p[0]+R*.6,p[1]-R*1.5,p[0]+R*1.15,p[1]-R*.7,p[0]+R*.55,p[1]);g.closePath();g.fill();g.stroke();
+ g.fillStyle='rgba(255,255,255,.35)';g.beginPath();g.ellipse(p[0]-R*.35,p[1]-R*.9,R*.18,R*.5,-.3,0,7);g.fill();g.strokeStyle='#d8b040';g.lineWidth=1.3;g.beginPath();g.moveTo(p[0],p[1]-R*2.1);g.lineTo(p[0],p[1]-R*2.1-9);g.moveTo(p[0]-3,p[1]-R*2.1-6);g.lineTo(p[0]+3,p[1]-R*2.1-6);g.stroke()}
+function civDeco(g,type,st,col){const dc=st.deco;if(!dc||!BIGB[type])return;const d=B[type],w=d.w,h=d.h,zm=ZMX[type]||100;
+ if(dc==='onion'){const pts=type==='tc'||type==='market'?[[w/2,h/2,.34]]:[[w/2,h/2,.42],[w*.22,h*.22,.22],[w*.78,h*.22,.22]];for(const [x,y,r] of pts){const z=zm*(r>.3?.6:.45);cyl(g,x,y,z-14,r*.55,14,st.big||st.wall,null,st.big||st.wall);onion(g,x,y,z,r,st.dome||'#3a7ac8')}}
+ else if(dc==='spire'&&(type==='temple'||type==='wonder'||type==='castle')){const x=type==='castle'?w/2:w*.72,y=type==='castle'?h/2:h*.3;const z=zm*(type==='castle'?.55:.62);cyl(g,x,y,z-18,.2,18,st.big||st.stone,'stone',st.big);cone(g,x,y,z,.24,46,st.roof,st.roofTex);const p=PJ(x,y,z+46);g.strokeStyle='#d8b040';g.lineWidth=1.4;g.beginPath();g.moveTo(p[0],p[1]);g.lineTo(p[0],p[1]-10);g.moveTo(p[0]-3,p[1]-6);g.lineTo(p[0]+3,p[1]-6);g.stroke()}
+ else if(dc==='minaret'&&(type==='temple'||type==='wonder')){for(const [x,y] of [[.25,.25],[w-.25,.25],[.25,h-.25],[w-.25,h-.25]].slice(0,type==='wonder'?4:2)){const hh=zm*.95;cyl(g,x,y,0,.13,hh,st.big||st.wall,'sand',st.big);cyl(g,x,y,hh*.72,.18,4,st.big||st.wall,null,shade(st.big||st.wall,.1));cone(g,x,y,hh,.15,20,st.dome||'#7a8088',null)}}
+ else if(dc==='torons'){g.strokeStyle='#5a3a1e';g.lineWidth=2;g.lineCap='round';for(const z of [zm*.22,zm*.4]){for(let k=1;k<w*2;k++){const p=PJ(k/2,h+.02,z),q=PJ(k/2,h+.22,z+1);g.beginPath();g.moveTo(p[0],p[1]);g.lineTo(q[0],q[1]);g.stroke()}for(let k=1;k<h*2;k++){const p=PJ(w+.02,k/2,z),q=PJ(w+.22,k/2,z+1);g.beginPath();g.moveTo(p[0],p[1]);g.lineTo(q[0],q[1]);g.stroke()}}g.lineCap='butt';
+  if(type==='wonder'||type==='temple')for(const [x,y] of [[.3,.3],[w-.3,.3],[.3,h-.3]]){cone(g,x,y,0,.32,zm*.75,st.wall,'sand')}}
+ else if(dc==='stele'&&type==='wonder'){const x=w-.5,y=h-.5;box3(g,x-.25,y-.25,0,.5,.5,zm*.85,'#8a8070','stone','#9a9080');const p=PJ(x,y,zm*.85);g.fillStyle='#9a9080';g.beginPath();g.ellipse(p[0],p[1],10,5,0,Math.PI,0);g.fill()}}
 let sprNew=0;const SPR_MAX=5;
 /* ---------- unit drawing (people & horses) ---------- */
 const SKIN=['#e8bd96','#c18c62','#8a573a'],HAIR=['#5a3a22','#2a1c12','#8a5a2a','#1a1410'];
@@ -1178,6 +1235,9 @@ const LOOK={villager:{k:'vil'},spear:{k:'spear'},archer:{k:'archer'},militia:{k:
  samurai:{k:'champ',ov:{hat:'kabuto',wpn:'katana',shield:false}},chukonu:{k:'xbow',ov:{hat:'cap'}},heroinf:{k:'champ',ov:{hat:'crown',cape:1,wpn:'bigsword',shield:false}},
  scout:{rider:'scout'},knight:{rider:'knight',kn:1},gendarme:{rider:'knight',kn:1,coat:['#2e2a28','#3a3330','#4a3f38']},cataphract:{rider:'knight',kn:1,barding:1},
  jinete:{rider:'scout',ov:{wpn:'javelin',hat:'cap',shield:true}},mameluke:{rider:'scout',camel:1,ov:{hat:'turban',wpn:'sword',shield:false}},mangudai:{rider:'archer',ov:{hat:'cap'}},
+ highlander:{k:'champ',ov:{hat:null,armored:false,tunic:'#2f5a3a',wpn:'bigsword',shield:false}},druzhina:{k:'champ',ov:{hat:'cap3',wpn:'axe2',shield:true,tunic:'#8a2a22'}},
+ janissary:{k:'xbow',ov:{hat:'turban',tunic:'#3a4f8a',armored:false}},hwarang:{k:'archer',ov:{hat:'cap',tunic:'#9a3a3a'}},gbeto:{k:'militia',ov:{hat:null,armored:false,wpn:'javelin',shield:true,tunic:'#c08a2a'}},shotel:{k:'militia',ov:{hat:null,armored:false,wpn:'katana',shield:true,tunic:'#f0e6d0'}},
+ hussar:{rider:'knight',kn:1,ov:{cape:1,wpn:'javelin'}},savaran:{rider:'knight',kn:1,barding:1,ov:{hat:'turban'}},
  herocav:{rider:'knight',kn:1,ov:{hat:'crown',cape:1}},heroarc:{rider:'archer',ov:{hat:'crown',cape:1}}};
 function camelHump(g,coat){g.fillStyle=shade(coat,.1);g.beginPath();g.ellipse(-2.2,-16.2,4,2.6,0,Math.PI,0);g.fill();g.strokeStyle='rgba(20,12,6,.5)';g.lineWidth=.5;g.stroke()}
 function cart(g,col,an,walk){const s=walk?Math.sin(an):0;horse(g,{an,walk,coat:'#7a5a3a',col:'#6b4a2c',knight:false});
@@ -1977,7 +2037,7 @@ function segUI(id,opts,key){const el=$('#'+id);el.innerHTML=opts.map(([v,l])=>`<
  el.onclick=e=>{const b=e.target.closest('[data-v]');if(!b)return;const v=b.dataset.v;SETUP[key]=isNaN(+v)?v:+v;el.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));saveSetup();updSetupInfo()}}
 function saveSetup(){try{localStorage.setItem('boc-setup',JSON.stringify(SETUP))}catch(e){}}
 function updSetupInfo(){const c=CIVS[SETUP.civ];$('#civinfo').innerHTML=`<b>${c.n}</b>: ${c.bonus} Unique unit: <b>${U[c.uu].n}</b>. Hero: <b>${U[c.hero].n}</b>.`;$('#mapinfo').textContent=SETUP.map==='random'?'A surprise map type.':MAPS[SETUP.map].d}
-function buildTitle(){const el=$('#civs');el.innerHTML=CKEYS.map(k=>{const c=CIVS[k];const sp=bSprite('house',c.style,0);const ic=iconCanvas(g=>{const w=sp.width/sp.sc,h=sp.height/sp.sc,s=Math.min(52/w,52/h);g.drawImage(sp,32-w*s/2,34-h*s/2,w*s,h*s)});return`<button data-c="${k}" class="${k===SETUP.civ?'on':''}"><img src="${ic}" alt="">${c.n}</button>`}).join('');
+function buildTitle(){const el=$('#civs');el.innerHTML=CKEYS.map(k=>{const c=CIVS[k];const sp=bSprite('house',c.style,0,2,undefined,k);const ic=iconCanvas(g=>{const w=sp.width/sp.sc,h=sp.height/sp.sc,s=Math.min(52/w,52/h);g.drawImage(sp,32-w*s/2,34-h*s/2,w*s,h*s)});return`<button data-c="${k}" class="${k===SETUP.civ?'on':''}"><img src="${ic}" alt="">${c.n}</button>`}).join('');
  el.onclick=e=>{const b=e.target.closest('[data-c]');if(!b)return;SETUP.civ=b.dataset.c;el.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));saveSetup();updSetupInfo()};
  segUI('mapType',[...MKEYS.map(k=>[k,MAPS[k].n]),['random','Random']],'map');segUI('mapSize',[['s','Small'],['m','Medium'],['l','Large']],'size');segUI('rivals',[[1,'1'],[2,'2'],[3,'3']],'rivals');segUI('allies',[[0,'None'],[1,'1 ally'],[2,'2 allies']],'allies');
  segUI('diff',[[0,'Easy'],[1,'Normal'],[2,'Hard']],'diff');segUI('peace',[[0,'None'],[5,'5 min'],[10,'10 min'],[15,'15 min'],[20,'20 min'],[30,'30 min'],[45,'45 min'],[60,'1 hour'],[90,'90 min']],'peace');segUI('victory',Object.entries(VMODES),'vmode');
@@ -2003,5 +2063,5 @@ addEventListener('pagehide',save);addEventListener('resize',resize);
 
 resize();makeResSprites();makeResSprites2();showTitle();requestAnimationFrame(frame);
 window.__boc={get S(){return S},get P(){return P},get units(){return units},get blds(){return blds},get animals(){return animals},tick,newGame,setRun:v=>{running=v},cam,centerOn,mkUnit,mkBld,canPlace,drawUnit,
- fast(n){for(let i=0;i<n;i++){tick();if(!running)break}},mkUnit,render,AU,SFX,musTick,moveTo:(us,x,y)=>{moveGroup(us,{x,y});for(let i=0;i<0;i++);},save,load,act,tap,confirmPlace,get placing(){return placing},sel:()=>sel,setSel:a=>{sel=a;panelDirty=true},get W(){return W},ter:()=>ter,terr:()=>terr,explored:()=>explored,resT:()=>resT,get pathBudget(){return pathBudget}};
+ fast(n){for(let i=0;i<n;i++){tick();if(!running)break}},mkUnit,render,AU,SFX,musTick,bSprite,CIVS,moveTo:(us,x,y)=>{moveGroup(us,{x,y});for(let i=0;i<0;i++);},save,load,act,tap,confirmPlace,get placing(){return placing},sel:()=>sel,setSel:a=>{sel=a;panelDirty=true},get W(){return W},ter:()=>ter,terr:()=>terr,explored:()=>explored,resT:()=>resT,get pathBudget(){return pathBudget}};
 })();

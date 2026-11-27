@@ -7,7 +7,7 @@ A medieval real-time strategy game built for phones, with game systems inspired 
 Open the link on your phone and use **Add to Home Screen**. After the first visit it works offline, and the game saves itself every 30 seconds.
 
 ## What's in it
-- **11 civilizations**, each with its own bonus, unique unit and hero: English, French, Holy Roman Empire, Castilians, Byzantines, Saracens, Vikings, Celts, Japanese, Chinese and Mongols, in four architecture styles.
+- **19 civilizations**, each with its own bonus, unique unit and hero: English, French, Holy Roman Empire, Castilians, Byzantines, Saracens, Vikings, Celts, Japanese, Chinese and Mongols, in four architecture styles.
 - **17 map types** (Mainland, Rivers, Great Lake, Coastline, Highlands, Desert Oasis, Nordic Fjords, Inland Sea, Black Forest, Steppe, Gold Rush, Fortress, Mountain Pass, Red Canyon, Marshlands, Alpine Valley, Islands) plus Random, in three sizes, with up to 3 computer rivals. Mountains are impassable, so passes and canyons become choke points.
 - **Three phases** (Village, Town, City) unlocked by building up your town.
 - **Territory**: town centers and castles claim land, and most buildings must go inside it.
