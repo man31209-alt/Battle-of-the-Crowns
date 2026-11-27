@@ -2406,6 +2406,9 @@ function customGen(name,np,seed){const d=myMaps()[name];if(!d)return genMap(seed
  for(let k=0;k<Math.round(N/1600);k++){const x=2+Math.floor(rnd()*(W-4)),y=2+Math.floor(rnd()*(H-4));if(ter[y*W+x]!==0||resT[y*W+x])continue;for(let j=0;j<3;j++)mkAnimal('deer',x+rnd()*2,y+rnd()*2)}
  return starts}
 regMaps();
+/* home menu -> setup screen */
+$('#setupBtn').onclick=()=>{$('#setupScr').hidden=false;const c=$('#setupScr .card');if(c)c.scrollTop=0};$('#setupBack').onclick=()=>{$('#setupScr').hidden=true};
+$('#newBtn').addEventListener('click',()=>{$('#setupScr').hidden=true});
 
 /* ---------- shifting diplomacy ---------- */
 const truceOn=(a,b)=>S&&S.truceT&&S.truceT[a*4+b]>S.t;
@@ -2849,7 +2852,7 @@ function buildTitle(){const el=$('#civs');el.innerHTML=CKEYS.map(k=>{const c=CIV
  regMaps();segUI('mapType',[...MKEYS.map(k=>[k,MAPS[k].n]),...Object.keys(MAPS).filter(k=>k.startsWith('custom:')).map(k=>[k,MAPS[k].n]),['random','Random']],'map');segUI('mapSize',[['s','Small'],['m','Medium'],['l','Large']],'size');segUI('rivals',[[1,'1'],[2,'2'],[3,'3']],'rivals');segUI('hotSeg',[[1,'Just me'],[2,'Two (pass-and-play)']],'hot');segUI('hotTurn',[[45,'45 s'],[60,'1 min'],[90,'1½ min'],[120,'2 min']],'hotT');segUI('allies',[[0,'None'],[1,'1 ally'],[2,'2 allies']],'allies');
  segUI('diff',[[0,'Easy'],[1,'Normal'],[2,'Hard']],'diff');segUI('peace',[[0,'None'],[5,'5 min'],[10,'10 min'],[15,'15 min'],[20,'20 min'],[30,'30 min'],[45,'45 min'],[60,'1 hour'],[90,'90 min']],'peace');segUI('victory',Object.entries(VMODES),'vmode');
  segUI('startRes',[['low','Low'],['std','Standard'],['high','High']],'res');segUI('popLim',[[100,'100'],[200,'200'],[300,'300']],'pop');segUI('pcolor',Object.keys(COLORS).map(k=>[k,`<i class="sw" style="background:${COLORS[k]}"></i>${k[0].toUpperCase()+k.slice(1)}`]),'color');segUI('proof',[['auto','By style'],['red','Red tile'],['blue','Blue slate'],['green','Copper green'],['slate','Grey slate'],['gold','Gold tile'],['black','Black slate']],'roof');segUI('seasons',[[1,'On'],[0,'Off']],'seasons');updSetupInfo();$('#contBtn').hidden=!hasSave()}
-function showTitle(){running=false;paused=false;$('#hud').hidden=true;$('#pause').hidden=true;$('#end').hidden=true;$('#title').hidden=false;
+function showTitle(){running=false;paused=false;$('#hud').hidden=true;$('#setupScr').hidden=true;$('#pause').hidden=true;$('#end').hidden=true;$('#title').hidden=false;
  newGame({civ:CKEYS[Math.floor(Math.random()*CKEYS.length)],map:['mainland','lakes','coast'][Math.floor(Math.random()*3)],size:'s',rivals:1,diff:1,peace:0,wonder:0,res:'high',pop:200},true);
  for(const tc of blds.filter(b=>b.type==='tc')){for(const [t,dx,dy] of [['house',-3,0],['house',5,1],['barracks',0,6],['farmstead',6,-3],['sentry',-2,-2],['house',-3,3],['field',5,5],['storehouse',-5,-4]]){if(canPlace(t,tc.x+dx,tc.y+dy,tc.o,false))mkBld(t,tc.o,tc.x+dx,tc.y+dy,true)}}
  computeTerritory();explored.fill(1);buildTitle();cam.z=VW<700?.7:.9;const t0=blds[0];centerOn(t0.x+2,t0.y+2)}

@@ -194,6 +194,14 @@ body.bigui .ab{width:76px;height:80px}body.bigui .rb{width:58px;height:58px}body
 #edTools{display:flex;flex-wrap:wrap;gap:4px}#edTools button,#edBar .row button{padding:6px 9px;border-radius:7px;border:1.5px solid var(--edge);background:linear-gradient(#4a321f,#2e1f13);color:var(--ink);font-weight:700;font-size:13px}#edTools button.on{border-color:var(--gold);color:var(--gold);background:linear-gradient(#6a4a28,#3e2a17)}#edTools .sep{width:8px}
 #edBar .row{display:flex;gap:6px;align-items:center;margin-top:6px}#edInfo{flex:1;color:var(--dim);font-size:13px}#edCode{width:100%;box-sizing:border-box;padding:8px;border-radius:8px;border:1px solid var(--edge);background:#0006;color:var(--ink)}#edName{padding:8px;border-radius:8px;border:1px solid var(--edge);background:#0006;color:var(--ink);font-size:15px;width:100%;box-sizing:border-box}
 @media (max-height:460px){body.bigui .ab{width:66px;height:66px}}
+#title .card.home{width:min(calc(100vw - 28px),980px);max-height:calc(100dvh - 16px);display:flex;flex-direction:column;gap:clamp(6px,1.8vh,16px);padding:clamp(10px,2.6vh,24px) clamp(12px,2.6vw,26px);overflow:auto;box-sizing:border-box}
+#title h1{font-size:clamp(22px,min(7.5vw,9vh),60px)}#title .tag{margin:2px 0 0;text-align:center;font-size:clamp(11px,2.5vh,16px)}
+.hmain{display:grid;grid-template-columns:repeat(auto-fit,minmax(clamp(118px,21vw,200px),1fr));gap:clamp(5px,1.3vh,10px)}
+.hmain .big{height:clamp(34px,8.4vh,58px);font-size:clamp(13px,3vh,19px);margin:0;padding:0 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.hmain #setupBtn,.hmain #contBtn:not([hidden]),.hmain #kgBtn{grid-column:span 2}.hmain #setupBtn{font-size:clamp(15px,3.6vh,22px)}
+.hfoot{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:2px 12px}.hfoot .link{margin:0;min-height:30px;font-size:clamp(12px,2.6vh,15px)}.hfoot .seg1{min-height:30px;padding:2px 10px}
+#setupScr .card{max-height:calc(100dvh - 16px);overflow:auto;box-sizing:border-box}#setupScr .setupgo{position:sticky;bottom:-22px;background:linear-gradient(#1c130c00,#1c130cf7 30%);padding:10px 0 6px;margin-top:12px}
+@media (max-height:420px){#title .tag{display:none}}
 </style>
 </head>
 <body>
@@ -227,9 +235,27 @@ body.bigui .ab{width:76px;height:80px}body.bigui .rb{width:58px;height:58px}body
 </div>
 
 <div id="title" class="screen">
+ <div class="card home">
+  <div class="hhead"><h1>Battle of the Crowns</h1><p class="sub tag">Gather. Build. Claim the land. Hold the line.</p></div>
+  <div class="hmain">
+   <button class="big alt" id="contBtn" hidden>Continue</button>
+   <button class="big" id="setupBtn">New game</button>
+   <button class="big alt" id="campBtn">Campaign</button>
+   <button class="big alt" id="cqBtn">Conquest</button>
+   <button class="big alt" id="dailyBtn">Daily challenge</button>
+   <button class="big alt" id="loadBtn">Load game</button>
+   <button class="big alt" id="missBtn">Missions</button>
+   <button class="big alt" id="watchBtn">Watch a battle</button>
+   <button class="big alt" id="edBtn">Map editor</button>
+   <button class="big alt" id="tutBtn">Tutorial</button>
+   <button class="big alt kgb" id="kgBtn"><canvas id="kgMini" width="44" height="54"></canvas><span id="kgLbl">Your kingdom</span></button>
+  </div>
+  <div class="hfoot"><button class="seg1" data-snd="sfx">Sound: On</button><button class="seg1" data-snd="music">Music: On</button><button class="link" id="helpBtn">How to play</button><button class="link" id="achBtn">Achievements</button><button class="link" id="setBtn">Settings</button><button class="link" id="encBtn">Encyclopedia</button><button class="link" id="treeBtn2">Tech tree</button></div>
+ </div>
+</div>
+<div id="setupScr" class="screen" hidden>
  <div class="card wide">
-  <h1>Battle of the Crowns</h1>
-  <p class="sub">Gather. Build. Claim the land. Hold the line.</p>
+  <h2>New game</h2>
   <h3>Civilization</h3>
   <div class="civs" id="civs"></div>
   <p class="civinfo" id="civinfo"></p>
@@ -244,13 +270,7 @@ body.bigui .ab{width:76px;height:80px}body.bigui .rb{width:58px;height:58px}body
   <h3>Population limit</h3><div class="seg" id="popLim"></div>
   <h3>Your color</h3><div class="seg wrap" id="pcolor"></div>
   <div class="grid2"><div><h3>Roofs</h3><div class="seg wrap" id="proof"></div></div><div><h3>Seasons, day &amp; night</h3><div class="seg" id="seasons"></div></div></div>
-  <div class="row"><button class="big alt" id="contBtn" hidden>Continue</button><button class="big" id="newBtn">New game</button></div>
-  <div class="row"><button class="big alt kgb" id="kgBtn"><canvas id="kgMini" width="44" height="54"></canvas><span id="kgLbl">Your kingdom</span></button></div>
-  <div class="row"><button class="big alt" id="loadBtn">Load game</button><button class="big alt" id="edBtn">Map editor</button></div>
-  <div class="row"><button class="big alt" id="campBtn">Campaign</button><button class="big alt" id="cqBtn">Conquest</button><button class="big alt" id="dailyBtn">Daily challenge</button><button class="big alt" id="watchBtn">Watch a battle</button></div>
-  <div class="row"><button class="big alt" id="missBtn">Missions</button><button class="big alt" id="tutBtn">Tutorial (optional)</button></div>
-  <div class="row"><button class="seg1" data-snd="sfx">Sound: On</button><button class="seg1" data-snd="music">Music: On</button></div>
-  <div class="row"><button class="link" id="helpBtn">How to play</button><button class="link" id="achBtn">Achievements</button><button class="link" id="setBtn">Settings</button><button class="link" id="encBtn">Encyclopedia</button><button class="link" id="treeBtn2">Tech tree</button></div>
+  <div class="row setupgo"><button class="big alt" id="setupBack">Back</button><button class="big" id="newBtn">Start game</button></div>
  </div>
 </div>
 <div id="missScr" class="screen" hidden><div class="card"><h2>Missions</h2><p class="sub">Uses the civilization, color and roofs you picked.</p><div id="missList"></div><div class="row"><button class="big alt" id="missClose">Close</button></div></div></div>
@@ -332,6 +352,7 @@ body.bigui .ab{width:76px;height:80px}body.bigui .rb{width:58px;height:58px}body
    <dt>Court and chronicle</dt><dd>Your ruler has a name and an age, may have an heir, and can die and be succeeded. The pause menu has 👑 Court and 📜 Chronicle, a running history of your reign (battles, phases, villages, alliances, lost and raised buildings) that you can also read from the end screen. Three advisors (Steward, Marshal, Chancellor) speak up with tips; turn them off in Settings.</dd>
    <dt>Conquest</dt><dd>A world map of 15 lands shared with three rival kingdoms and free lands. Tap a land next to yours and attack it to play a battle on its terrain; win to take it. Every land you hold sends extra resources into your battles. Between your battles the rivals expand, fight each other, and march on your borders: defend, or the land falls. Take every rival capital to win; lose your own and the conquest ends. Progress is saved.</dd>
    <dt>Pass-and-play</dt><dd>On the new game screen set Players on this phone to Two. Player 2 takes over the first rival kingdom (other rivals and allies stay computer-run). Each turn lasts the time you pick; when it runs out the game pauses on a cover screen so the next player can take the phone. Each player sees only their own explored map. The last human kingdom standing wins.</dd>
+   <dt>Home screen</dt><dd>The home menu fits any screen. Tap New game to pick your civilization, map and options, then Start game.</dd>
    <dt>Saving</dt><dd>The game autosaves every 30 seconds. Open the menu and tap Save game to keep up to 3 more saves; load any of them from Load game on the title screen.</dd>
    <dt>Settings</dt><dd>Larger buttons, a left-handed layout (minimap and buttons swap sides), graphics quality (Battery saver runs cooler and longer) and vibration.</dd>
    <dt>Map editor</dt><dd>Paint land, water, shallows, sand, rock, forests, gold, stone, berries, fish and hills, then place 2 to 4 start spots. Save it and it shows up in the Map list; Play starts a game on it right away. Share copies a map code a friend can paste into Import.</dd>
