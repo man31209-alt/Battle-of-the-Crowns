@@ -2466,7 +2466,7 @@ function paintArms(g,w,h,pf){const c1=TINCT[pf.f1][0],c2=TINCT[pf.f2][0];g.save(
  const gl=g.createLinearGradient(0,0,w,h);gl.addColorStop(0,'rgba(255,255,255,.28)');gl.addColorStop(.5,'rgba(255,255,255,0)');gl.addColorStop(1,'rgba(0,0,0,.25)');g.fillStyle=gl;g.fillRect(0,0,w,h);g.restore();
  shieldPath(g,pf.sh,w,h);g.lineWidth=Math.max(1.2,w*.05);g.strokeStyle='#2a1a0c';g.stroke();g.restore()}
 /* banner over the player's town centers and castles */
-function ARMSFX(){if(!P[0])return;const c=armsCanvas(18,22);for(const b of blds){if(b.o!==0||b.built<1||(b.type!=='tc'&&b.type!=='castle'))continue;const p=PJ(b.x+b.w+.35,b.y+b.h-.8,0);
+function ARMSFX(){if(!P[0]||(S&&S.hot))return;const c=armsCanvas(18,22);for(const b of blds){if(b.o!==0||b.built<1||(b.type!=='tc'&&b.type!=='castle'))continue;const p=PJ(b.x+b.w+.35,b.y+b.h-.8,0);
  ctx.strokeStyle='#3a2a18';ctx.lineWidth=1.8;ctx.beginPath();ctx.moveTo(p[0],p[1]);ctx.lineTo(p[0],p[1]-62);ctx.stroke();ctx.fillStyle='#c8a050';ctx.beginPath();ctx.arc(p[0],p[1]-63,1.8,0,7);ctx.fill();ctx.drawImage(c,p[0]+1.5,p[1]-60,18,22)}}
 /* career record */
 const CAREER={games:0,wins:0,losses:0,time:0,trained:0,kills:0,lost:0,gath:0,razed:0,villages:0,mercs:0,streak:0,best:0,fastest:0,longest:0,civ:{},maps:{},missions:0};try{Object.assign(CAREER,JSON.parse(localStorage.getItem('boc-career')||'{}'))}catch(e){}
@@ -2664,7 +2664,7 @@ function runEvent(ev,o){const p=P[o],tc=homeOf(o);if(!tc)return;const me=o===0;
 function eventEffects(){if(!S)return;if(S.plague)for(const k in S.plague){const pl=S.plague[k];if(S.t>pl.until){delete S.plague[k];continue}for(const u of units){if(u.o!==+k||ud(u).tag!=='vil'||u.gar)continue;if(Math.random()<(pl.mild?.08:.2)){u.hp-=1.5;if(u.hp<=0)kill(u,null)}}}}
 const festMul=o=>S&&S.fest&&S.fest[o]>S.t?1.15:1,droughtMul=o=>S&&S.drought&&S.drought[o]>S.t?.7:1;
 /* ---------- the ruler's court ---------- */
-function courtInit(){if(!S||S.court||S.editor||S.spectate||!P[0])return;const pool=VNAMES[P[0].civ]||VNAMES.english;const r=Math.random;
+function courtInit(){if(!S||S.court||S.editor||S.spectate||S.hot||!P[0])return;const pool=VNAMES[P[0].civ]||VNAMES.english;const r=Math.random;
  S.court={king:pool[(r()*pool.length)|0],age:30+((r()*16)|0),born:0,heir:null,reign:1,queen:null,regnal:1};chron(`${courtTitle()} took up the crown and founded our realm.`)}
 function courtTitle(){const c=S.court;if(!c)return '';const ro=['','I','II','III','IV','V','VI'];return `${KTITLE[P[0].civ]||'King'} ${c.king}${c.regnal>1?' '+ro[Math.min(6,c.regnal)]:''}`}
 const KTITLE={japanese:'Shogun',chinese:'Emperor',mongols:'Khan',ottomans:'Sultan',persians:'Shah',byzantines:'Emperor',rus:'Grand Prince',malians:'Mansa',ethiopians:'Negus',saracens:'Sultan',koreans:'King',germans:'Emperor'};
@@ -2750,6 +2750,27 @@ function cqAITurn(){const T=CQ.T,F=CQ.F;for(let f=1;f<F.length;f++){if(!F[f].ali
 function cqCheck(){const T=CQ.T;for(let f=1;f<CQ.F.length;f++)if(!T.some(t=>t.o===f&&t.cap))CQ.F[f].alive=0;if(!T.some(t=>t.o===0&&t.cap))CQ.over=2;else if(CQ.F.slice(1).every(f=>!f.alive))CQ.over=1}
 $('#cqBtn').onclick=showConquest;$('#cqClose').onclick=()=>{$('#cqScr').hidden=true};
 
+/* ---------- pass-and-play: two players share one phone, taking timed turns ---------- */
+function hotSetup(){if(!S||!(SETUP.hot===2)||S.spectate||S.mission||S.tut||S.daily||S.conq)return;const p2=P[1];if(!p2)return;
+ P[0].hid=1;p2.hid=2;p2.ai=null;p2.team=null;P[0].team=P[0].team==null?null:P[0].team;S.hot={len:SETUP.hotT||60,left:SETUP.hotT||60,cur:1,exp:{},turn:1};
+ toast(`Pass-and-play: Player 1 (${P[0].civN}) goes first. Turns last ${S.hot.len} seconds.`,'good')}
+function swapSlots(a,b){if(a===b)return;const sw=v=>v===a?b:v===b?a:v;[P[a],P[b]]=[P[b],P[a]];P[a].i=a;P[b].i=b;
+ for(const u of units){u.o=sw(u.o);if(u.task&&u.task.o!=null)u.task.o=sw(u.task.o)}for(const x of blds){x.o=sw(x.o);if(x.capBy!=null)x.capBy=sw(x.capBy)}for(const p of projs)p.o=sw(p.o);
+ if(S.sites)for(const s of S.sites){if(s.o>=0)s.o=sw(s.o);if(s.cby>=0)s.cby=sw(s.cby)}
+ if(S.truceT){const t=S.truceT.slice();for(let i=0;i<4;i++)for(let j=0;j<4;j++)S.truceT[sw(i)*4+sw(j)]=t[i*4+j]}
+ if(typeof overM!=='undefined'&&overM)for(let i=0;i<overM.length;i++)if(overM[i])overM[i]=sw(overM[i]-1)+1;
+ [PCOL[a],PCOL[b]]=[PCOL[b],PCOL[a]];sprC.clear();uC.clear();aC.clear();if(typeof farmC!=='undefined')farmC.clear();for(const u of units)u._sp=null;
+ for(const k of ['plague','fest','drought']){if(S[k]){const o={};for(const x in S[k])o[sw(+x)]=S[k][x];S[k]=o}}}
+function hotTick(dt){if(!S||!S.hot||!running||paused||S.hot.wait)return;S.hot.left-=dt;const el=$('#hotClock');if(el){el.hidden=false;el.textContent=`P${S.hot.cur} · ${Math.max(0,Math.ceil(S.hot.left))}s`;el.classList.toggle('low',S.hot.left<10)}
+ if(S.hot.left<=0)hotHandoff()}
+function hotHandoff(){const h=S.hot;const nx=h.cur===1?2:1;const slot=P.findIndex(p=>p.hid===nx);if(slot<0){h.left=h.len;return}
+ h.exp[h.cur]=Array.from(explored).map(v=>v?1:0).join('');sel=[];placing=null;cmdMode=null;h.wait=1;paused=true;$('#hotScr').hidden=false;$('#hotTitle').textContent=`Player ${nx}'s turn`;
+ $('#hotTxt').textContent=`Pass the phone to Player ${nx} (${P[slot].civN}). Player ${h.cur}, no peeking!`;
+ $('#hotGo').onclick=()=>{swapSlots(0,slot);const ex=h.exp[nx];if(ex){for(let i=0;i<N;i++)explored[i]=ex.charCodeAt(i)===49?1:0}else explored.fill(0);h.cur=nx;h.left=h.len;h.turn++;h.wait=0;
+  try{makeIcons(P[0].style)}catch(e){}if(typeof computeFog==='function')computeFog();terrDirty=true;panelDirty=true;lastSig='';lastAtk=null;const tc=blds.find(b=>b.o===0&&(b.type==='tc'||b.type==='castle'))||units.find(u=>u.o===0);if(tc)centerOn(tc.x+(tc.w||0)/2,tc.y+(tc.h||0)/2);
+  {const hc=$('#hudArms');if(hc)hc.style.display='none'}$('#hotScr').hidden=true;paused=false;toast(`Player ${nx}: your turn! ${h.len} seconds.`,'good')}}
+function hotEnd(){if(!S.hot)return false;const alive=P.filter(p=>p.hid&&p.alive!==false);if(alive.length===1){const w=alive[0];if(w.i!==0){swapSlots(0,w.i)}endGame(true,`Player ${w.hid} (${w.civN}) wins the pass-and-play match!`);return true}return false}
+
 /* ---------- game setup ---------- */
 const STARTRES={low:{food:200,wood:200,stone:100,gold:100},std:{food:300,wood:300,stone:200,gold:200},high:{food:1000,wood:1000,stone:1000,gold:1000}};
 function newPlayer(i,civ,rl){const p={i,civ,civN:CIVS[civ].n,style:CIVS[civ].style,res:Object.assign({},STARTRES[rl]||STARTRES.std),phase:0,techs:[],m:null,pop:0,popCap:0,ai:null,bell:false,hero:0,alive:true,barter:{food:100,wood:100,stone:100},st:{trained:0,kills:0,lost:0,razed:0,gath:0,captured:0}};recomputeMods(p);return p}
@@ -2800,14 +2821,15 @@ function tick(){S.t+=DT;S.tick++;pathBudget=0;
  if(terrDirty&&S.tick%10===0)computeTerritory();
  if(S.tick%600===0)save()}
 function defeat(p){p.alive=false;if(p.i!==0&&!S.spectate)chron(`The ${p.civN} were defeated${isEnemy(0,p.i)?'':', though they were our allies'}.`,true);for(const u of units.slice())if(u.o===p.i)kill(u,null,true);for(const b of blds.slice())if(b.o===p.i)kill(b,null,true);if(p.i!==0)toast(p.civN+' has been defeated!','good')}
-function checkEnd(){if(!running)return;for(const p of P){if(!p.alive)continue;const alive=!modeDefeat(p)&&(blds.some(b=>b.o===p.i&&(b.type==='tc'||b.type==='castle'||b.type==='wonder')&&b.built>=1)||units.some(u=>u.o===p.i&&canBuild(u)));if(!alive){if(p.i===0&&!S.spectate){endGame(false);return}defeat(p);if(myTeam(p.i))toast('Your ally '+p.civN+' has fallen!','bad')}}
+function checkEnd(){if(!running)return;for(const p of P){if(!p.alive)continue;const alive=!modeDefeat(p)&&(blds.some(b=>b.o===p.i&&(b.type==='tc'||b.type==='castle'||b.type==='wonder')&&b.built>=1)||units.some(u=>u.o===p.i&&canBuild(u)));if(!alive){if(p.i===0&&!S.spectate&&!S.hot){endGame(false);return}defeat(p);if(myTeam(p.i))toast('Your ally '+p.civN+' has fallen!','bad')}}
+ if(S.hot&&hotEnd())return;
  if(!S.spectate&&P.filter(p=>isEnemy(0,p.i)).every(p=>!p.alive)){endGame(true,S.allies?'You and your allies stand victorious.':undefined);return}
  if(S.wonderWin)for(const b of blds){if(b.type==='wonder'&&b.built>=1&&S.t-b.wonderT>=600&&P[b.o].alive){endGame(myTeam(b.o),b.o===0?'Your Wonder stood for ten years. The crown is yours.':P[b.o].civN+' held their Wonder for ten years.');return}}}
 function endGame(win,msg){recordGame(win);if(!S.spectate)chron(win?`Victory! ${courtTitle()||'Our ruler'} triumphed${msg?': '+msg:'.'}`:`Our realm fell${msg?': '+msg:'.'}`,true);sfx(win?'win':'lose');histTick();achEnd(win);running=false;try{localStorage.removeItem('boc-save2')}catch(e){}$('#hud').hidden=true;$('#end').hidden=false;$('#endTitle').textContent=(win?'Victory':'Defeat')+(PROF.name?' for '+PROF.name:'');
  $('#endSub').textContent=msg||(win?'Every rival crown has fallen.':'Your town has fallen. Rebuild and try again.');const t=Math.floor(S.t);
  const rows=[['',...P.map(p=>p.i===0?(PROF.name||'You'):(myTeam(p.i)?'Ally: ':'')+p.civN)],['Civilization',...P.map(p=>p.civN)],['Play style',...P.map(p=>p.ai?(AIPERS[p.ai.pers]||AIPERS.balanced).n:'—')],['Units trained',...P.map(p=>p.st.trained)],['Units killed',...P.map(p=>p.st.kills)],['Units lost',...P.map(p=>p.st.lost)],['Buildings razed',...P.map(p=>p.st.razed)],['Buildings captured',...P.map(p=>p.st.captured||0)],['Resources gathered',...P.map(p=>Math.floor(p.st.gath))],['Phase',...P.map(p=>PHASE[p.phase])],['Relics held',...P.map(p=>(S.relics||[]).filter(r=>{const b=r.t&&ents.get(r.t);return b&&b.o===p.i}).length)]];
  $('#endStats').innerHTML=`<tr><td colspan="${P.length+1}">Game time ${Math.floor(t/60)} min</td></tr>`+rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('');setTimeout(drawChart,50);endHook(win)}
-function frame(now){const dt=Math.min(.25,(now-last)/1000);last=now;sprNew=0;folkUpdate(dt*(S&&S.speed||1));debUpdate(dt);
+function frame(now){const dt=Math.min(.25,(now-last)/1000);last=now;sprNew=0;folkUpdate(dt*(S&&S.speed||1));debUpdate(dt);hotTick(dt);
  if(running&&!paused){acc+=dt*S.speed;let n=0;const maxT=S.speed>1?8:4;while(acc>=DT&&n<maxT){tick();acc-=DT;n++;if(!running)break}if(n>=maxT)acc=Math.min(acc,DT)}
  else if(!running&&S){cam.x+=dt*16;cam.y+=dt*5;if(cam.x>W*HW*.55)cam.x=-H*HW*.55;if(cam.y>(W+H)*HH*.75)cam.y=(W+H)*HH*.2}
  keyPan(dt);adaptRes(dt);edTick();render();
@@ -2815,7 +2837,7 @@ function frame(now){const dt=Math.min(.25,(now-last)/1000);last=now;sprNew=0;fol
  requestAnimationFrame(frame)}
 
 /* ---------- screens ---------- */
-const SETUP={civ:'english',map:'mainland',size:'m',rivals:1,allies:0,diff:1,peace:0,wonder:1,vmode:'wonder',res:'std',pop:200,color:'blue',roof:'auto',seasons:1};
+const SETUP={hot:1,hotT:60,civ:'english',map:'mainland',size:'m',rivals:1,allies:0,diff:1,peace:0,wonder:1,vmode:'wonder',res:'std',pop:200,color:'blue',roof:'auto',seasons:1};
 try{Object.assign(SETUP,JSON.parse(localStorage.getItem('boc-setup')||'{}'))}catch(e){}
 if(!CIVS[SETUP.civ])SETUP.civ='english';
 function segUI(id,opts,key){const el=$('#'+id);el.innerHTML=opts.map(([v,l])=>`<button data-v="${v}" class="${String(SETUP[key])===String(v)?'on':''}">${l}</button>`).join('');
@@ -2824,7 +2846,7 @@ function saveSetup(){try{localStorage.setItem('boc-setup',JSON.stringify(SETUP))
 function updSetupInfo(){const c=CIVS[SETUP.civ];$('#civinfo').innerHTML=`<b>${c.n}</b>: ${c.bonus} Unique unit: <b>${U[c.uu].n}</b>. Hero: <b>${U[c.hero].n}</b>.`;$('#mapinfo').textContent=SETUP.map==='random'?'A surprise map type.':MAPS[SETUP.map].d}
 function buildTitle(){const el=$('#civs');el.innerHTML=CKEYS.map(k=>{const c=CIVS[k];const sp=bSprite('house',c.style,0,2,undefined,k);const ic=iconCanvas(g=>{const w=sp.width/sp.sc,h=sp.height/sp.sc,s=Math.min(52/w,52/h);g.drawImage(sp,32-w*s/2,34-h*s/2,w*s,h*s)});return`<button data-c="${k}" class="${k===SETUP.civ?'on':''}"><img src="${ic}" alt="">${c.n}</button>`}).join('');
  el.onclick=e=>{const b=e.target.closest('[data-c]');if(!b)return;SETUP.civ=b.dataset.c;el.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));saveSetup();updSetupInfo()};
- regMaps();segUI('mapType',[...MKEYS.map(k=>[k,MAPS[k].n]),...Object.keys(MAPS).filter(k=>k.startsWith('custom:')).map(k=>[k,MAPS[k].n]),['random','Random']],'map');segUI('mapSize',[['s','Small'],['m','Medium'],['l','Large']],'size');segUI('rivals',[[1,'1'],[2,'2'],[3,'3']],'rivals');segUI('allies',[[0,'None'],[1,'1 ally'],[2,'2 allies']],'allies');
+ regMaps();segUI('mapType',[...MKEYS.map(k=>[k,MAPS[k].n]),...Object.keys(MAPS).filter(k=>k.startsWith('custom:')).map(k=>[k,MAPS[k].n]),['random','Random']],'map');segUI('mapSize',[['s','Small'],['m','Medium'],['l','Large']],'size');segUI('rivals',[[1,'1'],[2,'2'],[3,'3']],'rivals');segUI('hotSeg',[[1,'Just me'],[2,'Two (pass-and-play)']],'hot');segUI('hotTurn',[[45,'45 s'],[60,'1 min'],[90,'1½ min'],[120,'2 min']],'hotT');segUI('allies',[[0,'None'],[1,'1 ally'],[2,'2 allies']],'allies');
  segUI('diff',[[0,'Easy'],[1,'Normal'],[2,'Hard']],'diff');segUI('peace',[[0,'None'],[5,'5 min'],[10,'10 min'],[15,'15 min'],[20,'20 min'],[30,'30 min'],[45,'45 min'],[60,'1 hour'],[90,'90 min']],'peace');segUI('victory',Object.entries(VMODES),'vmode');
  segUI('startRes',[['low','Low'],['std','Standard'],['high','High']],'res');segUI('popLim',[[100,'100'],[200,'200'],[300,'300']],'pop');segUI('pcolor',Object.keys(COLORS).map(k=>[k,`<i class="sw" style="background:${COLORS[k]}"></i>${k[0].toUpperCase()+k.slice(1)}`]),'color');segUI('proof',[['auto','By style'],['red','Red tile'],['blue','Blue slate'],['green','Copper green'],['slate','Grey slate'],['gold','Gold tile'],['black','Black slate']],'roof');segUI('seasons',[[1,'On'],[0,'Off']],'seasons');updSetupInfo();$('#contBtn').hidden=!hasSave()}
 function showTitle(){running=false;paused=false;$('#hud').hidden=true;$('#pause').hidden=true;$('#end').hidden=true;$('#title').hidden=false;
@@ -2833,7 +2855,7 @@ function showTitle(){running=false;paused=false;$('#hud').hidden=true;$('#pause'
  computeTerritory();explored.fill(1);buildTitle();cam.z=VW<700?.7:.9;const t0=blds[0];centerOn(t0.x+2,t0.y+2)}
 function startGame(){$('#title').hidden=true;$('#end').hidden=true;$('#loading').hidden=false;setTimeout(()=>{newGame(Object.assign({},SETUP),false);$('#loading').hidden=true;beginPlay();
  toast('Tap a villager, then tap a tree, bush or animal to start gathering.','good')},30)}
-function beginPlay(){running=true;paused=false;lastAtk=null;$('#allyBtn').hidden=!(S.allies>0||P.length>1);$('#hud').hidden=false;lastSig='';panelDirty=true;{const hc=$('#hudArms');if(hc){hc.style.display='';const g=hc.getContext('2d');g.clearRect(0,0,hc.width,hc.height);paintArms(g,hc.width,hc.height,PROF)}}updTop();drawMini();setSpeedUI();setSpeedLbl();updGroups()}
+function beginPlay(){running=true;paused=false;lastAtk=null;if(S&&S.t<1&&!S.hot)hotSetup();$('#hotClock').hidden=!(S&&S.hot);$('#allyBtn').hidden=!(S.allies>0||P.length>1);$('#hud').hidden=false;lastSig='';panelDirty=true;{const hc=$('#hudArms');if(hc){hc.style.display='';const g=hc.getContext('2d');g.clearRect(0,0,hc.width,hc.height);paintArms(g,hc.width,hc.height,PROF)}}updTop();drawMini();setSpeedUI();setSpeedLbl();updGroups()}
 function setSpeedUI(){$('#speed').querySelectorAll('button').forEach(b=>b.classList.toggle('on',+b.dataset.s===S.speed))}
 $('#newBtn').onclick=startGame;
 $('#contBtn').onclick=()=>{$('#loading').hidden=false;setTimeout(()=>{const ok=load();$('#loading').hidden=true;if(ok){$('#title').hidden=true;beginPlay();toast('Welcome back.','good')}else{toast('That save could not be loaded','bad');$('#contBtn').hidden=true}},30)};
