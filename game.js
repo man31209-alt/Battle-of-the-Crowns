@@ -193,7 +193,8 @@ const newMods=()=>({vhp:0,varm:[0,0],vspd:0,carry:10,bhp:1,build:1,train:1,rate:
 
 /* ---------- state ---------- */
 let ter,resT,resA,block,occ,explored,vis,terr,treeK,gS,par,seen,closed;
-function alloc(w,h){W=w;H=h;N=w*h;ter=new Uint8Array(N);resT=new Uint8Array(N);resA=new Float32Array(N);block=new Uint8Array(N);occ=new Int32Array(N);explored=new Uint8Array(N);vis=new Uint8Array(N);terr=new Uint8Array(N);treeK=new Uint8Array(N);
+let elevL=null,cliffM=null;
+function alloc(w,h){W=w;H=h;N=w*h;ter=new Uint8Array(N);elevL=new Uint8Array(N);cliffM=new Uint8Array(N);resT=new Uint8Array(N);resA=new Float32Array(N);block=new Uint8Array(N);occ=new Int32Array(N);explored=new Uint8Array(N);vis=new Uint8Array(N);terr=new Uint8Array(N);treeK=new Uint8Array(N);
  gS=new Float32Array(N);par=new Int32Array(N);seen=new Int32Array(N);closed=new Int32Array(N);fogCv.width=W;fogCv.height=H;fogImg=fogCtx.createImageData(W,H)}
 let S=null,P=[],units=[],blds=[],animals=[],ents=new Map(),projs=[],fx=[],rubble=[];
 let sel=[],placing=null,running=false,paused=false,boxMode=false,cmdMode=null;
@@ -384,11 +385,11 @@ function doAttack(u,t,dt){const e=ents.get(t.id);
  if(!e||e.dead||(e.k==='u'&&e.gar)||(e.k!=='a'&&!isEnemy(u.o,e.o))||(e.k==='a'&&e.carc)){return done()}
  if(peace()&&e.k!=='a'){u.task=null;u.path=null;return}
  if(!canHitTarget(u,e))return done();
- const rng=uRng(u),d=edist(u,e),reach=(rng>0?rng:.35)+u.r*.8;const D=ud(u);
+ const hg=hiGround(u,e);const rng=uRng(u)+(uRng(u)>0&&hg>0?1:0),d=edist(u,e),reach=(rng>0?rng:.35)+u.r*.8;const D=ud(u);
  if(d<=reach){u.path=null;const c=ec(e);u.face=c.x<u.x?-1:1;
   if(u.cd<=0){u.cd=uRate(u);u.swing=.3;
    if(e.k==='b'&&capturer(u)&&capturable(e)&&!t.dmg){const cap=Math.max(.6,2.6*rankMul(u)*(u.aura==='atk'?1.2:1)-e.gar.length*.35)*uRate(u);e.cp-=cap;e.capT=S.t;e.capBy=u.o;if(e.o===0)alertAttack(e);gainXp(u,1.5);if(e.cp<=0)convert(e,u.o);return}
-   const dm=dmgTo(uAtk(u),D.at,D.bon,e);
+   const dm=dmgTo(uAtk(u),D.at,D.bon,e)*(hg>0?1.25:hg<0?.85:1);
    if(rng>0){const k=D.multi||1;for(let i=0;i<k;i++)shoot(u.x,u.y-.35,e,dm,u.o,u.id,u.type==='treb'||u.type==='mangonel'?'rock':u.type==='jinete'?'jav':'arrow',D.splash)}else{hit(e,dm,u.o,u.id);sfx(e.k==='b'?'thud':'clang',u.x,u.y);if(ud(u).demo){demoBlast(u,e);return}}}return}
  if(u.stance==='hold'){if(t.auto){u.task=null}return}
  const leash=u.stance==='def'&&u.home?Math.hypot(u.x-u.home.x,u.y-u.home.y)>7:false;
@@ -480,6 +481,8 @@ function doLand(u,t,dt){if(!t.sx){const sp=shoreNear(t.x,t.y);if(!sp){if(u.o===0
 function cargoFollow(){for(const s of units){if(!s.cargo||!s.cargo.length)continue;for(const id of s.cargo){const u=ents.get(id);if(u){u.x=s.x;u.y=s.y}}}}
 function demoBlast(u,e){const x=e.k==='b'?e.x+e.w/2:e.x,y=e.k==='b'?e.y+e.h/2:e.y;for(const q of [...units,...blds]){if(q===e||!isEnemy(u.o,q.o))continue;const d=q.k==='b'?rectDist(x,y,q.x,q.y,q.w,q.h):Math.hypot(q.x-x,q.y-y);if(d<1.8)hit(q,60*(1-d/2),u.o,u.id)}
  for(let k=0;k<8;k++)fx.push({k:'dust',x:x+(Math.random()-.5)*1.5,y:y+(Math.random()-.5)*1.5,t:0,life:.9,s:.7});sfx('crash',x,y);kill(u,u.o)}
+
+function hiGround(u,e){if(!elevL||u.nav)return 0;const c=e.k==='b'?{x:e.x+e.w/2,y:e.y+e.h/2}:e;const a=elevL[(u.y|0)*W+(u.x|0)],b=elevL[(c.y|0)*W+(c.x|0)];return a>b?1:a<b?-1:0}
 
 /* ---------- buildings ---------- */
 function trainList(b){const d=B[b.type];if(!d.train)return[];const civ=CIVS[P[b.o].civ];return d.train.map(t=>t==='UU'?civ.uu:t==='HERO'?civ.hero:t)}
@@ -586,6 +589,13 @@ function genMap(seed,type,size,np){alloc(SIZES[size]||128,SIZES[size]||128);rnd=
   starts.push(best)}
  if(type==='islands'){const r0=W*(np<=2?.2:np===3?.17:.15);for(const s of starts)blobT(s[0]+2,s[1]+2,r0,8,0);for(let k=0;k<starts.length&&starts.length>1;k++){const a=starts[k],b=starts[(k+1)%starts.length];if(starts.length===2&&k===1)break;const L=Math.hypot(b[0]-a[0],b[1]-a[1]);for(let t=0;t<=L;t+=.5){const px=a[0]+2+(b[0]-a[0])*t/L,py=a[1]+2+(b[1]-a[1])*t/L+Math.sin(t/L*Math.PI)*W*.04;for(let y=Math.floor(py-2);y<=py+2;y++)for(let x=Math.floor(px-2);x<=px+2;x++)if(x>=0&&y>=0&&x<W&&y<H&&ter[y*W+x]===1&&Math.hypot(x+.5-px,y+.5-py)<2.2)ter[y*W+x]=2}}for(let k=0;k<Math.max(2,np);k++){const a=rnd()*6.28;blobT(C+Math.cos(a)*W*.08,C+Math.sin(a)*W*.08,3+rnd()*2,3,0)}}
  const nearStart=(x,y,r)=>starts.some(s=>Math.hypot(x-(s[0]+2),y-(s[1]+2))<r);
+
+ {const amp={highlands:1.15,alpine:1.1,mountainpass:1,canyon:.95,mainland:.7,desert:.65,steppe:.6,fortress:.6,goldrush:.6,rivers:.55,lakes:.55,blackforest:.6,nordic:.6,coast:.45,mediterranean:.45,islands:.35,marsh:0}[type];const A=amp==null?.5:amp;const h1=makeNoise(seed+101),h2=makeNoise(seed+113);
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){const i=y*W+x;if(ter[i]===1||ter[i]===2||ter[i]===3){elevL[i]=0;continue}const v=h1(x/26+40,y/26+40)*.75+h2(x/10,y/10)*.25;elevL[i]=Math.max(0,Math.min(2,Math.floor((v-.42)*A*6.5)))}
+  for(const s of starts){const L=elevL[(s[1]+2)*W+s[0]+2];for(let y=Math.max(0,s[1]-9);y<Math.min(H,s[1]+13);y++)for(let x=Math.max(0,s[0]-9);x<Math.min(W,s[0]+13);x++){const i=y*W+x;if(ter[i]!==1&&ter[i]!==2&&ter[i]!==3&&Math.hypot(x-s[0]-2,y-s[1]-2)<11)elevL[i]=L}}
+  if(type==='highlands'||type==='alpine'||type==='canyon'||type==='mountainpass'||type==='mainland'||type==='desert'){const cn=makeNoise(seed+127),lim=type==='mainland'||type==='desert'?.66:.56;
+   for(let y=2;y<H-2;y++)for(let x=2;x<W-2;x++){const i=y*W+x;if(ter[i]!==0||!elevL[i])continue;let edge=false;for(let k=0;k<4;k++){const j=(y+DY[k])*W+x+DX[k];if(elevL[j]<elevL[i]&&ter[j]!==1)edge=true}
+    if(!edge||cn(x/6,y/6)<lim)continue;if(starts.some(s=>Math.hypot(x-s[0]-2,y-s[1]-2)<14))continue;ter[i]=4;cliffM[i]=1;resT[i]=0;resA[i]=0;block[i]=0}}}
  if(type==='mountainpass'){const ang=starts.map(s=>Math.atan2(s[1]+2-C,s[0]+2-C)).sort((a,b)=>a-b);const mids=[];for(let k=0;k<ang.length;k++){let a=ang[k],b=k+1<ang.length?ang[k+1]:ang[0]+6.283;mids.push((a+b)/2)}
   if(np===2)mids.push(...mids.map(a=>a+.6));for(const a of mids)ridge(C+Math.cos(a)*W*.1,C+Math.sin(a)*W*.1,C+Math.cos(a)*W*.64,C+Math.sin(a)*W*.64,2.6);
   for(let k=0,g=0;k<Math.round(W*W/3000)&&g<400;g++){const x=W*(.08+rnd()*.84),y=H*(.08+rnd()*.84);if(nearStart(x,y,15))continue;blobT(x,y,1.5+rnd()*2.5,4,4);k++}
@@ -608,7 +618,7 @@ function genMap(seed,type,size,np){alloc(SIZES[size]||128,SIZES[size]||128);rnd=
  if(type==='steppe')scatter(Math.round(area/1200),(x,y)=>herd(rnd()<.5?'sheep':'deer',x,y,4+ri(4)));
  if(type==='goldrush'){blob(2,C,C,70,4);for(let k=0;k<4;k++){const a=rnd()*6.28;blob(2,Math.round(C+Math.cos(a)*7),Math.round(C+Math.sin(a)*7),18,4)}blob(3,Math.round(C+5),Math.round(C-6),14)}
  if(type==='alpine'||type==='canyon'||type==='mountainpass')scatter(Math.round(area/2600),(x,y)=>blob(3,x,y,5+ri(4)));
- if(type==='blackforest'||type==='mountainpass'||type==='canyon'||type==='alpine'||type==='highlands'){const cut=(ax,ay,bx,by,w)=>{const L=Math.hypot(bx-ax,by-ay),ph=rnd()*9;for(let k=0;k<=L;k+=.5){const t=k/L;const wob=Math.sin(t*5+ph)*3;const px=ax+(bx-ax)*t-(by-ay)/L*wob,py=ay+(by-ay)*t+(bx-ax)/L*wob;for(let y=Math.floor(py-w);y<=py+w;y++)for(let x=Math.floor(px-w);x<=px+w;x++){if(x<1||y<1||x>=W-1||y>=H-1)continue;const i=y*W+x;if(ter[i]===4)ter[i]=0;if(resT[i]===1)clearRes(i)}}};
+ if(type==='blackforest'||type==='mountainpass'||type==='canyon'||type==='alpine'||type==='highlands'||type==='mainland'||type==='desert'){const cut=(ax,ay,bx,by,w)=>{const L=Math.hypot(bx-ax,by-ay),ph=rnd()*9;for(let k=0;k<=L;k+=.5){const t=k/L;const wob=Math.sin(t*5+ph)*3;const px=ax+(bx-ax)*t-(by-ay)/L*wob,py=ay+(by-ay)*t+(bx-ax)/L*wob;for(let y=Math.floor(py-w);y<=py+w;y++)for(let x=Math.floor(px-w);x<=px+w;x++){if(x<1||y<1||x>=W-1||y>=H-1)continue;const i=y*W+x;if(ter[i]===4)ter[i]=0;if(resT[i]===1)clearRes(i)}}};
   for(const s of starts)cut(s[0]+2,s[1]+2,C,C,type==='blackforest'?1.6:1.3);for(let k=0;k<starts.length;k++){const a=starts[k],b=starts[(k+1)%starts.length];if(starts.length>1&&(type==='blackforest'||type==='alpine'))cut(a[0]+2,a[1]+2,b[0]+2,b[1]+2,1.2)}}
  for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++){const i=y*W+x;if(ter[i]!==1||rnd()>.03)continue;let ok=true,wn=0;for(let k=0;k<8;k++){const j=(y+DY[k])*W+x+DX[k];if(resT[j]===5)ok=false;if(ter[j]===1)wn++}if(ok&&wn>=6)setRes(x,y,5)}
  for(const s of starts){for(let y=s[1]-1;y<s[1]+5;y++)for(let x=s[0]-1;x<s[0]+5;x++)if(x>=0&&y>=0&&x<W&&y<H){const i=y*W+x;clearRes(i);ter[i]=0}}
@@ -632,6 +642,9 @@ function renderGround(seed){const S2=Math.max(10,Math.min(20,Math.floor(2304/W))
    if(t===3){const f=.75;r=r*(1-f)+(bm.sand[0]+v*20)*f;gg=gg*(1-f)+(bm.sand[1]+v*18)*f;b=b*(1-f)+(bm.sand[2]+v*14)*f}
    let dirt=0;for(const c of tcs){const dd=Math.hypot(wx-c[0],wy-c[1]);dirt=Math.max(dirt,clamp((5.4+n2(wx,wy)*1.6-dd)/1.4,0,1))}
    if(dirt>0){r=r*(1-dirt)+(bm.dirt[0]+v*30)*dirt;gg=gg*(1-dirt)+(bm.dirt[1]+v*24)*dirt;b=b*(1-dirt)+(bm.dirt[2]+v*18)*dirt}}
+  if(t!==1&&elevL){const xi=wx|0,yi=wy|0,fx=wx-xi,fy=wy-yi;const E=(xx,yy)=>{xx=clamp(xx,0,W-1);yy=clamp(yy,0,H-1);return elevL[yy*W+xx]};const e00=E(xi,yi),e10=E(xi+1,yi),e01=E(xi,yi+1),e11=E(xi+1,yi+1);
+   const sm=(e00*(1-fx)+e10*fx)*(1-fy)+(e01*(1-fx)+e11*fx)*fy;const gx=E(xi+1,yi)-E(xi-1,yi),gy=E(xi,yi+1)-E(xi,yi-1);const lit=1+sm*.11-(gx+gy)*.1;r*=lit;gg*=lit;b*=lit;
+   {const sx=sm+.5,f=sx-Math.floor(sx);if(sm>.15&&sm<1.85&&Math.abs(f-.5)<.09){const k=.74+Math.abs(f-.5)*1.6;r*=k;gg*=k;b*=k}else if(sm>.15&&Math.abs(f-.5)<.2){const k=1.06;r*=k;gg*=k;b*=k}}}
   const o=(y*gw+x)*4;d[o]=r;d[o+1]=gg;d[o+2]=b;d[o+3]=255}
  g.putImageData(id,0,0);
  g.globalAlpha=.5;const tuft=S.biome==='desert'?['#b09050','#8a7a3a']:S.biome==='steppe'?['#c4b860','#7a7a30']:S.biome==='snow'?['#ffffff','#b8c4d0']:['#a3c460','#3f6a24'];
@@ -1126,6 +1139,19 @@ function civDeco(g,type,st,col){const dc=st.deco;if(!dc||!BIGB[type])return;cons
  else if(dc==='torons'){g.strokeStyle='#5a3a1e';g.lineWidth=2;g.lineCap='round';for(const z of [zm*.22,zm*.4]){for(let k=1;k<w*2;k++){const p=PJ(k/2,h+.02,z),q=PJ(k/2,h+.22,z+1);g.beginPath();g.moveTo(p[0],p[1]);g.lineTo(q[0],q[1]);g.stroke()}for(let k=1;k<h*2;k++){const p=PJ(w+.02,k/2,z),q=PJ(w+.22,k/2,z+1);g.beginPath();g.moveTo(p[0],p[1]);g.lineTo(q[0],q[1]);g.stroke()}}g.lineCap='butt';
   if(type==='wonder'||type==='temple')for(const [x,y] of [[.3,.3],[w-.3,.3],[.3,h-.3]]){cone(g,x,y,0,.32,zm*.75,st.wall,'sand')}}
  else if(dc==='stele'&&type==='wonder'){const x=w-.5,y=h-.5;box3(g,x-.25,y-.25,0,.5,.5,zm*.85,'#8a8070','stone','#9a9080');const p=PJ(x,y,zm*.85);g.fillStyle='#9a9080';g.beginPath();g.ellipse(p[0],p[1],10,5,0,Math.PI,0);g.fill()}}
+
+const cliffC={};
+function cliffSprite(v){const key=S.biome+v;if(cliffC[key])return cliffC[key];const w=70,h=54,c=document.createElement('canvas');c.width=w*3;c.height=h*3;const g=c.getContext('2d');g.scale(3,3);const r=mulberry(733+v*19);
+ const pal=S.biome==='desert'?['#b8744a','#8a5034','#d89a68']:S.biome==='snow'?['#8e8e96','#6a6a74','#f2f4f8']:['#8a8478','#666058','#6f9a42'];const top=S.biome==='snow'?'#eef2f8':S.biome==='desert'?'#c8a068':'#6f9a42';
+ const cx=35,by=h-10,hh=20+r()*6;const P=(x,y)=>[cx+(x-y)*32*.5,by-16+(x+y)*16*.5];
+ g.fillStyle='rgba(0,0,0,.25)';g.beginPath();g.ellipse(cx,by,30,9,0,0,7);g.fill();
+ const L=[cx-32,by-16],R=[cx+32,by-16],F=[cx,by],T=[cx,by-32];
+ g.fillStyle=pal[0];g.beginPath();g.moveTo(L[0],L[1]-hh);g.lineTo(F[0],F[1]-hh);g.lineTo(F[0],F[1]);g.lineTo(L[0],L[1]);g.closePath();g.fill();
+ g.fillStyle=pal[1];g.beginPath();g.moveTo(F[0],F[1]-hh);g.lineTo(R[0],R[1]-hh);g.lineTo(R[0],R[1]);g.lineTo(F[0],F[1]);g.closePath();g.fill();
+ g.strokeStyle='rgba(0,0,0,.28)';g.lineWidth=.8;for(let k=1;k<4;k++){const yy=hh*k/4;g.beginPath();g.moveTo(L[0],L[1]-yy+(r()-.5)*2);g.lineTo(F[0],F[1]-yy+(r()-.5)*2);g.lineTo(R[0],R[1]-yy+(r()-.5)*2);g.stroke()}
+ for(let k=0;k<6;k++){const t=r();const x=L[0]+(F[0]-L[0])*t,y=L[1]+(F[1]-L[1])*t-hh*r();g.beginPath();g.moveTo(x,y);g.lineTo(x+(r()-.5)*3,y+4+r()*4);g.stroke()}
+ g.fillStyle=top;g.beginPath();g.moveTo(L[0],L[1]-hh);g.lineTo(T[0],T[1]-hh);g.lineTo(R[0],R[1]-hh);g.lineTo(F[0],F[1]-hh);g.closePath();g.fill();g.strokeStyle='rgba(0,0,0,.3)';g.stroke();
+ c.w=w;c.h=h;const out=defineEdges(c,2,'#221a12');cliffC[key]=out;return out}
 let sprNew=0;const SPR_MAX=5;
 /* ---------- unit drawing (people & horses) ---------- */
 const SKIN=['#e8bd96','#c18c62','#8a573a'],HAIR=['#5a3a22','#2a1c12','#8a5a2a','#1a1410'];
@@ -1392,7 +1418,7 @@ function render(){const z=cam.z;ctx.setTransform(DPR,0,0,DPR,0,0);ctx.fillStyle=
  for(const it of L){if(it[1]===0){const i=it[2],x=i%W,y=(i/W)|0,t=resT[i],p=it[3];const h=(x*73856093^y*19349663)>>>0;
    if(t===1){const sp=treeV[treeK[i]]||treeV[h%6];const s=(.88+((h>>4)%5)*.06)*1.45;const ox=((h>>8)%9)-4,oy=((h>>11)%5)-2;ctx.drawImage(sp,p[0]-24*s+ox,p[1]-51*s+oy,44*s,56*s)}
    else{const sp=resV[t][h%3];const f=(t===5?1:.7+.3*Math.min(1,resA[i]/RAMT[t]))*1.55;ctx.drawImage(sp,p[0]-17*f,p[1]-25*f+4,34*f,30*f)}}
-  else if(it[1]===4){const i=it[2],x=i%W,y=(i/W)|0,p=it[3];const h=(x*73856093^y*19349663)>>>0;const sp=rockSprite(h%4);const s=1.15+((h>>5)%5)*.08;ctx.drawImage(sp,p[0]-sp.w*s/2,p[1]-sp.h*s+16,sp.w*s,sp.h*s)}
+  else if(it[1]===4){const i=it[2],x=i%W,y=(i/W)|0,p=it[3];const h=(x*73856093^y*19349663)>>>0;const sp=cliffM&&cliffM[i]?cliffSprite(h%3):rockSprite(h%4);const s=cliffM&&cliffM[i]?1:1.15+((h>>5)%5)*.08;ctx.drawImage(sp,p[0]-sp.w*s/2,p[1]-sp.h*s+16,sp.w*s,sp.h*s)}
   else if(it[1]===1)drawBld(ctx,it[2]);
   else if(it[1]===3){const a=it[2],p=it[3];if(!a.carc){ctx.fillStyle='rgba(0,0,0,.28)';ctx.beginPath();ctx.ellipse(p[0],p[1],9,3.4,0,0,7);ctx.fill()}const sp=animalSprite(a);ctx.drawImage(sp,p[0]-sp.ox,p[1]-sp.oy,sp.w,sp.h)}
   else{const u=it[2],p=it[3];const st=u.mv?'walk':u.work?'work':u.swing>0?'atk':'idle';const tg=U[u.type].tag;if(tg!=='shp'){ctx.fillStyle='rgba(0,0,0,.3)';ctx.beginPath();ctx.ellipse(p[0],p[1],(tg==='sie'?15:tg==='cav'?10:6.5)*US,(tg==='sie'?4.5:tg==='cav'?3.4:2.8)*US,0,0,7);ctx.fill()}
@@ -2028,13 +2054,13 @@ function save(){if(!running||!S)return;try{const data={v:2,S:Object.assign({},S)
  U:units.map(u=>({id:u.id,type:u.type,o:u.o,x:+u.x.toFixed(2),y:+u.y.toFixed(2),hp:u.hp,carry:u.carry,ct:u.ct,gar:u.gar,cargo:u.cargo,face:u.face,task:u.task,xp:u.xp,rank:u.rank,stance:u.stance,home:u.home})),
  B:blds.map(b=>({id:b.id,type:b.type,o:b.o,x:b.x,y:b.y,hp:b.hp,built:b.built,queue:b.queue,rally:b.rally,gar:b.gar,started:b.started,cp:b.cp,slots:b.slots,wonderT:b.wonderT,locked:b.locked})),
  A:animals.map(a=>({id:a.id,type:a.type,o:a.o,x:+a.x.toFixed(2),y:+a.y.toFixed(2),hp:a.hp,food:a.food,carc:a.carc,hx:a.hx,hy:a.hy})),
- ter:enc(ter),rt:enc(resT),tk:enc(treeK),ex:enc(explored),ra:Array.from(resA,v=>Math.round(v)),cam:{x:cam.x,y:cam.y,z:cam.z}};
+ ter:enc(ter),el:enc(elevL),cl:enc(cliffM),rt:enc(resT),tk:enc(treeK),ex:enc(explored),ra:Array.from(resA,v=>Math.round(v)),cam:{x:cam.x,y:cam.y,z:cam.z}};
  localStorage.setItem('boc-save2',JSON.stringify(data))}catch(e){}}
 function hasSave(){try{return !!localStorage.getItem('boc-save2')}catch(e){return false}}
 function load(){let d;try{d=JSON.parse(localStorage.getItem('boc-save2'))}catch(e){return false}if(!d||d.v!==2)return false;
  applyColors(d.S.opts);alloc(d.W,d.H);units=[];blds=[];animals=[];ents=new Map();projs=[];fx=[];rubble=[];sel=[];placing=null;cmdMode=null;pings=[];uC.clear();lastSig='';S=Object.assign({},d.S);
  P=d.P.map(q=>{const p=newPlayer(q.i,q.civ,'std');Object.assign(p,{res:q.res,phase:q.phase,techs:q.techs,bell:q.bell,autoRep:q.autoRep,king:q.king,team:q.team,st:q.st,barter:q.barter,hero:q.hero,alive:q.alive});if(q.ai)p.ai=Object.assign({},q.ai,{waves:new Set(q.ai.waves)});recomputeMods(p);return p});
- for(let i=0;i<N;i++){ter[i]=parseInt(d.ter[i],36);resT[i]=parseInt(d.rt[i],36);treeK[i]=parseInt(d.tk[i],36);explored[i]=+d.ex[i];resA[i]=d.ra[i];block[i]=resT[i]?1:0}
+ for(let i=0;i<N;i++){if(d.el){elevL[i]=+d.el[i];cliffM[i]=+d.cl[i]}ter[i]=parseInt(d.ter[i],36);resT[i]=parseInt(d.rt[i],36);treeK[i]=parseInt(d.tk[i],36);explored[i]=+d.ex[i];resA[i]=d.ra[i];block[i]=resT[i]?1:0}
  for(const q of d.B){const b=Object.assign({k:'b',w:B[q.type].w,h:B[q.type].h,cd:Math.random(),dmgT:0},q);blds.push(b);ents.set(b.id,b);stampB(b,true)}
  for(const q of d.U){const u=Object.assign({k:'u',path:null,cd:0,an:0,th:Math.random(),rp:0,r:RAD[U[q.type].tag]||.3,swing:0,work:0,nav:U[q.type].nav?1:0,aura:null},q);units.push(u);ents.set(u.id,u)}
  for(const q of d.A){const a=Object.assign({k:'a',face:1,an:0,path:null,cd:0,th:1,r:.32,fl:0},q);animals.push(a);ents.set(a.id,a)}
