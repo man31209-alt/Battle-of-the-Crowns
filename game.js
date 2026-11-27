@@ -251,7 +251,7 @@ const canBuild=u=>{const d=ud(u);return d.tag==='vil'||!!d.cit};
 function costStr(c){const m={food:'cf',wood:'cw',gold:'cg',stone:'cs2'};return Object.keys(c).map(k=>`<i class="${m[k]}"></i>${c[k]}`).join('')}
 function need(p,c){const out=[];for(const r in c){const d=c[r]-(p.res[r]||0);if(d>0)out.push(Math.ceil(d)+' more '+r)}return out.join(' and ')}
 const land=i=>ter[i]!==1&&ter[i]!==4;
-const pass=(i,o,nav)=>{if(nav)return ter[i]===1&&block[i]===0;if(ter[i]===1||ter[i]===4)return false;const b=block[i];if(b===0)return true;if(b===3){const g=ents.get(occ[i]);return !!g&&g.o===o&&!g.locked}return false};
+const pass=(i,o,nav)=>{if(nav)return (ter[i]===1||ter[i]===2)&&block[i]===0;if(ter[i]===1||ter[i]===4)return false;const b=block[i];if(b===0)return true;if(b===3){const g=ents.get(occ[i]);return !!g&&g.o===o&&!g.locked}return false};
 const passXY=(x,y,o,nav)=>x>=0&&y>=0&&x<W&&y<H&&pass(y*W+x,o,nav);
 
 /* ---------- entities ---------- */
@@ -324,7 +324,7 @@ function step(u,dt){if(!u.path||!u.path.length)return true;const p=u.path[0];con
  u.x=nx;u.y=ny;return false}
 
 /* ---------- resources ---------- */
-function hasOpen(i,nav){const x=i%W,y=(i/W)|0;for(let k=0;k<8;k++){const nx=x+DX[k],ny=y+DY[k];if(nx>=0&&ny>=0&&nx<W&&ny<H){const j=ny*W+nx;if(block[j]===0&&(nav?ter[j]===1:ter[j]!==1&&ter[j]!==4))return true}}return false}
+function hasOpen(i,nav){const x=i%W,y=(i/W)|0;for(let k=0;k<8;k++){const nx=x+DX[k],ny=y+DY[k];if(nx>=0&&ny>=0&&nx<W&&ny<H){const j=ny*W+nx;if(block[j]===0&&(nav?(ter[j]===1||ter[j]===2):ter[j]!==1&&ter[j]!==4))return true}}return false}
 function nearestRes(rt,x,y,maxR,human,nav){x|=0;y|=0;let best=-1,bd=1e9;for(let r=0;r<=maxR;r++){if(best>=0&&r>bd+1.5)break;
  for(let yy=y-r;yy<=y+r;yy++){if(yy<0||yy>=H)continue;const edge=Math.abs(yy-y)===r;for(let xx=x-r;xx<=x+r;xx+=(edge?1:2*r||1)){if(xx<0||xx>=W)continue;const i=yy*W+xx;
   if(resT[i]!==rt||resA[i]<=0)continue;if(human&&!explored[i])continue;if(!hasOpen(i,nav))continue;const d=Math.hypot(xx-x,yy-y);if(d<bd){bd=d;best=i}}}}return best}
@@ -575,9 +575,9 @@ const MAPS={mainland:{n:'Mainland',d:'Open land, forests and ponds.',biome:'temp
  steppe:{n:'Steppe',d:'Wide dry grassland. Few trees, big herds, extra gold.',biome:'steppe'},goldrush:{n:'Gold Rush',d:'A huge gold field in the middle. Fight for it.',biome:'temp'},
  fortress:{n:'Fortress',d:'Everyone starts behind stone walls with towers.',biome:'temp'},mountainpass:{n:'Mountain Pass',d:'Rock ridges you cannot cross. Hold the passes.',biome:'temp'},
  canyon:{n:'Red Canyon',d:'Desert mesas and narrow canyons.',biome:'desert'},marsh:{n:'Marshlands',d:'Shallow bogs, reeds and ponds full of fish.',biome:'temp'},
- alpine:{n:'Alpine Valley',d:'Snowy peaks ring a green valley. Rich in stone.',biome:'snow'},islands:{n:'Islands',d:'Each kingdom on its own island, linked by shallow sandbars.',biome:'temp'}};
+ alpine:{n:'Alpine Valley',d:'Snowy peaks ring a green valley. Rich in stone.',biome:'snow'},islands:{n:'Islands',d:'Each kingdom on its own island, linked by shallow sandbars.',biome:'temp'},fourcorners:{n:'Four Corners',d:'Four islands, one in each corner, each with its own resources. Deep water all around and no shallows: every expedition goes by boat.',biome:'temp'}};
 const MKEYS=Object.keys(MAPS);
-const SIZES={s:96,m:128,l:160};
+const SIZES={s:96,m:128,l:160};const FC=[[.2,.2],[.8,.8],[.8,.2],[.2,.8]];
 function makeNoise(seed){const r=mulberry(seed),G=64,g=new Float32Array(G*G);for(let i=0;i<G*G;i++)g[i]=r();const s=t=>t*t*(3-2*t);
  return(x,y)=>{const xi=Math.floor(x),yi=Math.floor(y),xf=x-xi,yf=y-yi;const a=g[(yi&63)*G+(xi&63)],b=g[(yi&63)*G+((xi+1)&63)],c=g[((yi+1)&63)*G+(xi&63)],d=g[((yi+1)&63)*G+((xi+1)&63)];const u=s(xf),v=s(yf);return a+(b-a)*u+(c-a)*v+(a-b-c+d)*u*v}}
 function setRes(x,y,t){if(x<1||y<1||x>=W-1||y>=H-1)return false;const i=y*W+x;if(ter[i]===4)return false;if(t!==5&&ter[i]===1)return false;if(t===5&&ter[i]!==1)return false;resT[i]=t;resA[i]=RAMT[t];block[i]=1;return true}
@@ -594,7 +594,7 @@ function genMap(seed,type,size,np){if(type&&type.startsWith('custom:'))return cu
  else if(type==='coast'||type==='nordic'){const side=ri(4);const depth=W*(type==='nordic'?.14:.2);for(let y=0;y<H;y++)for(let x=0;x<W;x++){const v=[x,y,W-1-x,H-1-y][side];const lim=depth+(n1(x/8,y/8)-.5)*W*.12+(type==='nordic'?Math.sin((side%2?x:y)/W*18)*W*.05:0);if(v<lim)ter[y*W+x]=1}
   if(type==='nordic')for(let k=0;k<3;k++)blobW(W*(.25+rnd()*.5),H*(.25+rnd()*.5),2.5+rnd()*2,3)}
  else if(type==='mediterranean'){blobW(C,C,W*.2,12);for(let k=0;k<2;k++)blobT(C+(rnd()-.5)*W*.12,C+(rnd()-.5)*W*.12,2+rnd()*2,2,0)}
- else if(type==='islands'){for(let y=0;y<H;y++)for(let x=0;x<W;x++)ter[y*W+x]=1}
+ else if(type==='islands'||type==='fourcorners'){for(let y=0;y<H;y++)for(let x=0;x<W;x++)ter[y*W+x]=1;if(type==='fourcorners')for(const [fx,fy] of FC)blobT(W*fx,H*fy,W*.24,7,0)}
  else if(type==='marsh'){for(let k=0;k<Math.round(W*W/700);k++)blobT(W*(.06+rnd()*.88),H*(.06+rnd()*.88),1.5+rnd()*3.5,3,2);for(let k=0;k<Math.round(W*W/2200);k++)blobW(W*(.1+rnd()*.8),H*(.1+rnd()*.8),2+rnd()*2.5,3)}
  else if(type==='canyon'){for(let k=0;k<Math.round(W*W/500);k++)blobT(W*(.04+rnd()*.92),H*(.04+rnd()*.92),2.5+rnd()*4.5,6,4);for(let k=0;k<2;k++)blobW(W*(.25+rnd()*.5),H*(.25+rnd()*.5),2+rnd()*1.5,2)}
  else if(type==='alpine'){for(let y=0;y<H;y++)for(let x=0;x<W;x++){const d=Math.hypot(x-C,y-C)/(W*.5)+(n1(x/7,y/7)-.5)*.35;if(d>.93)ter[y*W+x]=4}for(let k=0;k<Math.round(W*W/2500);k++)blobT(W*(.12+rnd()*.76),H*(.12+rnd()*.76),1.5+rnd()*2,4,4);blobW(C,C,3+rnd()*2,3)}
@@ -603,7 +603,8 @@ function genMap(seed,type,size,np){if(type&&type.startsWith('custom:'))return cu
  else{const n=type==='highlands'?2:Math.round(W*W/3000);for(let k=0;k<n;k++)blobW(W*(.12+rnd()*.76),H*(.12+rnd()*.76),2.5+rnd()*2.5,3)}
  // start positions spread around the map, nudged onto dry land
  const starts=[];const off=rnd()*6.28;const rad=W*(type==='alpine'?.28:type==='mediterranean'?.36:np<=2?.34:.33);
- for(let k=0;k<np;k++){const a=off+k/np*Math.PI*2;let bx=C+Math.cos(a)*rad-2,by=C+Math.sin(a)*rad-2;let best=null,bs=1e9;
+ if(type==='fourcorners'){const ord=np===2?[0,1]:[0,2,1,3];for(let k=0;k<np;k++){const c=FC[ord[k]];starts.push([Math.round(W*c[0]-2),Math.round(H*c[1]-2)])}}
+ else for(let k=0;k<np;k++){const a=off+k/np*Math.PI*2;let bx=C+Math.cos(a)*rad-2,by=C+Math.sin(a)*rad-2;let best=null,bs=1e9;
   for(let r=0;r<W*.3&&!best;r+=1)for(let j=0;j<24;j++){const aa=j/24*6.28;const x=Math.round(bx+Math.cos(aa)*r),y=Math.round(by+Math.sin(aa)*r);if(x<10||y<10||x>W-14||y>H-14)continue;let ok=true;
    for(let yy=y-7;yy<y+11&&ok;yy++)for(let xx=x-7;xx<x+11;xx++){if(xx<0||yy<0||xx>=W||yy>=H||ter[yy*W+xx]===1||ter[yy*W+xx]===4){ok=false;break}}
    if(ok&&starts.every(s=>Math.hypot(s[0]-x,s[1]-y)>W*.3)){const sc=r;if(sc<bs){bs=sc;best=[x,y]}}}
@@ -646,6 +647,9 @@ function genMap(seed,type,size,np){if(type&&type.startsWith('custom:'))return cu
  for(const s of starts){for(let y=s[1]-1;y<s[1]+5;y++)for(let x=s[0]-1;x<s[0]+5;x++)if(x>=0&&y>=0&&x<W&&y<H){const i=y*W+x;clearRes(i);ter[i]=0}}
  for(let i=0;i<N;i++){if(resT[i]===1){const h=((i*2654435761)>>>0);treeK[i]=S.biome==='desert'?6+h%3:S.biome==='snow'?9+h%3:h%6}
   if(ter[i]===0){const x=i%W,y=(i/W)|0;for(let k=0;k<4;k++){const xx=x+DX[k],yy=y+DY[k];if(xx>=0&&yy>=0&&xx<W&&yy<H&&ter[yy*W+xx]===1){ter[i]=3;break}}}}
+ if(type==='fourcorners'){for(let i=0;i<N;i++)if(ter[i]===2)ter[i]=1;const used=starts.map(s=>[s[0]+2,s[1]+2]);
+  for(const [fx,fy] of FC){const cx=W*fx,cy=H*fy;const tip=[Math.round(cx+(fx<.5?-1:1)*W*.07),Math.round(cy+(fy<.5?-1:1)*H*.07)];blob(2,tip[0],tip[1],8,0);blob(3,tip[0]+(fx<.5?3:-3),tip[1]-(fy<.5?-3:3),7,0);
+   if(!used.some(u=>Math.hypot(u[0]-cx,u[1]-cy)<10)){const fs=[cx,cy-2];blob(4,Math.round(cx+3),Math.round(cy-3),7,0);blob(2,Math.round(cx-4),Math.round(cy+3),7,0);blob(3,Math.round(cx+4),Math.round(cy+4),6,0);herd('sheep',cx-3,cy-3,4);herd('deer',cx+5,cy-5,4)}}}
  animals=animals.filter(a=>{const i=(a.y|0)*W+(a.x|0);if(ter[i]===1||ter[i]===4||block[i]){ents.delete(a.id);return false}return true});
  return starts}
 const BIOME={temp:{g:[74,112,44],gv:[46,44,20],dirt:[150,122,78],sand:[196,178,120]},desert:{g:[200,170,110],gv:[30,26,18],dirt:[176,140,90],sand:[214,190,130]},snow:{g:[222,228,236],gv:[18,16,14],dirt:[150,140,128],sand:[190,190,186]},steppe:{g:[150,150,70],gv:[40,34,16],dirt:[160,130,84],sand:[200,184,126]}};
@@ -732,7 +736,7 @@ function aiTick(p){const ai=p.ai,o=p.i;ai.t+=1;if(!ai.raid)ai.raid=[];if(ai.next
  if(gatherers>=5&&!pending('farmstead')&&!has('farmstead').length){const bi=nearestRes(4,home.x,home.y,14,false,false);if(bi>=0)aiBuild(p,'farmstead',bi%W,(bi/W)|0,1,4);else if(gatherers>=8)aiBuild(p,'farmstead',home.x,home.y,4,9)}
  const fields=has('field');const berries=nearestRes(4,home.x,home.y,14,false,false)>=0;const hunt=nearestHunt({o},home.x,home.y,14);const foodV=vils.filter(u=>u.task&&(u.task.k==='field'||u.task.k==='hunt'||u.task.rt==='food')).length;
  const fieldCap=fields.length*5;if(gatherers>=7&&!pending('field')&&fields.length<Math.ceil(ai.vilT*.5/5)+1&&(fieldCap<foodV-6||(!berries&&!hunt&&fieldCap<foodV+3))&&R.wood>=(ai.saving?100:150)){const fs=has('farmstead',1)[0];const near=fs&&fields.length>=2?{x:fs.x+1,y:fs.y+1}:home;aiBuild(p,'field',near.x,near.y,3,9)}
- const wi=ai.dockWater??(ai.dockWater=(()=>{for(let r=4;r<=18;r++)for(let k=0;k<32;k++){const a=k/32*6.28;const x=Math.round(home.x+Math.cos(a)*r),y=Math.round(home.y+Math.sin(a)*r);if(x>=0&&y>=0&&x<W&&y<H&&ter[y*W+x]===1)return[x,y]}return null})());
+ const wi=ai.dockWater??(ai.dockWater=(()=>{for(let r=4;r<=34;r++)for(let k=0;k<48;k++){const a=k/48*6.28;const x=Math.round(home.x+Math.cos(a)*r),y=Math.round(home.y+Math.sin(a)*r);if(x>=0&&y>=0&&x<W&&y<H&&ter[y*W+x]===1)return[x,y]}return null})());
  if(wi&&gatherers>=12&&!has('dock').length&&!pending('dock'))aiBuild(p,'dock',wi[0],wi[1],0,6);
  const docks=has('dock',1);if(docks.length){const boats=my.filter(u=>u.type==='fishboat').length,gal=my.filter(u=>u.type==='galley'||u.type==='fireship').length;const dk=docks[0];
   if(!dk.queue.length&&boats<(ai.diff?5:3)){const c=costOf(p,U.fishboat.cost,'u','fishboat');if(afford(p,c)&&room>0){pay(p,c);dk.queue.push({u:'fishboat',p:0})}}
@@ -771,7 +775,7 @@ function aiTick(p){const ai=p.ai,o=p.i;ai.t+=1;if(!ai.raid)ai.raid=[];if(ai.next
  for(const id of [...ai.waves])if(!ents.has(id))ai.waves.delete(id);
  aiRaid(p,army,home);aiRetreat(p,home);aiBreach(p);aiMode(p,army,home);if(p.i&&myTeam(p.i))aiAlly(p,army,home);
  if(!peace()&&ai.t>=ai.nextWave&&army.length>=ai.wave&&ai.t>=ai.regroup){ai.nextWave=ai.t+ai.gap;ai.wave+=3;ai.waveN=0;let k=0;for(const u of army){if(ud(u).cit&&k>=army.length*.7)continue;if(ai.raid.includes(u.id))continue;ai.waves.add(u.id);ai.waveN++;k++;if(u.task&&u.task.k==='gather')u.carry=0;u.task=null}}
- for(const id of ai.waves){const u=ents.get(id);if(!u||u.gar)continue;if(u.task&&u.task.k==='atk')continue;const t=aiNearestEnemyBld(p,{x:u.x,y:u.y});if(t)u.task={k:'atk',id:t.id,wave:1,dmg:ud(u).tag==='sie'?1:0};else{const e=nearestEnemy(u,999,false);if(e)u.task={k:'atk',id:e.id,wave:1}}}}
+ for(const id of ai.waves){const u=ents.get(id);if(!u||u.gar)continue;if(u.task&&(u.task.k==='atk'||u.task.k==='board'))continue;const t=aiNearestEnemyBld(p,{x:u.x,y:u.y});if(t)u.task={k:'atk',id:t.id,wave:1,dmg:ud(u).tag==='sie'?1:0};else{const e=nearestEnemy(u,999,false);if(e)u.task={k:'atk',id:e.id,wave:1}}}}
 
 /* ---------- placement ---------- */
 function swapWall(type,x,y,o){if(!B[type].gate||x<0||y<0||x>=W||y>=H)return null;const w=ents.get(occ[y*W+x]);if(!w||w.k!=='b'||w.o!==o||w.built<1)return null;const wood=type==='pgate';if(wood?w.type!=='palisade':(w.type!=='wall'&&w.type!=='palisade'))return null;return w}
@@ -883,6 +887,30 @@ function FIREFX(cull){const t=performance.now()/1000;for(const b of blds){if(!b.
  for(let s=0;s<3;s++){const bx=c[0]+(s-1)*b.w*9,by=c[1]-zm*(.6+.4*((s*37+b.id)%3)/3);for(let k=0;k<6;k++){const ph=(t*1.3+k/6+s*.31+b.id*.17)%1;g2fl(bx+Math.sin(ph*7+k)*3,by-ph*22,(1-ph)*6+1.5,ph)}
   for(let k=0;k<4;k++){const ph=(t*.4+k/4+s*.2)%1;ctx.globalAlpha=(1-ph)*.45;ctx.fillStyle='#3a3430';ctx.beginPath();ctx.arc(bx+ph*14+Math.sin(ph*5)*3,by-22-ph*40,4+ph*10,0,7);ctx.fill()}}ctx.globalAlpha=1}}
 function g2fl(x,y,r,ph){ctx.globalAlpha=Math.min(1,(1-ph)*1.3);ctx.fillStyle=ph<.25?'#fff0a0':ph<.55?'#ffb030':'#e0501a';ctx.beginPath();ctx.ellipse(x,y,r*.75,r,0,0,7);ctx.fill()}
+
+/* ---------- AI sea crossings: computer players ferry armies by transport cog ---------- */
+let isleFor=null,isle=null;
+function isleMap(){if(isleFor===S&&isle&&isle.length===N)return isle;isleFor=S;isle=new Int32Array(N).fill(-1);let id=0;const q=new Int32Array(N);
+ for(let s=0;s<N;s++){if(isle[s]>=0||ter[s]===1||ter[s]===4)continue;let h=0,t=0;q[t++]=s;isle[s]=id;while(h<t){const i=q[h++],x=i%W,y=(i/W)|0;for(let k=0;k<4;k++){const nx=x+DX[k],ny=y+DY[k];if(nx<0||ny<0||nx>=W||ny>=H)continue;const j=ny*W+nx;if(isle[j]>=0||ter[j]===1||ter[j]===4)continue;isle[j]=id;q[t++]=j}}id++}
+ return isle}
+function isleAt(x,y){const m=isleMap();x=clamp(Math.floor(x),0,W-1);y=clamp(Math.floor(y),0,H-1);let v=m[y*W+x];if(v>=0)return v;for(let r=1;r<4;r++)for(let k=0;k<8;k++){const xx=x+DX[k]*r,yy=y+DY[k]*r;if(xx>=0&&yy>=0&&xx<W&&yy<H&&m[yy*W+xx]>=0)return m[yy*W+xx]}return -1}
+const bIsle=b=>isleAt(b.x+b.w/2,b.y+b.h/2);
+function coastPoint(isl,tx,ty){const m=isleMap();let best=null,bd=1e9;for(let y=1;y<H-1;y+=1)for(let x=1;x<W-1;x+=1){const i=y*W+x;if(m[i]!==isl||block[i])continue;let wet=false;for(let k=0;k<4;k++)if(ter[(y+DY[k])*W+x+DX[k]]===1){wet=true;break}if(!wet)continue;const d=Math.hypot(x-tx,y-ty);if(d<bd){bd=d;best={x:x+.5,y:y+.5}}}return best}
+function ferryTick(){if(!S||S.editor)return;for(const p of P){if(!p.ai||p.alive===false)continue;const ai=p.ai;const tc=blds.find(b=>b.o===p.i&&(b.type==='tc'||b.type==='castle'));if(!tc)continue;const hi=bIsle(tc);
+ if(ai.ferT==null||S.t>=ai.ferT){ai.ferT=S.t+30;const foes=blds.filter(b=>isEnemy(p.i,b.o)&&(b.type==='tc'||b.type==='castle'));ai.overseas=foes.length>0&&foes.every(b=>bIsle(b)!==hi);
+  if(ai.overseas){const t=foes.sort((a,b)=>Math.hypot(a.x-tc.x,a.y-tc.y)-Math.hypot(b.x-tc.x,b.y-tc.y))[0];ai.ferTgt={id:t.id,isl:bIsle(t),pt:coastPoint(bIsle(t),t.x+t.w/2,t.y+t.h/2)}}}
+ if(!ai.overseas||!ai.ferTgt||!ai.ferTgt.pt)continue;
+ const cogs=units.filter(u=>u.o===p.i&&u.type==='cog'),dock=blds.find(b=>b.o===p.i&&b.type==='dock'&&b.built>=1);
+ if(dock&&!dock.queue.length&&cogs.length<(ai.diff>=1?2:1)&&p.phase>=0){const c=costOf(p,U.cog.cost,'u','cog');if(afford(p,c)&&p.pop<p.popCap){pay(p,c);dock.queue.push({u:'cog',p:0})}}
+ const waiting=[...ai.waves].map(id=>ents.get(id)).filter(u=>u&&!u.gar&&!u.nav&&isleAt(u.x,u.y)===hi);
+ for(const c of cogs){const f=c.fer||(c.fer={st:'load',t0:S.t});const cargo=(c.cargo||[]).filter(id=>ents.has(id)).length;
+  if(f.st==='go'){if(!cargo&&!c.task){f.st='back';const home=dock||tc;c.task={k:'move',x:home.x+home.w/2,y:home.y+home.h/2};c.path=null}else if(cargo&&!c.task){c.task={k:'land',x:ai.ferTgt.pt.x,y:ai.ferTgt.pt.y};c.path=null}continue}
+  if(f.st==='back'){if(!c.task){f.st='load';f.t0=S.t}continue}
+  if(!waiting.length&&!cargo){if(!c.task&&dock&&Math.hypot(c.x-dock.x-1,c.y-dock.y-1)>5){c.task={k:'move',x:dock.x+1,y:dock.y+1};c.path=null}continue}
+  const room=U.cog.cap-cargo;const boarding=waiting.filter(u=>u.task&&u.task.k==='board'&&u.task.id===c.id).length;let free=room-boarding;
+  for(const u of waiting){if(free<=0)break;if(u.task&&u.task.k==='board')continue;u.task={k:'board',id:c.id};u.path=null;free--}
+  if(!cargo)f.t0=S.t;const still=waiting.some(u=>!(u.task&&u.task.k==='board'));
+  if(cargo>0&&(room<=0||(!boarding&&!still)||S.t-f.t0>40)){f.st='go';c.task={k:'land',x:ai.ferTgt.pt.x,y:ai.ferTgt.pt.y};c.path=null}}}}
 /* ---------- sprites: isometric 3D kit ---------- */
 const sprC=new Map();
 const HW=32,HH=16,ZS=32;
@@ -2481,7 +2509,7 @@ function tick(){S.t+=DT;S.tick++;pathBudget=0;
  for(const a of animals.slice())if(!a.dead)updAnimal(a,DT);
  if(roadDirty)roadSync();cargoFollow();
  if(S.tick%2===0)separate();
- if(S.tick%20===3){hillTick();relicTick();moraleTick();weatherTick();wildTick();spectTick();if(S.tick%200===3)dipTick()}if(S.tick%40===9)seaTradeTick();if(S.tick%10===5)wolfTick();if(S.tick%600===0)histTick();if(S.tick%40===0)achTick();
+ if(S.tick%20===3){hillTick();relicTick();moraleTick();weatherTick();wildTick();spectTick();if(S.tick%200===3)dipTick()}if(S.tick%40===9)seaTradeTick();if(S.tick%10===5)wolfTick();if(S.tick%20===13)ferryTick();if(S.tick%600===0)histTick();if(S.tick%40===0)achTick();
  if(S.tick%20===7)for(const p of P)if(p.alive)autoRepair(p);
  for(const p of projs){p.t+=DT;if(p.t>=p.dur){const t=ents.get(p.tid);if(t&&!t.dead&&!(t.k==='u'&&t.gar))hit(t,p.d,p.o,p.aid);
    if(p.splash){for(const u of units){if(u.gar||!isEnemy(p.o,u.o)||u===t)continue;if(Math.hypot(u.x-p.tx,u.y-p.ty)<p.splash)hit(u,p.d*.6,p.o,p.aid)}fx.push({k:'dust',x:p.tx,y:p.ty,t:0,life:.8,s:.5})}p.done=1}
