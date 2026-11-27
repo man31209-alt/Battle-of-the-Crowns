@@ -67,6 +67,7 @@ const U={
  trader:{n:'Trade Cart',hp:80,atk:0,at:'m',rng:0,arm:[0,2],spd:1.4,los:6,cost:{food:100,gold:80},tm:16,ph:1,tag:'trd',rate:1,look:'trader',d:'Carries goods between two of your markets for gold.'},
  ram:{n:'Battering Ram',hp:260,atk:2,at:'m',rng:0,arm:[-3,150],spd:.8,los:4,cost:{wood:250,gold:100},tm:26,ph:1,tag:'sie',rate:3,bon:{bld:130},look:'ram',d:'Smashes buildings. Weak to melee.'},
  mangonel:{n:'Mangonel',hp:120,atk:14,at:'p',rng:8,arm:[0,10],spd:.75,los:9,cost:{wood:250,gold:150},tm:28,ph:2,tag:'sie',rate:5,bon:{bld:30},splash:1.2,look:'mangonel',d:'Hurls stones that hit groups of units.'},
+ stower:{n:'Siege Tower',hp:320,atk:0,at:'m',rng:0,arm:[1,10],spd:.7,los:6,cost:{wood:260,gold:60},tm:32,ph:2,tag:'sie',rate:1,d:'Tap an enemy wall: the tower rolls up and docks, and your soldiers can climb over that stretch of wall.'},
  treb:{n:'Trebuchet',hp:180,atk:2,at:'p',rng:12,arm:[1,150],spd:.65,los:12,cost:{wood:300,gold:250},tm:34,ph:2,tag:'sie',rate:8,bon:{bld:260},look:'treb',d:'Huge range. Destroys walls and castles.'},
  sheep:{n:'Sheep',hp:10,atk:0,at:'m',rng:0,arm:[0,0],spd:.8,los:3,cost:{food:50},tm:8,ph:0,tag:'ani',rate:1,look:'sheep',d:'Fattened at the corral. Hunt it for 100 food.'},
  fishboat:{n:'Fishing Boat',hp:80,atk:0,at:'m',rng:0,arm:[0,2],spd:1.6,los:7,cost:{wood:80},tm:14,ph:0,tag:'shp',rate:1,nav:1,look:'fishboat',d:'Catches fish and brings it to the dock.'},
@@ -131,7 +132,7 @@ const B={
  field:{n:'Field',w:3,h:3,hp:300,cost:{wood:100},tm:14,ph:0,los:2,flat:1,slots:5,d:'Never runs out. Up to 5 farmers.'},
  corral:{n:'Corral',w:2,h:2,hp:500,cost:{wood:100},tm:16,ph:0,los:4,train:['sheep'],d:'Raises sheep. Send up to 3 villagers here to herd and butcher for steady food, or train sheep to hunt.'},
  dock:{n:'Dock',w:2,h:2,hp:1000,cost:{wood:150},tm:24,ph:0,drop:['food','wood'],los:7,train:['fishboat','merchant','cog','galley','fireship','demoship'],tech:['nets','shipwright'],water:1,any:1,d:'Build on the shore. Fishing boats and warships.'},
- barracks:{n:'Barracks',w:3,h:3,hp:1500,cost:{wood:200},tm:30,ph:0,los:6,train:['spear','militia','champ'],tech:['t_pike','t_halberd','t_maa','t_long'],gar:10,d:'Trains infantry.'},
+ barracks:{n:'Barracks',w:3,h:3,hp:1500,cost:{wood:200},tm:30,ph:0,los:6,train:['spear','militia','champ'],tech:['t_pike','t_halberd','t_maa','t_long','ladders'],gar:10,d:'Trains infantry.'},
  range:{n:'Archery Range',w:3,h:3,hp:1500,cost:{wood:200},tm:30,ph:0,los:6,train:['archer','xbow'],tech:['t_earcher'],d:'Trains archers.'},
  stable:{n:'Stable',w:3,h:3,hp:1500,cost:{wood:200},tm:30,ph:0,los:6,train:['scout','knight'],tech:['t_lightcav','t_cavalier','t_paladin'],d:'Trains cavalry.'},
  sentry:{n:'Sentry Tower',w:1,h:1,hp:500,cost:{wood:100},tm:20,ph:0,los:10,arr:{n:1,r:6,a:4},gar:3,d:'Cheap lookout tower.'},
@@ -142,7 +143,7 @@ const B={
  smith:{n:'Blacksmith',w:3,h:3,hp:1500,cost:{wood:200},tm:30,ph:1,los:6,tech:['forge','iron','fletch','bodkin','scale','chain','barding','plate','blast','bracer'],d:'Attack and armor upgrades.'},
  market:{n:'Market',w:3,h:3,hp:1500,cost:{wood:300},tm:40,ph:1,los:6,train:['trader'],tech:['caravan','guilds','banking'],market:1,d:'Barter goods. Trade carts run between markets.'},
  temple:{n:'Monastery',w:3,h:3,hp:2000,cost:{stone:300},tm:40,ph:1,los:7,train:['monk'],tech:['herbal'],gar:10,heal:3,d:'Trains monks. Heals units inside.'},
- workshop:{n:'Siege Workshop',w:3,h:3,hp:1500,cost:{wood:300},tm:40,ph:1,los:6,train:['ram','mangonel','treb'],d:'Builds siege weapons.'},
+ workshop:{n:'Siege Workshop',w:3,h:3,hp:1500,cost:{wood:300},tm:40,ph:1,los:6,train:['ram','stower','mangonel','treb'],d:'Builds siege weapons.'},
  tower:{n:'Stone Tower',w:1,h:1,hp:1600,cost:{wood:100,stone:150},tm:40,ph:1,los:11,arr:{n:2,r:8,a:7},gar:5,d:'Strong tower. Garrison adds arrows.'},
  wall:{n:'Stone Wall',gar:2,arr:{n:0,r:6,a:6},w:1,h:1,hp:2200,cost:{stone:6},tm:6,ph:1,los:2,wall:1,any:1,nocap:1,d:'Thick stone wall.'},
  gate:{n:'Gate',gar:2,arr:{n:0,r:6,a:6},w:1,h:1,hp:2200,cost:{stone:30},tm:12,ph:1,los:3,wall:1,gate:1,any:1,nocap:1,d:'Your units can pass, enemies cannot. Build it on top of a wall to swap a piece out.'},
@@ -183,6 +184,7 @@ const TECH={
  guilds:{n:'Guilds',ph:2,cost:{food:300,gold:200},tm:40,ic:'brick',d:'Better barter prices.',fx:m=>{m.barter*=.5}},
  royal:{n:'Royal Treasury',ph:3,cost:{food:600,gold:600},tm:60,ic:'pickg',d:'Units cost 10% less and train 15% faster.',fx:m=>{m.train+=.15;m.cost.all=(m.cost.all||1)*.9}},
  hoardings:{n:'Hoardings',ph:3,cost:{wood:500,stone:400},tm:60,ic:'brick',req:'architecture',d:'Buildings +25% health. Towers and castles shoot 1 more arrow.',fx:m=>{m.bhp+=.25;m.towerArr+=1}},
+ ladders:{n:'Siege Ladders',ph:2,cost:{food:200,wood:150},tm:40,ic:'brick',d:'Your foot soldiers can climb enemy walls with ladders (slowly).',fx:m=>{m.ladders=1}},
  plate:{n:'Plate Armor',ph:3,cost:{food:400,gold:350},tm:60,ic:'shield',req:'chain',d:'Soldiers +2/+3 armor.',fx:m=>{m.arm[0]+=2;m.arm[1]+=3}},
  blast:{n:'Blast Furnace',ph:3,cost:{food:400,gold:300},tm:60,ic:'sword',req:'iron',d:'Melee units +2 attack.',fx:m=>{m.atk.m+=2}},
  bracer:{n:'Bracer',ph:3,cost:{food:400,gold:300},tm:60,ic:'arrow',req:'bodkin',d:'Ranged +1 attack and +1 range.',fx:m=>{m.atk.p+=1;m.rng+=1}},
@@ -251,7 +253,8 @@ const canBuild=u=>{const d=ud(u);return d.tag==='vil'||!!d.cit};
 function costStr(c){const m={food:'cf',wood:'cw',gold:'cg',stone:'cs2'};return Object.keys(c).map(k=>`<i class="${m[k]}"></i>${c[k]}`).join('')}
 function need(p,c){const out=[];for(const r in c){const d=c[r]-(p.res[r]||0);if(d>0)out.push(Math.ceil(d)+' more '+r)}return out.join(' and ')}
 const land=i=>ter[i]!==1&&ter[i]!==4;
-const pass=(i,o,nav)=>{if(nav)return (ter[i]===1||ter[i]===2)&&block[i]===0&&!(S&&S.frozen&&iceM&&iceM[i]);if((ter[i]===1&&!(S&&S.frozen&&iceM&&iceM[i]))||ter[i]===4)return false;const b=block[i];if(b===0)return true;if(b===3){const g=ents.get(occ[i]);return !!g&&g.o===o&&!g.locked}return false};
+const pass=(i,o,nav)=>{if(nav===2){if(ter[i]===4||(ter[i]===1&&!(S&&S.frozen&&iceM&&iceM[i])))return false;const b=block[i];if(b===0)return true;if(overM&&overM[i]&&!isEnemy(o,overM[i]-1))return true;const g=ents.get(occ[i]);if(g&&B[g.type].wall&&!B[g.type].gate&&isEnemy(o,g.o))return true;if(b===3)return !!g&&g.o===o&&!g.locked;return false}
+ if(nav)return (ter[i]===1||ter[i]===2)&&block[i]===0&&!(S&&S.frozen&&iceM&&iceM[i]);if((ter[i]===1&&!(S&&S.frozen&&iceM&&iceM[i]))||ter[i]===4)return false;const b=block[i];if(b===0)return true;if(overM&&overM[i]&&!isEnemy(o,overM[i]-1))return true;if(b===3){const g=ents.get(occ[i]);return !!g&&g.o===o&&!g.locked}return false};
 const passXY=(x,y,o,nav)=>x>=0&&y>=0&&x<W&&y<H&&pass(y*W+x,o,nav);
 
 /* ---------- entities ---------- */
@@ -305,22 +308,22 @@ function findPath(o,nav,sx,sy,gx0,gy0,gx1,gy1,adj){
   const h0=hh(cx,cy);if(h0<bestH){bestH=h0;best=c}
   for(let k=0;k<8;k++){const dx=DX[k],dy=DY[k],nx=cx+dx,ny=cy+dy;if(nx<0||ny<0||nx>=W||ny>=H)continue;const ni=ny*W+nx;if(closed[ni]===stampN||!pass(ni,o,nav))continue;
    if(dx&&dy&&(!pass(cy*W+nx,o,nav)||!pass(ny*W+cx,o,nav)))continue;
-   const g=gS[c]+(dx&&dy?1.414:1)*(!nav&&roadM&&roadM[ni]?.7:1);if(seen[ni]!==stampN||g<gS[ni]){seen[ni]=stampN;gS[ni]=g;par[ni]=c;hpush(ni,g+hh(nx,ny)*1.05)}}}
+   const g=gS[c]+(dx&&dy?1.414:1)*(!nav&&roadM&&roadM[ni]?.7:1)+(nav===2&&block[ni]?6:overM&&overM[ni]?2:0);if(seen[ni]!==stampN||g<gS[ni]){seen[ni]=stampN;gS[ni]=g;par[ni]=c;hpush(ni,g+hh(nx,ny)*1.05)}}}
  pathBudget+=it;
  const end=found>=0?found:best;const pts=[];let c=end;while(c!==-1&&c!==s){pts.push({x:c%W+.5,y:((c/W)|0)+.5});c=par[c]}pts.reverse();
  return{pts,partial:found<0}}
 function losOk(o,nav,x0,y0,x1,y1){const d=Math.hypot(x1-x0,y1-y0),n=Math.ceil(d/.25);const q=nav?.4:.28;for(let k=1;k<n;k++){const t=k/n,x=x0+(x1-x0)*t,y=y0+(y1-y0)*t;
  if(!passXY(Math.floor(x+q),Math.floor(y+q),o,nav)||!passXY(Math.floor(x-q),Math.floor(y+q),o,nav)||!passXY(Math.floor(x+q),Math.floor(y-q),o,nav)||!passXY(Math.floor(x-q),Math.floor(y-q),o,nav))return false}return true}
 function smooth(o,nav,x,y,pts){if(pts.length<2)return pts;const out=[];let cx=x,cy=y,i=0;while(i<pts.length){let j=Math.min(pts.length-1,i+14);for(;j>i;j--)if(losOk(o,nav,cx,cy,pts[j].x,pts[j].y))break;out.push(pts[j]);cx=pts[j].x;cy=pts[j].y;i=j+1}return out}
-function pathRect(u,x0,y0,x1,y1,adj){const r=findPath(u.o,u.nav,u.x,u.y,x0,y0,x1,y1,adj);u.path=smooth(u.o,u.nav,u.x,u.y,r.pts);u.partial=r.partial;
+function pathRect(u,x0,y0,x1,y1,adj){const nv=mvNav(u);const r=findPath(u.o,nv,u.x,u.y,x0,y0,x1,y1,adj);u.path=smooth(u.o,nv,u.x,u.y,r.pts);u.partial=r.partial;
  if(!u.path.length&&!r.partial){const cx=Math.floor(u.x)+.5,cy=Math.floor(u.y)+.5;if(Math.hypot(cx-u.x,cy-u.y)>.05)u.path=[{x:cx,y:cy}]}}
-function goPoint(u,x,y){const tx=clamp(x|0,0,W-1),ty=clamp(y|0,0,H-1);if(passXY(tx,ty,u.o,u.nav)){pathRect(u,tx,ty,tx,ty,false);if(!u.partial){if(u.path.length)u.path[u.path.length-1]={x,y};else u.path=[{x,y}]}}else pathRect(u,tx,ty,tx,ty,true)}
+function goPoint(u,x,y){const tx=clamp(x|0,0,W-1),ty=clamp(y|0,0,H-1);if(passXY(tx,ty,u.o,mvNav(u))){pathRect(u,tx,ty,tx,ty,false);if(!u.partial){if(u.path.length)u.path[u.path.length-1]={x,y};else u.path=[{x,y}]}}else pathRect(u,tx,ty,tx,ty,true)}
 function pathToEnt(u,e){if(e.k!=='b'){const tx=e.x|0,ty=e.y|0;pathRect(u,tx,ty,tx,ty,true);if(!u.partial)u.path.push({x:e.x,y:e.y})}else pathRect(u,e.x,e.y,e.x+e.w-1,e.y+e.h-1,true)}
-function step(u,dt){if(!u.path||!u.path.length)return true;const p=u.path[0];const _gs=u.task&&u.task.gs;const dx=p.x-u.x,dy=p.y-u.y,d=Math.hypot(dx,dy),s=(_gs?Math.min(uSpd(u),_gs):uSpd(u))*(!u.nav&&roadM&&roadM[(u.y|0)*W+(u.x|0)]?1.35:1)*dt;
+function step(u,dt){if(!u.path||!u.path.length)return true;const p=u.path[0];const _gs=u.task&&u.task.gs;const dx=p.x-u.x,dy=p.y-u.y,d=Math.hypot(dx,dy),s=(_gs?Math.min(uSpd(u),_gs):uSpd(u))*(!u.nav&&roadM&&roadM[(u.y|0)*W+(u.x|0)]?1.35:1)*(!u.nav&&block[(u.y|0)*W+(u.x|0)]?.4:1)*dt;
  if(Math.abs(dx)>.04)u.face=dx<0?-1:1;u.an+=dt*uSpd(u)*5;u.mv=1;
  if(d<=s){u.x=p.x;u.y=p.y;u.path.shift();return !u.path.length}
  const nx=u.x+dx/d*s,ny=u.y+dy/d*s;
- if(!passXY(Math.floor(nx),Math.floor(ny),u.o,u.nav)&&passXY(Math.floor(u.x),Math.floor(u.y),u.o,u.nav)){u.path=null;return false}
+ if(!passXY(Math.floor(nx),Math.floor(ny),u.o,mvNav(u))&&passXY(Math.floor(u.x),Math.floor(u.y),u.o,mvNav(u))){u.path=null;return false}
  u.x=nx;u.y=ny;return false}
 
 /* ---------- resources ---------- */
@@ -371,7 +374,8 @@ function updUnit(u,dt){
  switch(t.k){
  case 'move':{if(!u.path||!u.path.length){const d=Math.hypot(t.x-u.x,t.y-u.y);if(d<.35||(t.n||0)>3){u.task=null;u.path=null;u.home={x:u.x,y:u.y};return}if(u.rp>0||pathBusy(u))return;t.n=(t.n||0)+1;u.rp=.4;goPoint(u,t.x,t.y);if(!u.path.length){u.task=null}return}
   step(u,dt);return}
- case 'patrol':{u.th-=dt;if(u.th<=0){u.th=.4;const e=nearestEnemy(u,ud(u).los+.5,true);if(e){u.task={k:'atk',id:e.id,auto:1,resume:t};u.path=null;return}}
+ case 'dock':{towerDock(u,u.task,dt);break}
+  case 'patrol':{u.th-=dt;if(u.th<=0){u.th=.4;const e=nearestEnemy(u,ud(u).los+.5,true);if(e){u.task={k:'atk',id:e.id,auto:1,resume:t};u.path=null;return}}
   if(!u.path||!u.path.length){const tx=t.leg?t.bx:t.ax,ty=t.leg?t.by:t.ay;const d=Math.hypot(tx-u.x,ty-u.y);if(d<.8||(t.n||0)>3){t.leg=t.leg?0:1;t.n=0;u.rp=Math.max(u.rp,.3);return}if(u.rp>0||pathBusy(u))return;t.n=(t.n||0)+1;u.rp=.4;goPoint(u,tx,ty);return}step(u,dt);return}
  case 'amove':{u.th-=dt;if(u.th<=0){u.th=.4;const e=nearestEnemy(u,ud(u).los+.5,true);if(e){u.task={k:'atk',id:e.id,auto:1,resume:t};u.path=null;return}}
   if(!u.path||!u.path.length){const d=Math.hypot(t.x-u.x,t.y-u.y);if(d<.6||(t.n||0)>3){u.task=null;u.home={x:u.x,y:u.y};return}if(u.rp>0||pathBusy(u))return;t.n=(t.n||0)+1;u.rp=.4;goPoint(u,t.x,t.y);return}step(u,dt);return}
@@ -567,6 +571,32 @@ function computeTerritory(){terrDirty=false;terr.fill(0);const best=new Float32A
  for(const b of blds){const d=B[b.type];if(!d.terr||b.built<1)continue;const cx=b.x+b.w/2,cy=b.y+b.h/2,r=d.terr;
   for(let y=Math.max(0,Math.floor(cy-r));y<=Math.min(H-1,Math.ceil(cy+r));y++)for(let x=Math.max(0,Math.floor(cx-r));x<=Math.min(W-1,Math.ceil(cx+r));x++){const f=Math.hypot(x+.5-cx,y+.5-cy)/r;if(f>1)continue;const i=y*W+x;if(f<best[i]){best[i]=f;terr[i]=b.o+1}}}
  terrEdges=[];for(let y=0;y<H;y++)for(let x=0;x<W;x++){const i=y*W+x,o=terr[i];if(!o)continue;if(x+1>=W||terr[i+1]!==o)terrEdges.push([x+1,y,x+1,y+1,o-1]);if(x===0||terr[i-1]!==o)terrEdges.push([x,y,x,y+1,o-1]);if(y+1>=H||terr[i+W]!==o)terrEdges.push([x,y+1,x+1,y+1,o-1]);if(y===0||terr[i-W]!==o)terrEdges.push([x,y,x+1,y,o-1])}}
+
+/* ---------- real sieges: siege towers, ladders, ram crews, splintering gates ---------- */
+let overM=null,overFor=null;
+function overMap(){if(overFor!==S||!overM||overM.length!==N){overFor=S;overM=new Uint8Array(N)}return overM}
+const isWallB=g=>g&&B[g.type]&&B[g.type].wall&&!B[g.type].gate;
+const mvNav=u=>u.nav?1:(P[u.o]&&P[u.o].m.ladders&&ud(u).tag==='inf'?2:0);
+function towerDock(u,t,dt){const w=ents.get(t.id);if(!w||w.dead||!isWallB(w)){undock(u);u.task=null;return}
+ const d=rectDist(u.x,u.y,w.x,w.y,w.w,w.h);if(d<1.25){if(u.dockW!==w.id){undock(u);u.dockW=w.id;const m=overMap();m[w.y*W+w.x]=u.o+1;
+   for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){const g=ents.get(occ[(w.y+dy)*W+w.x+dx]);if(isWallB(g))m[g.y*W+g.x]=u.o+1}
+   if(u.o===0)toast('Siege tower in place! Your soldiers can now climb over this wall.','good',{x:u.x,y:u.y});sfx('creak',u.x,u.y)}u.path=null;return}
+ if(!u.path||!u.path.length){if(u.rp>0||pathBusy(u))return;t.n=(t.n||0)+1;if(t.n>8){u.task=null;return}u.rp=.8;pathRect(u,w.x,w.y,w.x,w.y,true)}step(u,dt)}
+function undock(u){if(!u.dockW)return;const w=ents.get(u.dockW);const m=overMap();if(w){m[w.y*W+w.x]=0;for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){const g=ents.get(occ[(w.y+dy)*W+w.x+dx]);if(isWallB(g)&&m[g.y*W+g.x]===u.o+1)m[g.y*W+g.x]=0}}u.dockW=0}
+function siegeTick(){const m=overMap();for(const u of units){if(u.type!=='stower'||!u.dockW)continue;if(u.dead||!u.task||u.task.k!=='dock'){undock(u)}}
+ for(const b of blds){if(!isWallB(b)||!m[b.y*W+b.x])continue;if(!units.some(u=>u.type==='stower'&&u.dockW===b.id))m[b.y*W+b.x]=0}}
+/* ladder and bridge visuals */
+function climbFx(g,u,p){if(u.nav)return;const i=(u.y|0)*W+(u.x|0);if(!block[i])return;const w=ents.get(occ[i]);if(!isWallB(w))return;
+ g.strokeStyle='#7a5634';g.lineWidth=1.4;const h=(ZMX[w.type]||56)*.8;g.beginPath();g.moveTo(p[0]-5,p[1]+4);g.lineTo(p[0]-3,p[1]-h);g.moveTo(p[0]+3,p[1]+4);g.lineTo(p[0]+5,p[1]-h);g.stroke();g.lineWidth=1;for(let k=0;k<6;k++){const y=p[1]+2-k*(h+2)/6;g.beginPath();g.moveTo(p[0]-4.6+k*.3,y);g.lineTo(p[0]+3.4+k*.3,y);g.stroke()}}
+function bridgeFx(g,u,p){if(!u.dockW)return;const w=ents.get(u.dockW);if(!w)return;const q=PJ(w.x+.5,w.y+.5,(ZMX[w.type]||56)*.9);g.strokeStyle='#5a3b20';g.lineWidth=4;g.beginPath();g.moveTo(p[0],p[1]-62);g.lineTo(q[0],q[1]);g.stroke();g.strokeStyle='#8a6a42';g.lineWidth=2.4;g.beginPath();g.moveTo(p[0],p[1]-62);g.lineTo(q[0],q[1]);g.stroke()}
+/* splintered gates */
+function gateDamageFx(g,b){if(!B[b.type].gate||b.built<1)return;const f=b.hp/bMaxHp(b);if(f>.65)return;const c=PJ(b.x+b.w/2,b.y+b.h/2,(ZMX[b.type]||60)*.3);const n=f<.3?7:4;
+ g.strokeStyle=b.type==='pgate'?'#3a2412':'#2a2620';g.lineWidth=1.2;for(let k=0;k<n;k++){const a=(b.id*37+k*71)%360/57.3,r=4+((b.id+k*13)%9);g.beginPath();g.moveTo(c[0]+Math.cos(a)*2,c[1]+Math.sin(a)*2);g.lineTo(c[0]+Math.cos(a)*r+((k%3)-1)*2,c[1]+Math.sin(a)*r*.7);g.lineTo(c[0]+Math.cos(a)*(r+4),c[1]+Math.sin(a)*(r+4)*.7);g.stroke()}
+ g.fillStyle='#8a6a42';for(let k=0;k<n;k++){const sx=c[0]+(((b.id+k*29)%19)-9),sy=c[1]+16+(((b.id+k*7)%7));g.save();g.translate(sx,sy);g.rotate(k*1.3);g.fillRect(-3,-.7,6,1.4);g.restore()}}
+/* lasting rubble */
+function drawRubble(r){const c=PJ(r.x+r.w/2,r.y+r.h/2,0);const fade=Math.min(1,(600-r.t)/60);ctx.globalAlpha=fade;footprint(ctx,r.x+.1,r.y+.1,r.w-.2,r.h-.2);ctx.fillStyle='rgba(72,58,42,.55)';ctx.fill();
+ const n=6+r.w*r.h*2;for(let k=0;k<n;k++){const h=(r.x*73+r.y*37+k*101)%997;const px=r.x+.2+(h%100)/100*(r.w-.4),py=r.y+.2+((h*7)%100)/100*(r.h-.4);const p=PJ(px,py,0);
+  if(k%4===0){ctx.save();ctx.translate(p[0],p[1]-1);ctx.rotate((h%31)/5);ctx.fillStyle='#5a3b20';ctx.fillRect(-7,-1.2,14,2.4);ctx.restore()}else{ctx.fillStyle=['#8a8478','#6a645a','#a8a294'][k%3];ctx.beginPath();ctx.ellipse(p[0],p[1]-1.5,2.5+(h%3),1.6+(h%2),0,0,7);ctx.fill()}}ctx.globalAlpha=1}
 
 /* ---------- map generation ---------- */
 const MAPS={mainland:{n:'Mainland',d:'Open land, forests and ponds.',biome:'temp'},rivers:{n:'Rivers',d:'Rivers split the land. Cross at the fords.',biome:'temp'},lakes:{n:'Great Lake',d:'A big lake in the middle. Fish and warships.',biome:'temp'},
@@ -1437,7 +1467,12 @@ function drawUnit(g,type,o,face,an,state,u,noSh){const col=PCOL[o]||'#888',d=U[t
  if(d.tag==='sie'||type==='trader'){if(!noSh){g.fillStyle='rgba(0,0,0,.3)';g.beginPath();g.ellipse(0,0,15,4.5,0,0,7);g.fill()}
   if(type==='trader'){cart(g,col,an,walk);g.restore();return}
   if(type==='mangonel'){mangonel(g,col,u);g.restore();return}
-  if(type==='ram'){g.fillStyle='#6d4b2c';g.fillRect(-13,-15,26,12);g.strokeStyle='#4a3020';g.lineWidth=.6;for(let k=-13;k<13;k+=3){g.beginPath();g.moveTo(k,-15);g.lineTo(k,-3);g.stroke()}g.fillStyle='#57391f';g.beginPath();g.moveTo(-15,-14);g.lineTo(0,-23);g.lineTo(15,-14);g.fill();
+  if(type==='stower'){const wl=Math.sin(an*2)*.6;for(const wx of [-8,8]){g.fillStyle='#3a2716';g.beginPath();g.arc(wx,-3,4,0,7);g.fill();g.fillStyle='#8a6a40';g.beginPath();g.arc(wx,-3,1.5,0,7);g.fill()}
+   g.fillStyle='#6d4b2c';g.beginPath();g.moveTo(-11,-6);g.lineTo(11,-6);g.lineTo(9,-40);g.lineTo(-9,-40);g.fill();g.fillStyle='#8a6a40';for(let y=-38;y<-7;y+=5){g.fillRect(-10+(y+40)*.06,y,20-(y+40)*.12,1.2)}
+   g.fillStyle='#9a7a52';g.beginPath();g.moveTo(-9,-38);g.lineTo(-11,-8);g.lineTo(-6,-8);g.lineTo(-5,-38);g.fill();g.strokeStyle='#4a3020';g.lineWidth=.7;g.strokeRect(-9,-40,18,34);
+   g.fillStyle='#5a3b20';g.fillRect(-11,-44,22,4);for(let k=-11;k<11;k+=5)g.fillRect(k,-47,3,3);g.fillStyle='#7a5634';g.fillRect(-4,-34,8,14);g.strokeStyle='#4a3020';g.strokeRect(-4,-34,8,14);
+   g.strokeStyle='#3a2716';g.lineWidth=1.2;g.beginPath();g.moveTo(0,-47);g.lineTo(0,-56);g.stroke();g.fillStyle=col;g.beginPath();g.moveTo(0,-56);g.lineTo(7,-54+wl);g.lineTo(0,-51);g.fill();g.fillStyle=col;g.fillRect(-9,-12,18,2);g.restore();return}
+  if(type==='ram'){const lg=Math.sin(an)*2.2;g.strokeStyle='#3a2a1a';g.lineWidth=1.5;for(const lx of [-6,-1,4]){g.beginPath();g.moveTo(lx-1,-5);g.lineTo(lx-1+lg,0);g.moveTo(lx+1,-5);g.lineTo(lx+1-lg,0);g.stroke()}g.fillStyle='#6d4b2c';g.fillRect(-13,-15,26,12);g.strokeStyle='#4a3020';g.lineWidth=.6;for(let k=-13;k<13;k+=3){g.beginPath();g.moveTo(k,-15);g.lineTo(k,-3);g.stroke()}g.fillStyle='#57391f';g.beginPath();g.moveTo(-15,-14);g.lineTo(0,-23);g.lineTo(15,-14);g.fill();
    g.fillStyle='#7a6a50';g.beginPath();g.moveTo(-14,-14.5);g.lineTo(0,-22.5);g.lineTo(0,-19);g.lineTo(-11,-13);g.fill();g.fillStyle=col;g.fillRect(-13,-8,26,2);
    g.fillStyle='#8a8070';g.fillRect(12+Math.max(0,swing)*3,-11.5,6,5);g.fillStyle='#5a5248';g.fillRect(17+Math.max(0,swing)*3,-12,2,6);for(const wx of [-9,0,9]){g.fillStyle='#3a2716';g.beginPath();g.arc(wx,-2,3.5,0,7);g.fill();g.fillStyle='#8a6a40';g.beginPath();g.arc(wx,-2,1.4,0,7);g.fill()}}
   else{g.strokeStyle='#5a3b20';g.lineWidth=2.5;g.beginPath();g.moveTo(-12,-2);g.lineTo(12,-2);g.moveTo(-8,-2);g.lineTo(0,-20);g.lineTo(8,-2);g.stroke();const a=-.9+((u.cd||0)>0?Math.min(1,u.cd/4)*1.6:0);g.save();g.translate(0,-20);g.rotate(a);g.lineWidth=2;g.beginPath();g.moveTo(-8,0);g.lineTo(20,0);g.stroke();g.fillStyle='#4a4038';g.fillRect(-12,-2,6,8);g.restore();
@@ -1509,7 +1544,7 @@ function drawBld(g,b){const c=B[b.type].wall?bSprite(b.type,P[b.o].style,b.o,bTi
   if(b.built>0){g.save();g.beginPath();g.rect(X,cy,w,h);g.clip();g.globalAlpha=.55+.45*b.built;g.drawImage(c,X,Y,w,h);g.restore()}
   g.strokeStyle='#8a6640';g.lineWidth=1.8;g.beginPath();for(const [a,bb] of [[b.x+.1,b.y+b.h-.1],[b.x+b.w-.1,b.y+b.h-.1],[b.x+b.w-.1,b.y+.1]]){const q=PJ(a,bb,0);g.moveTo(q[0],q[1]);g.lineTo(q[0],Math.max(cy-4,q[1]-70))}g.stroke();return}
  g.drawImage(c,X,Y,w,h);
- if(B[b.type].gate)drawGateLive(g,b);
+ if(B[b.type].gate){drawGateLive(g,b);gateDamageFx(g,b)}
  if(b.type==='corral'&&b.built>=1){if(!b._sh)b._sh=[[.55,.8,0],[1.35,.6,1],[1.1,1.35,0]].map(([x,y,f])=>({type:'sheep',face:f,mv:0,an:0,x,y}));const n=Math.min(3,1+(b.slots?b.slots.length:0));const t=performance.now()/1000;for(let k=0;k<n;k++){const sh=b._sh[k];if((t*.25+k*.37+b.id*.1)%1<.02)sh.face^=1;const sp=animalSprite(sh),q=PJ(b.x+sh.x,b.y+sh.y,0);g.drawImage(sp,q[0]-sp.ox,q[1]-sp.oy,sp.w,sp.h)}}
  if(B[b.type].wall&&b.gar.length&&(b.o===0||vis[b.y*W+b.x])){const gu=ents.get(b.gar[0]);if(gu){const sp=unitSprite(gu,'idle'),q=PJ(b.x+.5,b.y+.5,(ZMX[b.type]||56)*.82);g.drawImage(sp,q[0]-sp.ox*.8,q[1]-sp.oy*.8,sp.w*.8,sp.h*.8)}}
  const f=b.hp/bMaxHp(b);if(f<.6&&!B[b.type].wall){const n=f<.3?3:1,cc=PJ(b.x+b.w/2,b.y+b.h/2,(ZMX[b.type]||100)*.35);for(let k=0;k<n;k++){const t=(performance.now()/1000+k*.7+b.id)%2;g.fillStyle=`rgba(60,55,50,${.5*(1-t/2)})`;g.beginPath();g.arc(cc[0]+(k-1)*12,cc[1]-t*20,5+t*7,0,7);g.fill()}
@@ -1521,8 +1556,7 @@ function render(){const z=cam.z;ctx.setTransform(DPR,0,0,DPR,0,0);ctx.fillStyle=
  const cs=[toWorld(0,0),toWorld(VW,0),toWorld(0,VH),toWorld(VW,VH)];
  const x0=Math.max(0,Math.floor(Math.min(...cs.map(c=>c.x)))-2),x1=Math.min(W-1,Math.ceil(Math.max(...cs.map(c=>c.x)))+5),y0=Math.max(0,Math.floor(Math.min(...cs.map(c=>c.y)))-2),y1=Math.min(H-1,Math.ceil(Math.max(...cs.map(c=>c.y)))+5);
  const vr=cam.x+VW/z,vb=cam.y+VH/z;const cull=(px,py,up)=>px>cam.x-130&&px<vr+130&&py>cam.y-30&&py-up<vb+30;const showAll=!running;
- for(const r of rubble){const c=PJ(r.x+r.w/2,r.y+r.h/2,0);if(!cull(c[0],c[1],0))continue;footprint(ctx,r.x+.1,r.y+.1,r.w-.2,r.h-.2);ctx.fillStyle='rgba(72,58,42,.65)';ctx.fill();ctx.fillStyle='rgba(40,30,20,.6)';
-  for(let k=0;k<r.w*r.h*5;k++){const a=((k*37+r.x*13)%97)/97*r.w,bb=((k*53+r.y*7)%89)/89*r.h;const q=PJ(r.x+a,r.y+bb,0);ctx.fillRect(q[0]-2,q[1]-1.5,4,3)}}
+ for(const r of rubble){const c=PJ(r.x+r.w/2,r.y+r.h/2,0);if(!cull(c[0],c[1],0))continue;drawRubble(r)}
  for(const b of blds){if(!B[b.type].flat)continue;const c=PJ(b.x+b.w/2,b.y+b.h/2,0);if(!cull(c[0],c[1],0))continue;if(!showAll&&b.o!==0&&!explored[b.y*W+b.x])continue;
   if(B[b.type].road){const sp=roadSprite(roadMask(b));const p=PJ(b.x,b.y,0);ctx.globalAlpha=b.built<1?.25+.6*b.built:1;ctx.drawImage(sp,p[0]-sp.ox,p[1]-sp.oy,sp.w,sp.h);ctx.globalAlpha=1;continue}
   const q=b.built<1?0:4;const sp=farmSprite(b.w,b.h,q,b.built>=1);const p=PJ(b.x,b.y,0);ctx.drawImage(sp,p[0]-sp.ox,p[1]-sp.oy,sp.w,sp.h)}
@@ -1548,7 +1582,7 @@ function render(){const z=cam.z;ctx.setTransform(DPR,0,0,DPR,0,0);ctx.fillStyle=
   else if(it[1]===6)drawFolk(ctx,it[2]);
   else if(it[1]===3){const a=it[2],p=it[3];if(!a.carc){ctx.fillStyle='rgba(0,0,0,.28)';ctx.beginPath();ctx.ellipse(p[0],p[1],9,3.4,0,0,7);ctx.fill()}const sp=animalSprite(a);ctx.drawImage(sp,p[0]-sp.ox,p[1]-sp.oy,sp.w,sp.h)}
   else{const u=it[2],p=it[3];const st=u.mv?'walk':u.work?'work':u.swing>0?'atk':'idle';const tg=U[u.type].tag;if(tg!=='shp'){ctx.fillStyle='rgba(0,0,0,.3)';ctx.beginPath();ctx.ellipse(p[0],p[1],(tg==='sie'?15:tg==='cav'?10:6.5)*US,(tg==='sie'?4.5:tg==='cav'?3.4:2.8)*US,0,0,7);ctx.fill()}
-   const sp=unitSprite(u,st);ctx.drawImage(sp,p[0]-sp.ox,p[1]-sp.oy,sp.w,sp.h);if(u.flagB||u.drumB)drawBanner(ctx,u,p)}}
+   climbFx(ctx,u,p);const sp=unitSprite(u,st);ctx.drawImage(sp,p[0]-sp.ox,p[1]-sp.oy,sp.w,sp.h);if(u.flagB||u.drumB)drawBanner(ctx,u,p);if(u.dockW)bridgeFx(ctx,u,p)}}
  SMOKEFX(cull);FIREFX(cull);ARMSFX();
  for(const pr of projs){const f=Math.min(1,pr.t/pr.dur);const x=pr.x0+(pr.tx-pr.x0)*f,y=pr.y0+(pr.ty-pr.y0)*f;const arc=pr.kind==='rock'?70:26;const zz=16+Math.sin(f*Math.PI)*arc;const p=PJ(x,y,zz);
   if(pr.kind==='rock'){ctx.fillStyle='#4a4038';ctx.beginPath();ctx.arc(p[0],p[1],4.5,0,7);ctx.fill();ctx.strokeStyle='#1a140e';ctx.lineWidth=1;ctx.stroke()}
@@ -1994,7 +2028,7 @@ function command(mine,w,hu,hb,ha,mode){
  if(hu&&hu.o===0&&isTransport(hu)){const lu=mine.filter(u=>!u.nav);if(lu.length){const room=U[hu.type].cap-(hu.cargo||[]).length;if(room<=0){toast('That transport is full.','bad');return}let cx=0,cy=0;for(const u of lu){cx+=u.x;cy+=u.y}cx/=lu.length;cy/=lu.length;
   lu.slice(0,room).forEach(u=>{u.task={k:'board',id:hu.id};u.path=null});if(lu.length>room)toast('Only '+room+' fit; the rest stay.','bad');if(!hu.task&&Math.hypot(hu.x-cx,hu.y-cy)>2.5){const sp=shoreNear(cx,cy);if(sp){hu.task={k:'move',x:sp.x,y:sp.y};hu.path=null}}sfx('ackS');return}}
  {const tr=mine.filter(u=>isTransport(u)&&(u.cargo||[]).length);const wi=Math.floor(w.y)*W+Math.floor(w.x);if(tr.length&&!hu&&ter[wi]!==1){for(const s of tr){s.task={k:'land',x:w.x,y:w.y};s.path=null}fx.push({k:'ring',x:w.x,y:w.y,t:0,life:.5,c:'#9fd0ff'});sfx('ackS');const rest=mine.filter(u=>!tr.includes(u));if(!rest.length)return;mine=rest}}{const rl=!hu&&!hb&&relicAt(w);const mk=mine.find(u=>u.type==='monk');if(rl&&mk){mk.task={k:'relic',rid:rl.id};mk.path=null;fx.push({k:'ring',x:rl.x,y:rl.y,t:0,life:.5,c:'#ffe58a'});sfx('ackV');return}}sfx(mine.some(isMil)?'ackS':'ackV');const tx=Math.floor(w.x),ty=Math.floor(w.y),i=ty*W+tx;let mark='#7fe06a';const ships=mine.filter(u=>u.nav),landU=mine.filter(u=>!u.nav);
- const attack=e=>{if(peace()){toast('Ceasefire! No fighting until it ends.','bad');return false}for(const u of mine){if(!canFight(u))continue;u.task={k:'atk',id:e.id};u.path=null}voice('atk',mine.find(canFight)||mine[0]);return true};
+ const attack=e=>{if(peace()){toast('Ceasefire! No fighting until it ends.','bad');return false}for(const u of mine){if(u.type==='stower'){if(isWallB(e)){u.task={k:'dock',id:e.id};u.path=null}continue}if(!canFight(u))continue;u.task={k:'atk',id:e.id};u.path=null}voice('atk',mine.find(canFight)||mine[0]);return true};
  if(hu&&isEnemy(0,hu.o)){if(attack(hu))mark='#ff5a4a'}
  else if(hb&&isEnemy(0,hb.o)){if(attack(hb))mark='#ff5a4a'}
  else if(ha&&ha.type==='wolf'){for(const u of mine.filter(canFight)){u.task={k:'atk',id:ha.id};u.path=null}}
@@ -2632,12 +2666,12 @@ function tick(){S.t+=DT;S.tick++;pathBudget=0;
  for(const a of animals.slice())if(!a.dead)updAnimal(a,DT);
  if(roadDirty)roadSync();cargoFollow();
  if(S.tick%2===0)separate();
- if(S.tick%20===3){hillTick();relicTick();moraleTick();weatherTick();wildTick();spectTick();iceTick();if(S.tick%200===3)dipTick()}if(S.tick%40===9)seaTradeTick();if(S.tick%10===5)wolfTick();if(S.tick%20===13)ferryTick();if(S.tick%600===0)histTick();if(S.tick%40===0)achTick();
+ if(S.tick%20===3){hillTick();relicTick();moraleTick();weatherTick();wildTick();spectTick();iceTick();siegeTick();if(S.tick%200===3)dipTick()}if(S.tick%40===9)seaTradeTick();if(S.tick%10===5)wolfTick();if(S.tick%20===13)ferryTick();if(S.tick%600===0)histTick();if(S.tick%40===0)achTick();
  if(S.tick%20===7)for(const p of P)if(p.alive)autoRepair(p);
  for(const p of projs){p.t+=DT;if(p.t>=p.dur){const t=ents.get(p.tid);if(t&&!t.dead&&!(t.k==='u'&&t.gar)){hit(t,p.d,p.o,p.aid);if(p.kind==='rock')impact(p.tx,p.ty,t.k==='b'?3:1.5,t.k==='b'?5:0,t.k==='b'?debCol(t):DEBC_STONE,t.o===0&&t.k==='b'?18:0)}
    if(p.splash){for(const u of units){if(u.gar||!isEnemy(p.o,u.o)||u===t)continue;if(Math.hypot(u.x-p.tx,u.y-p.ty)<p.splash)hit(u,p.d*.6,p.o,p.aid)}fx.push({k:'dust',x:p.tx,y:p.ty,t:0,life:.8,s:.5})}p.done=1}
   else{const t=ents.get(p.tid);if(t&&!t.gar){const c=ec(t);p.tx=c.x;p.ty=c.y}}}
- projs=projs.filter(p=>!p.done);for(const f of fx)f.t+=DT;fx=fx.filter(f=>f.t<f.life);for(const r of rubble)r.t+=DT;rubble=rubble.filter(r=>r.t<40);
+ projs=projs.filter(p=>!p.done);for(const f of fx)f.t+=DT;fx=fx.filter(f=>f.t<f.life);for(const r of rubble)r.t+=DT;rubble=rubble.filter(r=>r.t<600);
  if(S.tick%5===0)computeFog();
  if(S.tick%20===0){updAuras();for(const p of P){calcPop(p);if(p.ai&&p.alive)aiTick(p)}if(!storyTick())checkEnd();if(S.peace&&Math.abs(S.t-S.peace)<.6)toast('The ceasefire is over. War begins!','bad')}
  if(terrDirty&&S.tick%10===0)computeTerritory();
