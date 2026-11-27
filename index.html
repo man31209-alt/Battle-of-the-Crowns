@@ -64,6 +64,8 @@ button{font:inherit;color:inherit;cursor:pointer}
 #alertBtn{position:fixed;z-index:5;right:calc(var(--sar) + 8px);top:calc(var(--sat) + 184px);border-radius:8px;border:2px solid #ff8a6b;background:linear-gradient(#8a2a1c,#4a140c);color:#fff;font-weight:800;font-size:14px;padding:7px 10px;animation:pulse 1s ease-in-out infinite alternate}
 @keyframes pulse{from{box-shadow:0 0 0 0 #ff6a4a88}to{box-shadow:0 0 0 7px #ff6a4a00}}
 #pausedBar{position:fixed;z-index:6;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 60px);background:#000c;border:1.5px solid var(--gold);color:var(--gold);font-weight:800;padding:8px 16px;border-radius:20px}
+.seg1{flex:1;padding:9px 10px;border-radius:9px;border:1.5px solid var(--edge);background:#0005;color:var(--dim);font-weight:800;font-size:14px}
+.seg1.on{border-color:var(--gold);color:var(--gold);background:#e0b04a1c}
 #toasts{position:fixed;z-index:6;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 146px);display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none;width:min(92vw,420px)}
 .toast{pointer-events:auto;background:#1b120bf0;border:1.5px solid var(--edge);border-radius:9px;padding:7px 12px;font-weight:700;font-size:15px;text-align:center;box-shadow:0 3px 10px #000a;animation:tin .25s ease}
 .toast.bad{border-color:var(--red);color:#ffd9cf}
@@ -213,6 +215,7 @@ button{font:inherit;color:inherit;cursor:pointer}
   <div class="grid2"><div><h3>Victory</h3><div class="seg" id="victory"></div></div><div><h3>Starting resources</h3><div class="seg" id="startRes"></div></div></div>
   <h3>Population limit</h3><div class="seg" id="popLim"></div>
   <div class="row"><button class="big alt" id="contBtn" hidden>Continue</button><button class="big" id="newBtn">New game</button></div>
+  <div class="row"><button class="seg1" data-snd="sfx">Sound: On</button><button class="seg1" data-snd="music">Music: On</button></div>
   <button class="link" id="helpBtn">How to play</button>
  </div>
 </div>
@@ -223,6 +226,7 @@ button{font:inherit;color:inherit;cursor:pointer}
   <h2>Paused</h2>
   <h3>Game speed</h3>
   <div class="seg" id="speed"><button data-s="1">Slow</button><button data-s="1.5">Normal</button><button data-s="2">Fast</button></div>
+  <div class="row"><button class="seg1" data-snd="sfx">Sound: On</button><button class="seg1" data-snd="music">Music: On</button></div>
   <div class="row"><button class="big" id="resumeBtn">Resume</button></div>
   <div class="row"><button class="big alt" id="quitBtn">Save &amp; quit</button></div>
   <button class="link" id="help2Btn">How to play</button>
