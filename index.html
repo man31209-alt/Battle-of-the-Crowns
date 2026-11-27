@@ -186,7 +186,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 @media (prefers-reduced-motion:reduce){.toast{animation:none}}
 body.lefty #side{left:auto;right:calc(var(--sar) + 8px)}body.lefty #mini,body.lefty #groups,body.lefty #alertBtn,body.lefty #allyBtn{right:auto;left:calc(var(--sal) + 8px)}body.lefty #panel{flex-direction:row-reverse}
 body.bigui .ab{width:76px;height:80px}body.bigui .rb{width:58px;height:58px}body.bigui .gb{width:52px;height:40px}body.bigui .tb{transform:scale(1.15)}
-#slotScr,#setScr{z-index:40}#allyScr .card{max-height:88vh;overflow:auto}.dip{font-size:17px;line-height:1.45;text-align:center}.dip b{color:var(--gold);font-family:Cinzel,serif}#slotScr .card,#setScr .card,#edScr .card{max-height:88vh;overflow:auto}.ach .row{margin-top:6px;justify-content:flex-start;gap:6px}
+#slotScr,#setScr{z-index:40}#kgScr .card{max-height:88vh;overflow:auto}.kgTop{display:flex;gap:14px;align-items:center}.kgTop>div{flex:1}#kgArms{width:120px;height:146px;flex:none}#kgName{padding:9px;border-radius:8px;border:1px solid var(--edge);background:#0006;color:var(--ink);font-size:16px;width:100%;box-sizing:border-box}.kgb{display:flex;align-items:center;justify-content:center;gap:10px}#kgMini{width:22px;height:27px}#hudArms{width:18px;height:22px;flex:none;align-self:center;margin-right:6px}#kgBody .seg i.sw{margin-right:4px}#allyScr .card{max-height:88vh;overflow:auto}.dip{font-size:17px;line-height:1.45;text-align:center}.dip b{color:var(--gold);font-family:Cinzel,serif}#slotScr .card,#setScr .card,#edScr .card{max-height:88vh;overflow:auto}.ach .row{margin-top:6px;justify-content:flex-start;gap:6px}
 #edBar{position:fixed;z-index:6;left:0;right:0;bottom:0;padding:6px calc(var(--sar) + 6px) calc(var(--sab) + 6px) calc(var(--sal) + 6px);background:linear-gradient(#2b1d12f2,#1b120bfa);border-top:2px solid var(--edge)}
 #edTools{display:flex;flex-wrap:wrap;gap:4px}#edTools button,#edBar .row button{padding:6px 9px;border-radius:7px;border:1.5px solid var(--edge);background:linear-gradient(#4a321f,#2e1f13);color:var(--ink);font-weight:700;font-size:13px}#edTools button.on{border-color:var(--gold);color:var(--gold);background:linear-gradient(#6a4a28,#3e2a17)}#edTools .sep{width:8px}
 #edBar .row{display:flex;gap:6px;align-items:center;margin-top:6px}#edInfo{flex:1;color:var(--dim);font-size:13px}#edCode{width:100%;box-sizing:border-box;padding:8px;border-radius:8px;border:1px solid var(--edge);background:#0006;color:var(--ink)}#edName{padding:8px;border-radius:8px;border:1px solid var(--edge);background:#0006;color:var(--ink);font-size:15px;width:100%;box-sizing:border-box}
@@ -203,7 +203,7 @@ body.bigui .ab{width:76px;height:80px}body.bigui .rb{width:58px;height:58px}body
   <div class="res" id="r-gold"><img alt="Gold"><b>0</b></div>
   <div class="res" id="r-stone"><img alt="Stone"><b>0</b></div>
   <div class="res pop" id="r-pop"><img alt="Population"><b>0/0</b></div>
-  <div id="age"><b>Dark Age</b><small>0:00</small></div>
+  <canvas id="hudArms" width="36" height="44" aria-label="Your coat of arms"></canvas><div id="age"><b>Dark Age</b><small>0:00</small></div>
   <button class="tb" id="pauseBtn" aria-label="Pause">❚❚</button><button class="tb" id="spdBtn" aria-label="Game speed">1.5×</button>
   <button class="iconbtn" id="menuBtn" aria-label="Menu"><span></span></button>
  </div>
@@ -241,6 +241,7 @@ body.bigui .ab{width:76px;height:80px}body.bigui .rb{width:58px;height:58px}body
   <h3>Your color</h3><div class="seg wrap" id="pcolor"></div>
   <div class="grid2"><div><h3>Roofs</h3><div class="seg wrap" id="proof"></div></div><div><h3>Seasons, day &amp; night</h3><div class="seg" id="seasons"></div></div></div>
   <div class="row"><button class="big alt" id="contBtn" hidden>Continue</button><button class="big" id="newBtn">New game</button></div>
+  <div class="row"><button class="big alt kgb" id="kgBtn"><canvas id="kgMini" width="44" height="54"></canvas><span id="kgLbl">Your kingdom</span></button></div>
   <div class="row"><button class="big alt" id="loadBtn">Load game</button><button class="big alt" id="edBtn">Map editor</button></div>
   <div class="row"><button class="big alt" id="missBtn">Missions</button><button class="big alt" id="tutBtn">Tutorial (optional)</button></div>
   <div class="row"><button class="seg1" data-snd="sfx">Sound: On</button><button class="seg1" data-snd="music">Music: On</button></div>
@@ -253,6 +254,7 @@ body.bigui .ab{width:76px;height:80px}body.bigui .rb{width:58px;height:58px}body
 <div id="achScr" class="screen" hidden><div class="card"><h2>Achievements</h2><div id="achList"></div><div class="row"><button class="big" id="achClose">Close</button></div></div></div>
 <div id="mercScr" class="screen" hidden><div class="card"><h2>Mercenary camp</h2><p class="sub">Hired soldiers join your army right away. They need room in your houses.</p><div id="mercList"></div><div class="row"><button class="big" id="mercClose">Back to the game</button></div></div></div>
 <div id="dipScr" class="screen" hidden><div class="card"><h2>An envoy arrives</h2><p id="dipTxt" class="dip"></p><div class="row"><button class="big" id="dipYes">Yes</button><button class="big alt" id="dipNo">No</button></div></div></div>
+<div id="kgScr" class="screen" hidden><div class="card"><h2>Your kingdom</h2><div id="kgBody"></div><div class="row"><button class="big" id="kgClose">Done</button></div></div></div>
 <div id="slotScr" class="screen" hidden><div class="card"><h2 id="slotTitle">Save game</h2><div id="slotList"></div><div class="row"><button class="big" id="slotClose">Close</button></div></div></div>
 <div id="setScr" class="screen" hidden><div class="card"><h2>Settings</h2><div id="setList"></div><div class="row"><button class="big" id="setClose">Done</button></div></div></div>
 <div id="edScr" class="screen" hidden><div class="card"><h2>Map editor</h2><h3>New map</h3><input id="edName" maxlength="24" placeholder="Map name" value="My map">
@@ -298,6 +300,7 @@ body.bigui .ab{width:76px;height:80px}body.bigui .rb{width:58px;height:58px}body
    <dt>Fire and wells</dt><dd>A building below 30% health catches fire and keeps burning until it is repaired above half. A well stops fires within 7 tiles and makes nearby fields 10% faster.</dd>
    <dt>Diplomacy</dt><dd>Rival envoys turn up now and then: a stronger rival may demand gold for peace, a weaker one may offer a truce, and one rival may ask to join you against another. Tap 🤝 to send rivals gold (it delays their attacks) or ask for a 5-minute truce.</dd>
    <dt>Sea trade</dt><dd>Merchant ships (from the dock, Town phase) sail on their own between your dock and the farthest other dock, yours or an ally's, earning gold. Allied docks pay 40% more.</dd>
+   <dt>Your kingdom</dt><dd>On the title screen, tap Your kingdom to name your realm and design a coat of arms (shield, colors, pattern and emblem). It flies over your town centers and castles. Your career record (wins, streaks, fastest victory, favorite civilization and more) lives there too.</dd>
    <dt>Saving</dt><dd>The game autosaves every 30 seconds. Open the menu and tap Save game to keep up to 3 more saves; load any of them from Load game on the title screen.</dd>
    <dt>Settings</dt><dd>Larger buttons, a left-handed layout (minimap and buttons swap sides), graphics quality (Battery saver runs cooler and longer) and vibration.</dd>
    <dt>Map editor</dt><dd>Paint land, water, shallows, sand, rock, forests, gold, stone, berries, fish and hills, then place 2 to 4 start spots. Save it and it shows up in the Map list; Play starts a game on it right away. Share copies a map code a friend can paste into Import.</dd>
